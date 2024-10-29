@@ -13,7 +13,7 @@ public class CreativeModeTabs {
     private static final DeferredRegister<CreativeModeTab> TABS =
             DeferredRegister.create(Mochila.MOD_ID, Registries.CREATIVE_MODE_TAB);
 
-    public static final RegistrySupplier<CreativeModeTab> TEMPLATE = TABS.register(
+    public static final RegistrySupplier<CreativeModeTab> MOCHILA = TABS.register(
             Mochila.MOD_ID,
             () -> CreativeTabRegistry.create(Component.translatable("creativetab." + Mochila.MOD_ID + "." + Mochila.MOD_ID),
                     () -> new ItemStack(Items.EXAMPLE_ITEM.get())

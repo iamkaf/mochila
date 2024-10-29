@@ -11,7 +11,7 @@ public class Items {
             DeferredRegister.create(Mochila.MOD_ID, Registries.ITEM);
 
     public static RegistrySupplier<Item> EXAMPLE_ITEM = ITEMS.register("mochila_item",
-            () -> new Item(new Item.Properties().arch$tab(CreativeModeTabs.TEMPLATE))
+            () -> new Item(new Item.Properties().arch$tab(CreativeModeTabs.MOCHILA))
     );
 
     public static void init() {

@@ -4,7 +4,7 @@ import net.fabricmc.api.ModInitializer;
 
 import com.iamkaf.mochila.Mochila;
 
-public final class TemplateFabric implements ModInitializer {
+public final class MochilaFabric implements ModInitializer {
     @Override
     public void onInitialize() {
         // This code runs as soon as Minecraft is in a mod-load-ready state.
