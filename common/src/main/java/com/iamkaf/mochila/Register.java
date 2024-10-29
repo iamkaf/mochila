@@ -1,4 +1,4 @@
-package com.iamkaf.template;
+package com.iamkaf.mochila;
 
 import dev.architectury.injectables.annotations.ExpectPlatform;
 import net.minecraft.core.Holder;

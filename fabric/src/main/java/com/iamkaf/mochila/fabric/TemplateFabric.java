@@ -1,8 +1,8 @@
-package com.iamkaf.template.fabric;
+package com.iamkaf.mochila.fabric;
 
 import net.fabricmc.api.ModInitializer;
 
-import com.iamkaf.template.Template;
+import com.iamkaf.mochila.Mochila;
 
 public final class TemplateFabric implements ModInitializer {
     @Override
@@ -12,6 +12,6 @@ public final class TemplateFabric implements ModInitializer {
         // Proceed with mild caution.
 
         // Run our common setup.
-        Template.init();
+        Mochila.init();
     }
 }

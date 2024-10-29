@@ -1,3 +1,3 @@
-# Template
+# Mochila
 
-A multiloader mod template for @iamkaf mods.
+A backpack mod for Fabric and NeoForge.

@@ -1,6 +1,6 @@
-package com.iamkaf.registry;
+package com.iamkaf.mochila.registry;
 
-import com.iamkaf.template.Template;
+import com.iamkaf.mochila.Mochila;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
@@ -8,9 +8,9 @@ import net.minecraft.world.item.Item;
 
 public class Items {
     public static final DeferredRegister<Item> ITEMS =
-            DeferredRegister.create(Template.MOD_ID, Registries.ITEM);
+            DeferredRegister.create(Mochila.MOD_ID, Registries.ITEM);
 
-    public static RegistrySupplier<Item> EXAMPLE_ITEM = ITEMS.register("example_item",
+    public static RegistrySupplier<Item> EXAMPLE_ITEM = ITEMS.register("mochila_item",
             () -> new Item(new Item.Properties().arch$tab(CreativeModeTabs.TEMPLATE))
     );
 

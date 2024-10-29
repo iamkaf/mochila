@@ -1,17 +1,17 @@
-package com.iamkaf.template;
+package com.iamkaf.mochila;
 
-import com.iamkaf.registry.CreativeModeTabs;
-import com.iamkaf.registry.Items;
+import com.iamkaf.mochila.registry.CreativeModeTabs;
+import com.iamkaf.mochila.registry.Items;
 import com.mojang.logging.LogUtils;
 import net.minecraft.resources.ResourceLocation;
 import org.slf4j.Logger;
 
-public final class Template {
-    public static final String MOD_ID = "template";
+public final class Mochila {
+    public static final String MOD_ID = "mochila";
     public static final Logger LOGGER = LogUtils.getLogger();
 
     public static void init() {
-        LOGGER.info("Kaf template.");
+        LOGGER.info("Bag 'em up!");
 
         // Registries
         Items.init();
