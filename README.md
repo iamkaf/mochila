@@ -1,3 +1,3 @@
 # Mochila
 
-A backpack mod for Fabric and NeoForge.
+A colorful upgradable backpack mod for Fabric and NeoForge available on CurseForge and Modrinth.

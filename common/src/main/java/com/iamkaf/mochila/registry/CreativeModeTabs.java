@@ -16,7 +16,7 @@ public class CreativeModeTabs {
     public static final RegistrySupplier<CreativeModeTab> MOCHILA = TABS.register(
             Mochila.MOD_ID,
             () -> CreativeTabRegistry.create(Component.translatable("creativetab." + Mochila.MOD_ID + "." + Mochila.MOD_ID),
-                    () -> new ItemStack(Items.EXAMPLE_ITEM.get())
+                    () -> new ItemStack(Items.LIGHT_BLUE_IRON_BACKPACK.get())
             )
     );
 
