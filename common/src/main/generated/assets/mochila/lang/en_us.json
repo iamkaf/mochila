@@ -86,5 +86,11 @@
   "item.mochila.yellow_leather_backpack": "Yellow Leather Backpack",
   "item.mochila.yellow_netherite_backpack": "Yellow Netherite Backpack",
   "key.categories.mochila": "Mochila",
-  "key.mochila.open_backpack": "Open Backpack"
+  "key.mochila.open_backpack": "Open Backpack",
+  "tag.item.mochila.backpacks": "Backpacks",
+  "tag.item.mochila.diamond_backpacks": "Diamond Backpacks",
+  "tag.item.mochila.gold_backpacks": "Gold Backpacks",
+  "tag.item.mochila.iron_backpacks": "Iron Backpacks",
+  "tag.item.mochila.leather_backpacks": "Leather Backpacks",
+  "tag.item.mochila.netherite_backpacks": "Netherite Backpacks"
 }

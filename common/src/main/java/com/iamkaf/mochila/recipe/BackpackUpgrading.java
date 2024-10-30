@@ -97,7 +97,7 @@ public class BackpackUpgrading extends CustomRecipe {
         return backpack.transmuteCopy(item, 1);
     }
 
-    private Item getMaterialForTier(BackpackItem.Tier tier) {
+    public static Item getMaterialForTier(BackpackItem.Tier tier) {
         return switch (tier) {
             case LEATHER -> Items.LEATHER;
             case IRON -> Items.IRON_INGOT;

@@ -41,6 +41,12 @@ public class ModLanguageProvider extends LanguageProvider {
         add("creativetab.mochila.mochila", "Mochila");
         add("key.categories.mochila", "Mochila");
         add("key.mochila.open_backpack", "Open Backpack");
+        add("tag.item.mochila.backpacks", "Backpacks");
+        add("tag.item.mochila.leather_backpacks", "Leather Backpacks");
+        add("tag.item.mochila.iron_backpacks", "Iron Backpacks");
+        add("tag.item.mochila.gold_backpacks", "Gold Backpacks");
+        add("tag.item.mochila.diamond_backpacks", "Diamond Backpacks");
+        add("tag.item.mochila.netherite_backpacks", "Netherite Backpacks");
         addBackpackTranslations();
     }
 
