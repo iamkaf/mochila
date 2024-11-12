@@ -27,7 +27,6 @@ public final class Mochila {
         Items.init();
         CreativeModeTabs.init();
         RecipeSerializers.init();
-        Keybinds.init();
 
         NetworkManager.registerReceiver(NetworkManager.Side.C2S, OpenBackpackPayload.TYPE, OpenBackpackPayload.STREAM_CODEC, ((packet, context) -> {
             ServerPlayer player = (ServerPlayer) context.getPlayer();
