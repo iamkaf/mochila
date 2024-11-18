@@ -3,7 +3,6 @@ package com.iamkaf.mochila;
 import com.iamkaf.mochila.item.BackpackItem;
 import com.iamkaf.mochila.registry.CreativeModeTabs;
 import com.iamkaf.mochila.registry.Items;
-import com.iamkaf.mochila.registry.Keybinds;
 import com.iamkaf.mochila.registry.RecipeSerializers;
 import com.mojang.logging.LogUtils;
 import dev.architectury.networking.NetworkManager;
@@ -28,10 +27,15 @@ public final class Mochila {
         CreativeModeTabs.init();
         RecipeSerializers.init();
 
-        NetworkManager.registerReceiver(NetworkManager.Side.C2S, OpenBackpackPayload.TYPE, OpenBackpackPayload.STREAM_CODEC, ((packet, context) -> {
-            ServerPlayer player = (ServerPlayer) context.getPlayer();
-            BackpackItem.onBackpackKeybindPressed(player);
-        }));
+        NetworkManager.registerReceiver(
+                NetworkManager.Side.C2S,
+                OpenBackpackPayload.TYPE,
+                OpenBackpackPayload.STREAM_CODEC,
+                ((packet, context) -> {
+                    ServerPlayer player = (ServerPlayer) context.getPlayer();
+                    BackpackItem.onBackpackKeybindPressed(player);
+                })
+        );
     }
 
     /**
