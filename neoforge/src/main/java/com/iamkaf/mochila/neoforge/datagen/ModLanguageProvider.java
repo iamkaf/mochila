@@ -48,6 +48,7 @@ public class ModLanguageProvider extends LanguageProvider {
         add("tag.item.mochila.diamond_backpacks", "Diamond Backpacks");
         add("tag.item.mochila.netherite_backpacks", "Netherite Backpacks");
         addBackpackTranslations();
+        add("item.mochila.ender_backpack", "Ender Backpack");
     }
 
     private void addBackpackTranslations() {

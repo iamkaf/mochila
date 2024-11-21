@@ -1,4 +1,4 @@
-// 1.21.1	2024-10-29T11:48:23.1240322	Item Models: mochila
+// 1.21.1	2024-11-21T02:26:56.2599069	Item Models: mochila
 af10e1caf9949333395a3d6256b55368f856535a assets/mochila/models/item/black_diamond_backpack.json
 b2744ba1547ad43838f1624ce2efd4d8def47c81 assets/mochila/models/item/black_gold_backpack.json
 f2da8e61f6605cb6ccf94b648f1793300ccffd37 assets/mochila/models/item/black_iron_backpack.json
@@ -20,6 +20,7 @@ ec1f71551afc526c6a715b96b1633c302f498607 assets/mochila/models/item/cyan_gold_ba
 d6bc02d1fa325f34b3038b9552c8c35d722596c7 assets/mochila/models/item/cyan_leather_backpack.json
 b72611300394c76e655b5fbd9c1dfec66ac6cd5e assets/mochila/models/item/cyan_netherite_backpack.json
 2e8408831154f80dbdf1d12523808aae9dda7927 assets/mochila/models/item/diamond_backpack.json
+ba080ab74df7f591293bd9c009bb16f9b4a496fd assets/mochila/models/item/ender_backpack.json
 922ddd738b3cb0eb64dd9ebacf759eeb298913cf assets/mochila/models/item/gold_backpack.json
 40c62509bcb704758d32aab0699b613afb351f0f assets/mochila/models/item/gray_diamond_backpack.json
 65fe77edb68a1dcb6ed97cf43d6d27227fb5c575 assets/mochila/models/item/gray_gold_backpack.json

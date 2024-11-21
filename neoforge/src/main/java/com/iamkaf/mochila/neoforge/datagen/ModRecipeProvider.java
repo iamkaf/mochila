@@ -87,6 +87,18 @@ public class ModRecipeProvider extends RecipeProvider implements IConditionBuild
                 .unlockedBy("has_leather", has(Items.LEATHER))
                 .save(recipeOutput);
 
+        ShapedRecipeBuilder.shaped(RecipeCategory.TOOLS, com.iamkaf.mochila.registry.Items.ENDER_BACKPACK.get())
+                .pattern("ABA")
+                .pattern("ACD")
+                .pattern("AEB")
+                .define('A', Items.LEATHER)
+                .define('B', Items.IRON_INGOT)
+                .define('C', Items.ENDER_CHEST)
+                .define('D', Items.STRING)
+                .define('E', ItemTags.WOOL)
+                .unlockedBy("has_eye_of_ender", has(Items.ENDER_EYE))
+                .save(recipeOutput);
+
         SpecialRecipeBuilder.special(BackpackColoring::new).save(recipeOutput, Mochila.resource("backpack_coloring"));
         SpecialRecipeBuilder.special(BackpackUpgrading::new).save(recipeOutput, Mochila.resource("backpack_upgrading"));
     }

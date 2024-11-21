@@ -3,6 +3,7 @@ package com.iamkaf.mochila.registry;
 import com.iamkaf.mochila.Mochila;
 import com.iamkaf.mochila.item.BackpackContainer;
 import com.iamkaf.mochila.item.BackpackItem;
+import com.iamkaf.mochila.item.EnderBackpackItem;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
@@ -120,7 +121,7 @@ public class Items {
     public static RegistrySupplier<Item> PINK_DIAMOND_BACKPACK = ITEMS.register("pink_diamond_backpack", () -> new BackpackItem(DIAMOND_BACKPACK_SIZE, new Item.Properties().stacksTo(1).arch$tab(CreativeModeTabs.MOCHILA)));
     public static RegistrySupplier<Item> PINK_NETHERITE_BACKPACK = ITEMS.register("pink_netherite_backpack", () -> new BackpackItem(NETHERITE_BACKPACK_SIZE, new Item.Properties().stacksTo(1).fireResistant().arch$tab(CreativeModeTabs.MOCHILA)));
 
-
+    public static RegistrySupplier<Item> ENDER_BACKPACK = ITEMS.register("ender_backpack", () -> new EnderBackpackItem(new Item.Properties().stacksTo(1).fireResistant().arch$tab(CreativeModeTabs.MOCHILA)));
 
     public static void init() {
         ITEMS.register();

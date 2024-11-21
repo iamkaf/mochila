@@ -1,6 +1,7 @@
 package com.iamkaf.mochila.neoforge.datagen;
 
 import com.iamkaf.mochila.Mochila;
+import com.iamkaf.mochila.registry.Items;
 import net.minecraft.data.PackOutput;
 import net.minecraft.resources.ResourceLocation;
 import net.neoforged.neoforge.client.model.generators.ItemModelBuilder;
@@ -58,6 +59,8 @@ public class ModItemModelProvider extends ItemModelProvider {
                 i++;
             }
         }
+
+        basicItem(Items.ENDER_BACKPACK.get());
     }
 
     public void buttonItem(String id, String baseBlockId) {
