@@ -1,5 +1,6 @@
 package com.iamkaf.mochila.item;
 
+import com.iamkaf.amber.api.sound.SoundHelper;
 import com.iamkaf.mochila.Mochila;
 import com.iamkaf.mochila.registry.Items;
 import dev.architectury.event.EventResult;
@@ -303,6 +304,7 @@ public class BackpackItem extends Item {
 
     public void openForPlayer(Player player, ItemStack stack) {
         var container = new BackpackContainer(stack, size);
+        SoundHelper.sendClientSound(player, BACKPACK_EQUIP_SOUND.value());
         player.openMenu(new SimpleMenuProvider((i, inventory, playerx) -> new ChestMenu(container.getMenuType(),
                 i,
                 inventory,
@@ -331,10 +333,6 @@ public class BackpackItem extends Item {
     @Override
     public @NotNull InteractionResultHolder<ItemStack> use(Level level, Player player,
             InteractionHand usedHand) {
-        if (level.isClientSide) {
-            assert Minecraft.getInstance().player != null;
-            Minecraft.getInstance().player.playSound(BACKPACK_EQUIP_SOUND.value());
-        }
         ItemStack stack = player.getItemInHand(usedHand);
         openForPlayer(player, stack);
         return InteractionResultHolder.consume(stack);
@@ -345,7 +343,6 @@ public class BackpackItem extends Item {
     //        Dump, store everything (this is the current implementation)
     @Override
     public @NotNull InteractionResult useOn(UseOnContext context) {
-        Mochila.LOGGER.info("useOn triggered: {} {}", context.getClickLocation(), context.isInside());
         Level level = context.getLevel();
         Player player = context.getPlayer();
         InteractionHand hand = context.getHand();
@@ -379,15 +376,7 @@ public class BackpackItem extends Item {
             InteractionHand hand, Direction direction) {
         if (CONTAINER_WHITELIST.stream().anyMatch(state::is)) {
             if (player instanceof ServerPlayer serverPlayer) {
-                serverPlayer.connection.send(new ClientboundSoundPacket(SoundEvents.ARMOR_EQUIP_NETHERITE,
-                        SoundSource.PLAYERS,
-                        player.getX(),
-                        player.getY(),
-                        player.getZ(),
-                        0.5f,
-                        1f,
-                        player.level().getRandom().nextLong()
-                ));
+                SoundHelper.sendClientSound(player, SoundEvents.ARMOR_EQUIP_NETHERITE.value(), SoundSource.PLAYERS, 0.5f, 1f);
             }
 
             BackpackContainer backpack = new BackpackContainer(player.getItemInHand(hand), size);
