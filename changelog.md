@@ -2,6 +2,12 @@
 
 See the full changelog at https://github.com/iamkaf/mochila/commits/main
 
+## 1.2.2
+
+- feat: update ru_ru.json translations
+
+Thanks to @NiTiSon
+
 ## 1.2.1
 
 - feat: sync backpack open sound with the server
@@ -16,6 +22,8 @@ See the full changelog at https://github.com/iamkaf/mochila/commits/main
 ## 1.1.0-beta.1
 
 - feat: add ru_ru.json translations
+
+Thanks to @NiTiSon
 
 ## 1.0.1-beta.1
 
