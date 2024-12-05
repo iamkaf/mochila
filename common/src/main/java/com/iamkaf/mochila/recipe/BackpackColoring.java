@@ -1,6 +1,7 @@
 package com.iamkaf.mochila.recipe;
 
 import com.iamkaf.mochila.item.BackpackItem;
+import com.iamkaf.mochila.item.BackpackUtility;
 import com.iamkaf.mochila.registry.RecipeSerializers;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.world.item.DyeItem;
@@ -12,10 +13,10 @@ import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Colors a backpack copying its contents and tier.
- * @see net.minecraft.world.item.crafting.ShulkerBoxColoring
  */
 public class BackpackColoring extends CustomRecipe {
     public BackpackColoring(CraftingBookCategory category) {
@@ -49,7 +50,7 @@ public class BackpackColoring extends CustomRecipe {
     }
 
     // TODO: add support for coloring higher tiers backpacks
-    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
+    public @NotNull ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
         ItemStack backpack = ItemStack.EMPTY;
         DyeItem dyeItem = (DyeItem) Items.WHITE_DYE;
 
@@ -65,17 +66,16 @@ public class BackpackColoring extends CustomRecipe {
             }
         }
 
-        Item item = BackpackItem.getBackpackByColor(backpack, dyeItem.getDyeColor());
+        Item item = BackpackUtility.getBackpackByColor(backpack, dyeItem.getDyeColor());
         return backpack.transmuteCopy(item, 1);
     }
 
-    @Override
     public boolean canCraftInDimensions(int width, int height) {
         return width * height >= 2;
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public @NotNull RecipeSerializer<? extends CustomRecipe> getSerializer() {
         return RecipeSerializers.BACKPACK_COLORING_SERIALIZER.get();
     }
 }

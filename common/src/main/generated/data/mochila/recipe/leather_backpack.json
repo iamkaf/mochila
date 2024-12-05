@@ -2,21 +2,11 @@
   "type": "minecraft:crafting_shaped",
   "category": "equipment",
   "key": {
-    "A": {
-      "item": "minecraft:leather"
-    },
-    "B": {
-      "item": "minecraft:iron_ingot"
-    },
-    "C": {
-      "item": "minecraft:chest"
-    },
-    "D": {
-      "item": "minecraft:string"
-    },
-    "E": {
-      "tag": "minecraft:wool"
-    }
+    "A": "minecraft:leather",
+    "B": "minecraft:iron_ingot",
+    "C": "minecraft:chest",
+    "D": "minecraft:string",
+    "E": "#minecraft:wool"
   },
   "pattern": [
     "ABA",

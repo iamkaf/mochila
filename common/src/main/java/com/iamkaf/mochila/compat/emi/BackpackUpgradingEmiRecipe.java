@@ -3,6 +3,7 @@ package com.iamkaf.mochila.compat.emi;
 import com.google.common.collect.Lists;
 import com.iamkaf.mochila.Mochila;
 import com.iamkaf.mochila.item.BackpackItem;
+import com.iamkaf.mochila.item.BackpackUtility;
 import com.iamkaf.mochila.recipe.BackpackUpgrading;
 import com.iamkaf.mochila.tags.MochilaTags;
 import dev.emi.emi.api.recipe.EmiCraftingRecipe;
@@ -19,7 +20,7 @@ public class BackpackUpgradingEmiRecipe extends EmiCraftingRecipe implements Emi
     public BackpackUpgradingEmiRecipe(BackpackItem.Tier tier, DyeColor color) {
         super(
                 arrangeIngredients(tier, color),
-                EmiStack.of(BackpackItem.getBackpackByTierAndColor(nextTier(tier), color)),
+                EmiStack.of(BackpackUtility.getBackpackByTierAndColor(nextTier(tier), color)),
                 Mochila.resource("/backpack_upgrading/" + nextTier(tier).toString()
                         .toLowerCase() + "/" + color.toString().toLowerCase()),
                 false
@@ -34,7 +35,7 @@ public class BackpackUpgradingEmiRecipe extends EmiCraftingRecipe implements Emi
                 ingredients.add(EmiIngredient.of(MochilaTags.Items.tagByTier(tier)));
             } else {
                 ingredients.add(EmiIngredient.of(Ingredient.of(BackpackUpgrading.getMaterialForTier(Objects.requireNonNull(
-                        BackpackItem.getNextTier(tier))))));
+                        BackpackUtility.getNextTier(tier))))));
             }
         }
 
@@ -42,6 +43,6 @@ public class BackpackUpgradingEmiRecipe extends EmiCraftingRecipe implements Emi
     }
 
     private static BackpackItem.Tier nextTier(BackpackItem.Tier tier) {
-        return Objects.requireNonNull(BackpackItem.getNextTier(tier));
+        return Objects.requireNonNull(BackpackUtility.getNextTier(tier));
     }
 }

@@ -8,7 +8,7 @@ import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.stats.Stats;
 import net.minecraft.world.InteractionHand;
-import net.minecraft.world.InteractionResultHolder;
+import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
@@ -26,12 +26,12 @@ public class EnderBackpackItem extends Item {
     }
 
     @Override
-    public @NotNull InteractionResultHolder<ItemStack> use(Level level, Player player,
+    public @NotNull InteractionResult use(Level level, Player player,
             InteractionHand usedHand) {
         PlayerEnderChestContainer playerEnderChestContainer = player.getEnderChestInventory();
         ItemStack stack = player.getItemInHand(usedHand);
         if (level.isClientSide) {
-            return InteractionResultHolder.success(stack);
+            return InteractionResult.SUCCESS;
         } else {
             playSound(player);
             player.openMenu(new SimpleMenuProvider((i, inventory, playerx) -> {
@@ -46,7 +46,7 @@ public class EnderBackpackItem extends Item {
                 };
             }, Component.translatable("container.enderchest")));
             player.awardStat(Stats.OPEN_ENDERCHEST);
-            return InteractionResultHolder.consume(stack);
+            return InteractionResult.CONSUME;
         }
     }
 

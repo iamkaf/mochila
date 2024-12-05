@@ -2,6 +2,7 @@ package com.iamkaf.mochila.recipe;
 
 import com.google.common.collect.ImmutableSet;
 import com.iamkaf.mochila.item.BackpackItem;
+import com.iamkaf.mochila.item.BackpackUtility;
 import com.iamkaf.mochila.registry.RecipeSerializers;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.world.item.Item;
@@ -12,6 +13,7 @@ import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
 import net.minecraft.world.level.Level;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -64,8 +66,8 @@ public class BackpackUpgrading extends CustomRecipe {
             return false;
         }
 
-        var currentTier = BackpackItem.determineTier(backpack);
-        var nextTier = BackpackItem.getNextTier(currentTier);
+        var currentTier = BackpackUtility.determineTier(backpack);
+        var nextTier = BackpackUtility.getNextTier(currentTier);
 
         if (nextTier == null) {
             return false;
@@ -74,7 +76,7 @@ public class BackpackUpgrading extends CustomRecipe {
         return material.equals(getMaterialForTier(nextTier));
     }
 
-    public ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
+    public @NotNull ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {
         ItemStack backpack = ItemStack.EMPTY;
 
         for (int i = 0; i < input.size(); i++) {
@@ -87,13 +89,13 @@ public class BackpackUpgrading extends CustomRecipe {
             }
         }
 
-        var currentTier = BackpackItem.determineTier(backpack);
-        var nextTier = BackpackItem.getNextTier(currentTier);
-        var color = BackpackItem.determineDyeColor(backpack);
+        var currentTier = BackpackUtility.determineTier(backpack);
+        var nextTier = BackpackUtility.getNextTier(currentTier);
+        var color = BackpackUtility.determineDyeColor(backpack);
 
         assert nextTier != null;
 
-        Item item = BackpackItem.getBackpackByTierAndColor(nextTier, color);
+        Item item = BackpackUtility.getBackpackByTierAndColor(nextTier, color);
         return backpack.transmuteCopy(item, 1);
     }
 
@@ -107,13 +109,12 @@ public class BackpackUpgrading extends CustomRecipe {
         };
     }
 
-    @Override
     public boolean canCraftInDimensions(int width, int height) {
         return width >= 3 && height >= 3;
     }
 
     @Override
-    public RecipeSerializer<?> getSerializer() {
+    public @NotNull RecipeSerializer<? extends CustomRecipe> getSerializer() {
         return RecipeSerializers.BACKPACK_UPGRADING_SERIALIZER.get();
     }
 }

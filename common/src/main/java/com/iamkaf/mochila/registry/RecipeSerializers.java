@@ -6,23 +6,23 @@ import com.iamkaf.mochila.recipe.BackpackUpgrading;
 import dev.architectury.registry.registries.DeferredRegister;
 import dev.architectury.registry.registries.RegistrySupplier;
 import net.minecraft.core.registries.Registries;
+import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.item.crafting.SimpleCraftingRecipeSerializer;
 
 public class RecipeSerializers {
     private static final DeferredRegister<RecipeSerializer<?>> RECIPE_SERIALIZERS =
             DeferredRegister.create(Mochila.MOD_ID, Registries.RECIPE_SERIALIZER);
 
-    public static final RegistrySupplier<RecipeSerializer<?>> BACKPACK_COLORING_SERIALIZER =
+    public static final RegistrySupplier<RecipeSerializer<? extends CustomRecipe>> BACKPACK_COLORING_SERIALIZER =
             RECIPE_SERIALIZERS.register(
                     "crafting_special_backpackcoloring",
-                    () -> new SimpleCraftingRecipeSerializer<>(BackpackColoring::new)
+                    () -> new CustomRecipe.Serializer<>(BackpackColoring::new)
             );
 
-    public static final RegistrySupplier<RecipeSerializer<?>> BACKPACK_UPGRADING_SERIALIZER =
+    public static final RegistrySupplier<RecipeSerializer<? extends CustomRecipe>> BACKPACK_UPGRADING_SERIALIZER =
             RECIPE_SERIALIZERS.register(
                     "crafting_special_backpackupgrading",
-                    () -> new SimpleCraftingRecipeSerializer<>(BackpackUpgrading::new)
+                    () -> new CustomRecipe.Serializer<>(BackpackUpgrading::new)
             );
 
     public static void init() {

@@ -2,6 +2,10 @@
 
 See the full changelog at https://github.com/iamkaf/mochila/commits/main
 
+## 1.3.0+1.21.4
+
+- feat: port to 1.21.4
+
 ## 1.2.2
 
 - feat: update ru_ru.json translations

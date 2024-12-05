@@ -15,28 +15,35 @@ import java.util.concurrent.CompletableFuture;
 @EventBusSubscriber(modid = Mochila.MOD_ID, bus = EventBusSubscriber.Bus.MOD)
 public class DataGenerators {
     @SubscribeEvent
-    public static void gatherData(GatherDataEvent event) {
+    public static void serverDatagen(GatherDataEvent.Client event) {
         DataGenerator generator = event.getGenerator();
         PackOutput packOutput = generator.getPackOutput();
         ExistingFileHelper existingFileHelper = event.getExistingFileHelper();
         CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
 
-        generator.addProvider(event.includeServer(), new ModRecipeProvider(packOutput, lookupProvider));
+        generator.addProvider(true, new ModRecipeProvider.Runner(packOutput, lookupProvider));
         BlockTagsProvider blockTagsProvider =
                 new ModBlockTagProvider(packOutput, lookupProvider, existingFileHelper);
-        generator.addProvider(event.includeServer(), blockTagsProvider);
-        generator.addProvider(
-                event.includeServer(),
+        generator.addProvider(true, blockTagsProvider);
+        generator.addProvider(true,
                 new ModItemTagProvider(packOutput,
                         lookupProvider,
                         blockTagsProvider.contentsGetter(),
                         existingFileHelper
                 )
         );
-        generator.addProvider(
-                event.includeClient(),
-                new ModItemModelProvider(packOutput, existingFileHelper)
-        );
-        generator.addProvider(event.includeClient(), new ModLanguageProvider(packOutput));
+        generator.addProvider(true, new ModItemModelProvider(packOutput, existingFileHelper));
+        generator.addProvider(true, new ModLanguageProvider(packOutput));
     }
+
+//    @SubscribeEvent
+//    public static void clientDatagen(GatherDataEvent.Client event) {
+//        DataGenerator generator = event.getGenerator();
+//        PackOutput packOutput = generator.getPackOutput();
+//        ExistingFileHelper existingFileHelper = event.getExistingFileHelper();
+//        CompletableFuture<HolderLookup.Provider> lookupProvider = event.getLookupProvider();
+//
+//        generator.addProvider(true, new ModItemModelProvider(packOutput, existingFileHelper));
+//        generator.addProvider(true, new ModLanguageProvider(packOutput));
+//    }
 }
