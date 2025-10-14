@@ -24,7 +24,7 @@ dependencies {
     implementation group: 'com.google.code.gson', name: 'gson', version: '2.10.1'
 
     // Uncomment this line if you want to use Amber
-    // implementation group: 'com.iamkaf.amber', name: 'amber-common', version: amber_version
+    implementation group: 'com.iamkaf.amber', name: 'amber-common', version: amber_version
 }
 
 configurations {
@@ -40,6 +40,6 @@ configurations {
 
 artifacts {
     commonJava sourceSets.main.java.sourceDirectories.singleFile
-    commonResources sourceSets.main.resources.sourceDirectories.singleFile
+    commonResources sourceSets.main.resources.sourceDirectories.files
 }
 

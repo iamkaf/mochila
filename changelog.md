@@ -7,8 +7,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the full changelog at https://github.com/iamkaf/multiloader-template
 
-## 1.0.0
-- Initial template release.
+## 3.0.0+1.21.10
+
+Initial Implementation
 
 ## Types of changes
 - `Added` for new features.

@@ -14,14 +14,15 @@ dependencies {
     modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
     modImplementation "com.terraformersmc:modmenu:${mod_menu_version}"
     // Uncomment the next line if you want to use Amber
-    //modImplementation "com.iamkaf.amber:amber-fabric:${amber_version}"
+    modImplementation "com.iamkaf.amber:amber-fabric:${amber_version}"
 }
 
-sourceSets.main.resources.srcDir('src/generated/resources')
+//sourceSets.main.resources.srcDir('src/generated/resources')
 
 fabricApi {
     configureDataGeneration {
         client = true
+        outputDirectory = file('../common/src/main/generated')
     }
 }
 

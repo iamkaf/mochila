@@ -6,7 +6,7 @@ plugins {
 
 dependencies {
     // Uncomment this line if you want to use Amber
-    //implementation "com.iamkaf.amber:amber-neoforge:${amber_version}"
+    implementation "com.iamkaf.amber:amber-neoforge:${amber_version}"
 }
 
 neoForge {
@@ -42,7 +42,7 @@ neoForge {
     }
 }
 
-sourceSets.main.resources { srcDir 'src/generated/resources' }
+//sourceSets.main.resources.srcDir('src/generated/resources')
 
 publisher {
     // Setup the required API keys. You only need to define the keys for

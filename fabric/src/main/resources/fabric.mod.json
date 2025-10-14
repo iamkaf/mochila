@@ -9,17 +9,17 @@
     ],
     "contact": {
         "homepage": "https://fabricmc.net/",
-        "sources": "https://github.com/FabricMC/fabric-example-mod"
+        "sources": "https://github.com/FabricMC/fabric-Mochila-mod"
     },
     "license": "${license}",
     "icon": "icon.png",
     "environment": "*",
     "entrypoints": {
         "main": [
-            "com.example.modtemplate.TemplateFabric"
+            "com.iamkaf.mochila.MochilaFabric"
         ],
         "fabric-datagen": [
-            "com.example.modtemplate.fabric.TemplateDatagen"
+            "com.iamkaf.mochila.fabric.MochilaDatagen"
         ]
     },
     "mixins": [
