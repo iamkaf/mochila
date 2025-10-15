@@ -15,7 +15,7 @@ java {
 
 sourceSets {
     main {
-        resources.srcDirs += [file('../../../common/src/main/generated')]
+        resources.srcDirs += [file('src/main/generated')]
     }
 }
 

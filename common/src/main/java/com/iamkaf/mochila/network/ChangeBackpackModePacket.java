@@ -35,7 +35,7 @@ public class ChangeBackpackModePacket implements Packet<ChangeBackpackModePacket
 
     public static void handle(ChangeBackpackModePacket packet, PacketContext context) {
         context.execute(() -> {
-            ServerPlayer player = (ServerPlayer) context.getPlayer();
+            ServerPlayer player = context.getServerPlayer();
             ItemStack stack = player.getMainHandItem();
 
             if (stack.getItem() instanceof BackpackItem) {

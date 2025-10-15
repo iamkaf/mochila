@@ -1,7 +1,9 @@
 package com.iamkaf.mochila.item.backpack;
 
 import com.iamkaf.amber.api.component.SimpleIntegerDataComponent;
+import com.iamkaf.amber.api.event.v1.events.common.PlayerEvents;
 import com.iamkaf.amber.api.sound.SoundHelper;
+import com.iamkaf.mochila.item.BackpackItem;
 import com.iamkaf.mochila.registry.DataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
@@ -13,6 +15,8 @@ import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
 import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.InteractionHand;
+import net.minecraft.world.InteractionResult;
+import net.minecraft.world.entity.decoration.ItemFrame;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
@@ -26,36 +30,33 @@ import java.util.List;
 public class QuickStash {
     public static final List<Block> CONTAINER_WHITELIST = List.of(Blocks.CHEST, Blocks.TRAPPED_CHEST, Blocks.BARREL, Blocks.COPPER_CHEST);
 
-    // TODO: restore item frame quick stash functionality when Amber's InteractionEvent is implemented
-//    static {
-//        InteractionEvent.INTERACT_ENTITY.register((player, entity, hand) -> {
-//            Level level = player.level();
-//
-//            if (!level.isClientSide && player.getItemInHand(hand)
-//                    .getItem() instanceof BackpackItem backpackItem && player.isShiftKeyDown() && entity instanceof
-//                    ItemFrame frame) {
-//                Direction direction = frame.getDirection().getOpposite();
-//                BlockPos blockPosBehindFrame = frame.getPos().relative(direction);
-//                BlockState blockState = level.getBlockState(blockPosBehindFrame);
-//
-//                boolean inserted = quickStash(blockState,
-//                        player,
-//                        level,
-//                        blockPosBehindFrame,
-//                        hand,
-//                        direction.getOpposite(),
-//                        backpackItem.size,
-//                        getMode(player.getItemInHand(hand))
-//                );
-//
-//                if (inserted) {
-//                    return EventResult.interruptTrue();
-//                }
-//            }
-//
-//            return EventResult.pass();
-//        });
-//    }
+    static {
+        PlayerEvents.ENTITY_INTERACT.register((player, level, hand, entity) -> {
+            if (!level.isClientSide() && player.getItemInHand(hand)
+                    .getItem() instanceof BackpackItem backpackItem && player.isShiftKeyDown() && entity instanceof
+                    ItemFrame frame) {
+                Direction direction = frame.getDirection().getOpposite();
+                BlockPos blockPosBehindFrame = frame.getPos().relative(direction);
+                BlockState blockState = level.getBlockState(blockPosBehindFrame);
+
+                boolean inserted = quickStash(blockState,
+                        player,
+                        level,
+                        blockPosBehindFrame,
+                        hand,
+                        direction.getOpposite(),
+                        backpackItem.size,
+                        getMode(player.getItemInHand(hand))
+                );
+
+                if (inserted) {
+                    return InteractionResult.CONSUME;
+                }
+            }
+
+            return InteractionResult.PASS;
+        });
+    }
 
     public static Mode getMode(ItemStack stack) {
         return stack.getOrDefault(DataComponents.QUICKSTASH_MODE.get(), SimpleIntegerDataComponent.empty())
