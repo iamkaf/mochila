@@ -11,6 +11,7 @@ import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundEvents;
+import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
 
 import static com.iamkaf.mochila.item.BackpackItem.BACKPACK_EQUIP_SOUND;
@@ -38,9 +39,21 @@ public class Keybinds {
                         MochilaNetworking.CHANNEL.sendToServer(new ChangeBackpackModePacket(0));
                     }
                 } else {
-                    // TODO: add backpack check
-                    player.playSound(BACKPACK_EQUIP_SOUND.value());
-                    MochilaNetworking.CHANNEL.sendToServer(new OpenBackpackPacket(0));
+                    // Check if player has backpack before playing sound
+                    boolean hasBackpack = false;
+                    var inventory = player.getInventory();
+                    for (int i = 0; i < inventory.getContainerSize(); ++i) {
+                        ItemStack stack = inventory.getItem(i);
+                        if (stack.getItem() instanceof BackpackItem) {
+                            hasBackpack = true;
+                            break;
+                        }
+                    }
+                    
+                    if (hasBackpack) {
+                        player.playSound(BACKPACK_EQUIP_SOUND.value());
+                        MochilaNetworking.CHANNEL.sendToServer(new OpenBackpackPacket(0));
+                    }
                 }
             }
         });
