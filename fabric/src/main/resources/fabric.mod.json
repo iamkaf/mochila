@@ -8,8 +8,8 @@
         "${mod_author}"
     ],
     "contact": {
-        "homepage": "https://fabricmc.net/",
-        "sources": "https://github.com/FabricMC/fabric-Mochila-mod"
+        "homepage": "https://iamkaf.com",
+        "sources": "https://github.com/iamkaf/mochila2"
     },
     "license": "${license}",
     "icon": "icon.png",
@@ -30,7 +30,8 @@
         "fabricloader": ">=${fabric_loader_version}",
         "fabric-api": "*",
         "minecraft": "${fabric_version_range}",
-        "java": ">=${java_version}"
+        "java": ">=${java_version}",
+        "amber": ">=${amber_version}"
     },
     "suggests": {
         "modmenu": ">=${mod_menu_version}"
