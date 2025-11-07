@@ -76,6 +76,8 @@ sourcesJar {
     from(rootProject.file('LICENSE')) {
         rename { "${it}_${mod_name}" }
     }
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 jar {
@@ -136,6 +138,8 @@ processResources {
     }
 
     inputs.properties(expandProps)
+
+    duplicatesStrategy = DuplicatesStrategy.EXCLUDE
 }
 
 publishing {
