@@ -3,7 +3,7 @@ package com.iamkaf.mochila.item.backpack;
 import com.iamkaf.mochila.item.BackpackItem;
 import com.iamkaf.mochila.registry.Items;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -210,7 +210,7 @@ public class BackpackUtils {
     }
 
     public static boolean isBlacklistedItem(Item theItem) {
-        ResourceLocation registryName = BuiltInRegistries.ITEM.getKey(theItem);
+        Identifier registryName = BuiltInRegistries.ITEM.getKey(theItem);
         return theItem instanceof BackpackItem || registryName.getPath().contains("shulker_box");
     }
 

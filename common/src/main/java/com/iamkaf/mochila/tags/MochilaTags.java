@@ -3,7 +3,7 @@ package com.iamkaf.mochila.tags;
 import com.iamkaf.mochila.Constants;
 import com.iamkaf.mochila.item.backpack.BackpackUtils;
 import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceLocation;
+import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.level.block.Block;
@@ -14,7 +14,7 @@ public class MochilaTags {
     }
 
     private static TagKey<Item> createItemTag(String namespace, String path) {
-        return TagKey.create(Registries.ITEM, ResourceLocation.fromNamespaceAndPath(namespace, path));
+        return TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(namespace, path));
     }
 
     private static TagKey<Block> createBlockTag(String name) {
@@ -22,7 +22,7 @@ public class MochilaTags {
     }
 
     private static TagKey<Block> createBlockTag(String namespace, String path) {
-        return TagKey.create(Registries.BLOCK, ResourceLocation.fromNamespaceAndPath(namespace, path));
+        return TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(namespace, path));
     }
 
     public static class Items {
