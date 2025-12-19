@@ -12,6 +12,7 @@ See the full changelog at https://github.com/iamkaf/mochila2
 ### Changed
 
 - Ported to Minecraft 1.21.11.
+- Pausing Minecraft Forge support until it supports Gradle 9.
 
 ## 3.0.0
 
