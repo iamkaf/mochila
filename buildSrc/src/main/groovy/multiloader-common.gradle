@@ -53,8 +53,8 @@ repositories {
         url = 'https://maven.terraformersmc.com/'
     }
     maven {
-        name = "Kaf Mod Resources"
-        url = "https://raw.githubusercontent.com/iamkaf/modresources/main/maven/"
+        name = "Kaf Maven"
+        url = "https://maven.kaf.sh"
     }
 }
 
