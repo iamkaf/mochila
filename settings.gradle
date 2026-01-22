@@ -46,7 +46,8 @@ dependencyResolutionManagement {
 
     versionCatalogs {
         libs {
-            from("com.iamkaf.platform:mc-1.21.11:1.21.11-SNAPSHOT")
+            def mcVersion = providers.gradleProperty('platform_minecraft_version').get()
+            from("com.iamkaf.platform:mc-${mcVersion}:${mcVersion}-SNAPSHOT")
         }
     }
 }
