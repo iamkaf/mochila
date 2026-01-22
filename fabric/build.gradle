@@ -5,16 +5,16 @@ plugins {
 }
 
 dependencies {
-    minecraft "com.mojang:minecraft:${minecraft_version}"
+    minecraft libs.minecraft
     mappings loom.layered {
         officialMojangMappings()
-        parchment("org.parchmentmc.data:parchment-${parchment_minecraft}:${parchment_version}@zip")
+        parchment(libs.parchment)
     }
-    modImplementation "net.fabricmc:fabric-loader:${fabric_loader_version}"
-    modImplementation "net.fabricmc.fabric-api:fabric-api:${fabric_version}"
-    // modImplementation "com.terraformersmc:modmenu:${mod_menu_version}" // Temporarily disabled for 1.21.11 testing
+    modImplementation libs.fabric.loader
+    modImplementation libs.fabric.api
+    modImplementation libs.modmenu
     // Uncomment the next line if you want to use Amber
-    modImplementation "com.iamkaf.amber:amber-fabric:${amber_version}"
+    modImplementation libs.amber.fabric
 }
 
 //sourceSets.main.resources.srcDir('src/generated/resources')

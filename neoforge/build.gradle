@@ -6,19 +6,19 @@ plugins {
 
 dependencies {
     // Uncomment this line if you want to use Amber
-    implementation "com.iamkaf.amber:amber-neoforge:${amber_version}"
+    implementation libs.amber.neoforge
 }
 
 neoForge {
-    version = neoforge_version
+    version = libs.neoforge.get().version.toString()
     // Automatically enable neoforge AccessTransformers if the file exists
     def at = project(':common').file('src/main/resources/META-INF/accesstransformer.cfg')
     if (at.exists()) {
         accessTransformers.from(at.absolutePath)
     }
     parchment {
-        minecraftVersion = parchment_minecraft
-        mappingsVersion = parchment_version
+        minecraftVersion = libs.versions.parchment.minecraft.get()
+        mappingsVersion = libs.parchment.get().version.toString()
     }
     runs {
         configureEach {

@@ -1,7 +1,7 @@
 plugins {
     id 'multiloader-loader'
-    id 'net.minecraftforge.gradle' version '[6.0.46,6.2)'
-    id 'org.spongepowered.mixin' version '0.7-SNAPSHOT'
+    id 'net.minecraftforge.gradle'
+    id 'org.spongepowered.mixin'
     id 'com.hypherionmc.modutils.modpublisher'
 }
 
@@ -57,14 +57,14 @@ minecraft {
 //sourceSets.main.resources.srcDir 'src/generated/resources'
 
 dependencies {
-    minecraft "net.minecraftforge:forge:${minecraft_version}-${forge_version}"
+    minecraft "net.minecraftforge:forge:${libs.versions.minecraft.get()}-${libs.forge.get().version.toString()}"
     annotationProcessor("org.spongepowered:mixin:0.8.5-SNAPSHOT:processor")
 
     // Forge's hack fix
     implementation('net.sf.jopt-simple:jopt-simple:5.0.4') { version { strictly '5.0.4' } }
 
     // Uncomment this line if you want to use Amber
-    implementation "com.iamkaf.amber:amber-forge:${amber_version}"
+    implementation "com.iamkaf.amber:amber-forge:${libs.amber.forge.get().version.toString()}"
 }
 
 publishing {
