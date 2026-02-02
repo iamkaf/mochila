@@ -25,13 +25,19 @@ jobs:
           # Matches: 1.21.11, 26.1, 24.0.5, etc.
           all_versions=$(find . -maxdepth 1 -type d -regex '\./[0-9]+\.[0-9]+.*' | sed 's|./||' | sort)
 
-          # If this is a PR, only build changed versions
+          # For PRs and pushes, only build changed versions; otherwise build all.
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             # Match version directories in git diff (both formats)
             changed=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -oP '^[0-9]+\.[0-9]+[^/]*' | sort -u)
-
-            # Intersect changed with actual directories
             versions=$(comm -12 <(echo "$all_versions") <(echo "$changed"))
+          elif [ "${{ github.event_name }}" == "push" ]; then
+            # If this is the first push (no before SHA), build all.
+            if [ "${{ github.event.before }}" = "0000000000000000000000000000000000000000" ]; then
+              versions="$all_versions"
+            else
+              changed=$(git diff --name-only ${{ github.event.before }}...${{ github.sha }} | grep -oP '^[0-9]+\.[0-9]+[^/]*' | sort -u)
+              versions=$(comm -12 <(echo "$all_versions") <(echo "$changed"))
+            fi
           else
             versions="$all_versions"
           fi
