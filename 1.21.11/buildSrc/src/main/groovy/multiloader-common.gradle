@@ -151,8 +151,12 @@ publishing {
     }
     repositories {
         maven {
-            name = "ModResources"
-            url = file(System.getenv("MOD_RESOURCES").concat(File.separator).concat("maven"))
+            name = "KafMaven"
+            url = project.version.endsWith("-SNAPSHOT") ? "https://z.kaf.sh/snapshots" : "https://z.kaf.sh/releases"
+            credentials {
+                username = System.getenv("MAVEN_PUBLISH_USERNAME")
+                password = System.getenv("MAVEN_PUBLISH_PASSWORD")
+            }
         }
     }
 }
