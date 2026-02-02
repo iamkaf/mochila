@@ -6,7 +6,7 @@ import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 
 import java.util.concurrent.CompletableFuture;
 
@@ -26,7 +26,7 @@ public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
         var netherite_backpacks = valueLookupBuilder(MochilaTags.Items.NETHERITE_BACKPACKS);
 
         for (var item : BuiltInRegistries.ITEM) {
-            Identifier id = BuiltInRegistries.ITEM.getKey(item);
+            ResourceLocation id = BuiltInRegistries.ITEM.getKey(item);
             if (!id.getNamespace().equals("mochila")) {
                 continue;
             }

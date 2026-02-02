@@ -8,7 +8,7 @@ import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.model.*;
 import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
+import net.minecraft.resources.ResourceLocation;
 import net.minecraft.world.item.Item;
 
 import java.util.List;
@@ -62,7 +62,7 @@ public class ModModelProvider extends FabricModelProvider {
                 // this whole part here is a bit of a mess, it's here because the way the textures are
                 // named does not match the item ids
                 ModelTemplate model = new ModelTemplate(
-                        Optional.of(Identifier.withDefaultNamespace("item/generated")),
+                        Optional.of(ResourceLocation.withDefaultNamespace("item/generated")),
                         Optional.empty(),
                         TextureSlot.LAYER0
                 );
