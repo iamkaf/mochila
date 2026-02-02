@@ -23,19 +23,26 @@ jobs:
         run: |
           # Get all version directories (supports both 1.x.x and YY.x formats)
           # Matches: 1.21.11, 26.1, 24.0.5, etc.
-          versions=$(find . -maxdepth 1 -type d -regex '\./[0-9]+\.[0-9]+.*' | sed 's|./||' | jq -R -s -c 'split("\n")[:-1]')
-          
+          all_versions=$(find . -maxdepth 1 -type d -regex '\./[0-9]+\.[0-9]+.*' | sed 's|./||' | sort)
+
           # If this is a PR, only build changed versions
           if [ "${{ github.event_name }}" == "pull_request" ]; then
             # Match version directories in git diff (both formats)
-            changed=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -oP '^[0-9]+\.[0-9]+[^/]*' | sort -u | jq -R -s -c 'split("\n")[:-1]')
-            if [ "$changed" != "[]" ]; then
-              versions=$changed
-            fi
+            changed=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -oP '^[0-9]+\.[0-9]+[^/]*' | sort -u)
+
+            # Intersect changed with actual directories
+            versions=$(comm -12 <(echo "$all_versions") <(echo "$changed"))
+          else
+            versions="$all_versions"
           fi
-          
-          echo "versions=$versions" >> $GITHUB_OUTPUT
-          echo "Building versions: $versions"
+
+          # If a PR doesn't touch any version directories, versions will be empty and the build will be skipped.
+
+          # Convert to JSON array, filtering empty lines
+          versions_json=$(echo "$versions" | jq -R -s -c 'split("\n") | map(select(length > 0))')
+
+          echo "versions=$versions_json" >> $GITHUB_OUTPUT
+          echo "Building versions: $versions_json"
 
   build:
     needs: detect-changes
