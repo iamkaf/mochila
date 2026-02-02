@@ -14,6 +14,12 @@ public class MochilaNetworking {
                 OpenBackpackPacket::handle
         );
         CHANNEL.register(
+                OpenEnderBackpackPacket.class,
+                OpenEnderBackpackPacket::encode,
+                OpenEnderBackpackPacket::decode,
+                OpenEnderBackpackPacket::handle
+        );
+        CHANNEL.register(
                 ChangeBackpackModePacket.class,
                 ChangeBackpackModePacket::encode,
                 ChangeBackpackModePacket::decode,

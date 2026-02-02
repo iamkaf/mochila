@@ -42,6 +42,7 @@ public class ModLanguageProvider extends FabricLanguageProvider {
         translationBuilder.add("creativetab.mochila.mochila", "Mochila");
         translationBuilder.add("key.category.mochila.mochila", "Mochila");
         translationBuilder.add("key.mochila.open_backpack", "Open Backpack");
+        translationBuilder.add("key.mochila.open_ender_backpack", "Open Ender Backpack");
         translationBuilder.add("tag.item.mochila.backpacks", "Backpacks");
         translationBuilder.add("tag.item.mochila.leather_backpacks", "Leather Backpacks");
         translationBuilder.add("tag.item.mochila.iron_backpacks", "Iron Backpacks");

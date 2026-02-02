@@ -93,6 +93,7 @@
   "item.mochila.yellow_netherite_backpack": "Yellow Netherite Backpack",
   "key.category.mochila.mochila": "Mochila",
   "key.mochila.open_backpack": "Open Backpack",
+  "key.mochila.open_ender_backpack": "Open Ender Backpack",
   "mochila.keybind_mode_changed": "Backpack mode changed: %s",
   "tag.item.mochila.backpacks": "Backpacks",
   "tag.item.mochila.diamond_backpacks": "Diamond Backpacks",

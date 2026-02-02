@@ -28,7 +28,19 @@ import net.minecraft.world.level.block.state.BlockState;
 import java.util.List;
 
 public class QuickStash {
-    public static final List<Block> CONTAINER_WHITELIST = List.of(Blocks.CHEST, Blocks.TRAPPED_CHEST, Blocks.BARREL, Blocks.COPPER_CHEST);
+    public static final List<Block> CONTAINER_WHITELIST = List.of(
+            Blocks.CHEST,
+            Blocks.TRAPPED_CHEST,
+            Blocks.BARREL,
+            Blocks.COPPER_CHEST,
+            Blocks.EXPOSED_COPPER_CHEST,
+            Blocks.WEATHERED_COPPER_CHEST,
+            Blocks.OXIDIZED_COPPER_CHEST,
+            Blocks.WAXED_COPPER_CHEST,
+            Blocks.WAXED_EXPOSED_COPPER_CHEST,
+            Blocks.WAXED_WEATHERED_COPPER_CHEST,
+            Blocks.WAXED_OXIDIZED_COPPER_CHEST
+    );
 
     static {
         PlayerEvents.ENTITY_INTERACT.register((player, level, hand, entity) -> {

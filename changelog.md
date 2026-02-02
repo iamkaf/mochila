@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the full changelog at https://github.com/iamkaf/mochila2
 
+## 4.1.0
+
+### Added
+
+- Quick stash support for all copper chest variants.
+- Keybind (V) to open the ender backpack.
+
+### Fixed
+
+- Ender backpack shows in the creative tab.
+
 ## 4.0.0
 
 ### Changed

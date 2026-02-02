@@ -114,6 +114,7 @@ public class Items {
     }
 
     public static void init() {
+        CreativeModeTabs.addItem(ENDER_BACKPACK);
         ITEMS.register();
     }
 }

@@ -25,6 +25,17 @@ public class EnderBackpackItem extends Item {
         super(properties);
     }
 
+    public static void onEnderBackpackKeybindPressed(ServerPlayer player) {
+        var inventory = player.getInventory();
+        for (int i = 0; i < inventory.getContainerSize(); ++i) {
+            ItemStack stack = inventory.getItem(i);
+            if (stack.getItem() instanceof EnderBackpackItem enderBackpack) {
+                enderBackpack.openForPlayer(player, stack);
+                return;
+            }
+        }
+    }
+
     @Override
     public @NotNull InteractionResult use(Level level, Player player,
             InteractionHand usedHand) {
@@ -33,21 +44,30 @@ public class EnderBackpackItem extends Item {
         if (level.isClientSide()) {
             return InteractionResult.SUCCESS;
         } else {
-            playSound(player);
-            player.openMenu(new SimpleMenuProvider((i, inventory, playerx) -> {
-                return new ChestMenu(MenuType.GENERIC_9x3, i, inventory, playerEnderChestContainer, 3) {
-                    @Override
-                    public void clicked(int slotId, int button, ClickType clickType, Player player) {
-                        if (slotId > -1 && getSlot(slotId).getItem().equals(stack)) {
-                            return;
-                        }
-                        super.clicked(slotId, button, clickType, player);
-                    }
-                };
-            }, Component.translatable("container.enderchest")));
-            player.awardStat(Stats.OPEN_ENDERCHEST);
+            openForPlayer((ServerPlayer) player, stack);
             return InteractionResult.CONSUME;
         }
+    }
+
+    public void openForPlayer(ServerPlayer player, ItemStack stack) {
+        PlayerEnderChestContainer playerEnderChestContainer = player.getEnderChestInventory();
+        playSound(player);
+        player.openMenu(new SimpleMenuProvider((i, inventory, playerx) -> new ChestMenu(
+                MenuType.GENERIC_9x3,
+                i,
+                inventory,
+                playerEnderChestContainer,
+                3
+        ) {
+            @Override
+            public void clicked(int slotId, int button, ClickType clickType, Player player) {
+                if (slotId > -1 && getSlot(slotId).getItem().equals(stack)) {
+                    return;
+                }
+                super.clicked(slotId, button, clickType, player);
+            }
+        }, Component.translatable("container.enderchest")));
+        player.awardStat(Stats.OPEN_ENDERCHEST);
     }
 
     private void playSound(Player player) {
