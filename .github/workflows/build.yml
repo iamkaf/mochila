@@ -1,0 +1,127 @@
+name: Build All Versions
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+  workflow_dispatch:
+
+jobs:
+  # Detect which versions have changed
+  detect-changes:
+    runs-on: ubuntu-latest
+    outputs:
+      versions: ${{ steps.set-versions.outputs.versions }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      
+      - name: Detect changed versions
+        id: set-versions
+        run: |
+          # Get all version directories (supports both 1.x.x and YY.x formats)
+          # Matches: 1.21.11, 26.1, 24.0.5, etc.
+          versions=$(find . -maxdepth 1 -type d -regex '\./[0-9]+\.[0-9]+.*' | sed 's|./||' | jq -R -s -c 'split("\n")[:-1]')
+          
+          # If this is a PR, only build changed versions
+          if [ "${{ github.event_name }}" == "pull_request" ]; then
+            # Match version directories in git diff (both formats)
+            changed=$(git diff --name-only origin/${{ github.base_ref }}...HEAD | grep -oP '^[0-9]+\.[0-9]+[^/]*' | sort -u | jq -R -s -c 'split("\n")[:-1]')
+            if [ "$changed" != "[]" ]; then
+              versions=$changed
+            fi
+          fi
+          
+          echo "versions=$versions" >> $GITHUB_OUTPUT
+          echo "Building versions: $versions"
+
+  build:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.versions != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: ${{ fromJson(needs.detect-changes.outputs.versions) }}
+        loader: [fabric, forge, neoforge]
+      fail-fast: false
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Setup just
+        uses: taiki-e/install-action@just
+      
+      - name: Make gradlew executable
+        working-directory: ${{ matrix.version }}
+        run: chmod +x gradlew
+      
+      - name: Build ${{ matrix.loader }}
+        run: just run ${{ matrix.version }} :${{ matrix.loader }}:build
+      
+      - name: Upload artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: mochila-${{ matrix.version }}-${{ matrix.loader }}
+          path: ${{ matrix.version }}/${{ matrix.loader }}/build/libs/*.jar
+          if-no-files-found: error
+      
+      - name: Capture build scan
+        if: always()
+        run: just run ${{ matrix.version }} :${{ matrix.loader }}:build --scan
+
+  # Optional: Run tests
+  test:
+    needs: detect-changes
+    if: needs.detect-changes.outputs.versions != '[]'
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        version: ${{ fromJson(needs.detect-changes.outputs.versions) }}
+    
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+      
+      - name: Setup Java
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'temurin'
+          java-version: '21'
+      
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Setup just
+        uses: taiki-e/install-action@just
+      
+      - name: Make gradlew executable
+        working-directory: ${{ matrix.version }}
+        run: chmod +x gradlew
+      
+      - name: Run tests
+        run: just test ${{ matrix.version }}
+
+  # Summarize build results
+  summary:
+    needs: [build, test]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Build Summary
+        run: |
+          echo "## Build Results" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "Build status: ${{ needs.build.result }}" >> $GITHUB_STEP_SUMMARY
+          echo "Test status: ${{ needs.test.result }}" >> $GITHUB_STEP_SUMMARY

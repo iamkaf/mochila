@@ -73,7 +73,7 @@ publisher {
     // You can also use VersionType.BETA, VersionType.ALPHA or VersionType.RELEASE
     setVersionType(release_type)
 
-    setChangelog(extractHeaderLatestFooterFromChangelog(file('../changelog.md').text))
+    setChangelog(extractHeaderLatestFooterFromChangelog(file('../../changelog.md').text))
 
     // Required for Modrinth/GitHub
     setProjectVersion(rootProject.version)
