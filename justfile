@@ -14,6 +14,16 @@ versions: list-versions
 latest:
   @echo {{version}}
 
+# Check if a loader is included in a version's settings.gradle.
+loader-enabled version loader:
+  @if [ ! -f "{{version}}/settings.gradle" ]; then echo "false"; exit 0; fi
+  @if (command -v rg >/dev/null 2>&1 && rg -q "^[[:space:]]*include\\([\"']{{loader}}[\"']\\)|^[[:space:]]*include[[:space:]]+[\"']{{loader}}[\"']" "{{version}}/settings.gradle") || \
+     (! command -v rg >/dev/null 2>&1 && grep -Eq "^[[:space:]]*include\\([\"']{{loader}}[\"']\\)|^[[:space:]]*include[[:space:]]+[\"']{{loader}}[\"']" "{{version}}/settings.gradle"); then \
+    echo "true"; \
+  else \
+    echo "false"; \
+  fi
+
 # Run arbitrary Gradle tasks.
 # - If the first arg is a version directory, run only there.
 # - Otherwise run across all versions.
@@ -33,13 +43,21 @@ build version="":
     for v in $(ls -1d */ | sed 's:/$::' | grep -E '^[0-9]' | sort -V); do \
       echo "==> $v"; \
       for loader in fabric forge neoforge; do \
-        (cd "$v" && ./gradlew :$loader:build); \
+        if [ "$(just loader-enabled "$v" "$loader")" = "true" ]; then \
+          (cd "$v" && ./gradlew :$loader:build); \
+        else \
+          echo "Skipping $v:$loader (not included in settings.gradle)"; \
+        fi; \
       done; \
     done; \
   else \
     if [ ! -d "{{version}}" ]; then echo "Version {{version}} not found."; exit 1; fi; \
     for loader in fabric forge neoforge; do \
-      (cd "{{version}}" && ./gradlew :$loader:build); \
+      if [ "$(just loader-enabled "{{version}}" "$loader")" = "true" ]; then \
+        (cd "{{version}}" && ./gradlew :$loader:build); \
+      else \
+        echo "Skipping {{version}}:$loader (not included in settings.gradle)"; \
+      fi; \
     done; \
   fi
 
@@ -66,9 +84,20 @@ build-changed base="origin/main":
   for v in $changed; do \
     echo "==> $v"; \
     for loader in fabric forge neoforge; do \
-      (cd "$v" && ./gradlew :$loader:build); \
+      if [ "$(just loader-enabled "$v" "$loader")" = "true" ]; then \
+        (cd "$v" && ./gradlew :$loader:build); \
+      else \
+        echo "Skipping $v:$loader (not included in settings.gradle)"; \
+      fi; \
     done; \
   done
+
+build-loader version loader *args:
+  @if [ "$(just loader-enabled "{{version}}" "{{loader}}")" = "true" ]; then \
+    (cd "{{version}}" && ./gradlew :{{loader}}:build {{args}}); \
+  else \
+    echo "Skipping {{version}}:{{loader}} (not included in settings.gradle)"; \
+  fi
 
 test-changed base="origin/main":
   @if ! git rev-parse --verify "{{base}}" >/dev/null 2>&1; then echo "Base ref {{base}} not found."; exit 1; fi

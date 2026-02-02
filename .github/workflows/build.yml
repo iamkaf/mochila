@@ -67,10 +67,16 @@ jobs:
         working-directory: ${{ matrix.version }}
         run: chmod +x gradlew
       
+      - name: Check loader enabled
+        id: loader_enabled
+        run: echo "enabled=$(just loader-enabled ${{ matrix.version }} ${{ matrix.loader }})" >> $GITHUB_OUTPUT
+
       - name: Build ${{ matrix.loader }}
-        run: just run ${{ matrix.version }} :${{ matrix.loader }}:build
+        if: steps.loader_enabled.outputs.enabled == 'true'
+        run: just build-loader ${{ matrix.version }} ${{ matrix.loader }}
       
       - name: Upload artifacts
+        if: steps.loader_enabled.outputs.enabled == 'true'
         uses: actions/upload-artifact@v4
         with:
           name: mochila-${{ matrix.version }}-${{ matrix.loader }}
@@ -78,8 +84,8 @@ jobs:
           if-no-files-found: error
       
       - name: Capture build scan
-        if: always()
-        run: just run ${{ matrix.version }} :${{ matrix.loader }}:build --scan
+        if: steps.loader_enabled.outputs.enabled == 'true'
+        run: just build-loader ${{ matrix.version }} ${{ matrix.loader }} --scan
 
   # Optional: Run tests
   test:
