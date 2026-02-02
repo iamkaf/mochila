@@ -1,5 +1,6 @@
 pluginManagement {
     repositories {
+        mavenLocal()
         gradlePluginPortal()
         mavenCentral()
         maven {
@@ -39,9 +40,14 @@ plugins {
 
 dependencyResolutionManagement {
     repositories {
-        maven {
-            name = "Kaf Mod Resources"
-            url = "https://raw.githubusercontent.com/iamkaf/modresources/main/maven/"
+        maven { url = uri("https://maven.kaf.sh") }
+        mavenCentral()
+    }
+
+    versionCatalogs {
+        libs {
+            def mcVersion = providers.gradleProperty('platform_minecraft_version').get()
+            from("com.iamkaf.platform:mc-${mcVersion}:${mcVersion}-SNAPSHOT")
         }
     }
 }

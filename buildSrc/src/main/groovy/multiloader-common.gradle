@@ -53,8 +53,8 @@ repositories {
         url = 'https://maven.terraformersmc.com/'
     }
     maven {
-        name = "Kaf Mod Resources"
-        url = "https://raw.githubusercontent.com/iamkaf/modresources/main/maven/"
+        name = "Kaf Maven"
+        url = "https://maven.kaf.sh"
     }
 }
 
@@ -64,7 +64,7 @@ repositories {
     configurations."$variant".outgoing {
         capability("$group:${project.name}:$version")
         capability("$group:${base.archivesName.get()}:$version")
-        capability("$group:$mod_id-${project.name}-${minecraft_version}:$version")
+        capability("$group:$mod_id-${project.name}-${libs.versions.minecraft.get()}:$version")
         capability("$group:$mod_id:$version")
     }
     publishing.publications.configureEach {
@@ -93,7 +93,7 @@ jar {
                 'Implementation-Title'  : project.name,
                 'Implementation-Version': project.jar.archiveVersion,
                 'Implementation-Vendor' : mod_author,
-                'Built-On-Minecraft'    : minecraft_version
+                'Built-On-Minecraft'    : libs.versions.minecraft.get()
         ])
     }
 }
@@ -102,28 +102,27 @@ processResources {
     var expandProps = [
             'version'                      : version,
             'group'                        : project.group, //Else we target the task's group.
-            'minecraft_version'            : minecraft_version,
+            'minecraft_version'            : libs.versions.minecraft.get(),
             'minecraft_version_range'      : minecraft_version_range,
             'fabric_version_range'         : fabric_version_range,
-            'fabric_version'               : fabric_version,
-            'fabric_loader_version'        : fabric_loader_version,
-            'mod_menu_version'            : mod_menu_version,
+            'fabric_version'               : libs.fabric.api.get().version.toString(),
+            'fabric_loader_version'        : libs.fabric.loader.get().version.toString(),
+            'mod_menu_version'            : libs.versions.modmenu.get(),
             'mod_name'                     : mod_name,
             'mod_author'                   : mod_author,
             'mod_id'                       : mod_id,
             'license'                      : license,
             'description'                  : project.description,
-            'neoforge_version'             : neoforge_version,
+            'neoforge_version'             : libs.neoforge.get().version.toString(),
             'neoforge_loader_version_range': neoforge_loader_version_range,
-            "forge_version": forge_version,
+            "forge_version": libs.forge.get().version.toString(),
             "forge_loader_version_range": forge_loader_version_range,
+            'amber_version'                : libs.amber.neoforge.get().version.toString(),
+            'parchment_minecraft'          : libs.versions.parchment.minecraft.get(),
+            'parchment_version'            : libs.parchment.get().version.toString(),
             'credits'                      : credits,
             'java_version'                 : java_version
     ]
-
-    if (project.hasProperty('amber_version')) {
-        expandProps['amber_version'] = project['amber_version']
-    }
 
     var jsonExpandProps = expandProps.collectEntries {
         key, value -> [(key): value instanceof String ? value.replace("\n", "\\\\n") : value]
