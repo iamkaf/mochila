@@ -1,6 +1,7 @@
 pluginManagement {
     repositories {
         mavenLocal()
+        maven { url = uri('https://maven.kaf.sh') }
         gradlePluginPortal()
         mavenCentral()
         maven {

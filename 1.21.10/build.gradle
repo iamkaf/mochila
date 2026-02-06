@@ -1,9 +1,37 @@
 plugins {
+    id 'com.iamkaf.flight' version '0.1-SNAPSHOT'
+
     alias(libs.plugins.fabric.loom) apply false
     alias(libs.plugins.neoforge.moddev) apply false
     alias(libs.plugins.forgegradle) apply false
     alias(libs.plugins.mixin) apply false
     alias(libs.plugins.modpublisher) apply false
+}
+
+flight {
+    config {
+        dryRun.set(providers.gradleProperty('dry_run').map { it.toBoolean() }.orElse(false))
+        releaseType.set(providers.gradleProperty('release_type').orElse('release'))
+    }
+
+    publish {
+        modrinth {
+            id.set(providers.gradleProperty('modrinth_id'))
+            // token intentionally not set here
+            dependencies {
+                required('fabric-api')
+                optional('sodium')
+            }
+        }
+
+        curseforge {
+            id.set(providers.gradleProperty('curse_id'))
+            // token intentionally not set here
+            dependencies {
+                required('amber-lib')
+            }
+        }
+    }
 }
 
 /**
