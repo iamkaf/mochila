@@ -1,6 +1,4 @@
 plugins {
-    id 'com.iamkaf.flight' version '0.1-SNAPSHOT'
-
     alias(libs.plugins.fabric.loom) apply false
     alias(libs.plugins.neoforge.moddev) apply false
     alias(libs.plugins.forgegradle) apply false
