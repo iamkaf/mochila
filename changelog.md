@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the full changelog at https://github.com/iamkaf/mochila2
 
+## 4.1.1
+
+### Changed
+
+- Backpack tooltips now stay compact unless Shift is held.
+
 ## 4.1.0
 
 ### Added

@@ -1,7 +1,10 @@
 {
   "creativetab.mochila.mochila": "Mochila",
   "item.mochila.backpack.dump": "Sneak Right-Click on a chest to store all items.",
+  "item.mochila.backpack.hold_shift": "Hold Shift for details.",
   "item.mochila.backpack.mode": "Mode: %s",
+  "item.mochila.backpack.mode.dump": "Dump",
+  "item.mochila.backpack.mode.store": "Store",
   "item.mochila.backpack.shift": "Use SHIFT+B to swap modes.",
   "item.mochila.backpack.size": "Size: %s",
   "item.mochila.backpack.store": "Sneak Right-Click on a chest to store items that are already on the chest.",

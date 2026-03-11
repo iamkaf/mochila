@@ -1,7 +1,10 @@
 {
   "creativetab.mochila.mochila": "Mochila",
   "item.mochila.backpack.dump": "用 潜行右键 点击箱子 于箱子中存储物品.",
+  "item.mochila.backpack.hold_shift": "按住 Shift 查看详情.",
   "item.mochila.backpack.mode": "模式: %s",
+  "item.mochila.backpack.mode.dump": "倾倒",
+  "item.mochila.backpack.mode.store": "整理",
   "item.mochila.backpack.shift": "用 SHIFT+B 切换模式.",
   "item.mochila.backpack.size": "尺寸: %s",
   "item.mochila.backpack.store": "用 潜行右键 点击箱子 将物品归类箱子.",

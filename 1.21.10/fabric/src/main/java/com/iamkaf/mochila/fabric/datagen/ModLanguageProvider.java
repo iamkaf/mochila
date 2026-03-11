@@ -52,8 +52,11 @@ public class ModLanguageProvider extends FabricLanguageProvider {
         addBackpackTranslations(translationBuilder);
         translationBuilder.add("item.mochila.ender_backpack", "Ender Backpack");
 
+        translationBuilder.add("item.mochila.backpack.hold_shift", "Hold Shift for details.");
         translationBuilder.add("item.mochila.backpack.size", "Size: %s");
         translationBuilder.add("item.mochila.backpack.mode", "Mode: %s");
+        translationBuilder.add("item.mochila.backpack.mode.dump", "Dump");
+        translationBuilder.add("item.mochila.backpack.mode.store", "Store");
         translationBuilder.add("item.mochila.backpack.dump", "Sneak Right-Click on a chest to store all items.");
         translationBuilder.add(
                 "item.mochila.backpack.store",

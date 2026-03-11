@@ -129,19 +129,22 @@ public class BackpackItem extends Item {
         super.appendHoverText(stack, context, tooltipDisplay, tooltipAdder, flag);
         QuickStash.Mode mode = stack.getOrDefault(DataComponents.QUICKSTASH_MODE.get(), SimpleIntegerDataComponent.empty())
                 .value() == 0 ? QuickStash.Mode.DUMP : QuickStash.Mode.STORE;
+        Component modeText = Component.translatable("item.mochila.backpack.mode." + mode.toString().toLowerCase())
+                .withStyle(mode == QuickStash.Mode.DUMP ? ChatFormatting.YELLOW : ChatFormatting.AQUA);
 
-        new SmartTooltip().add(Component.translatable(
+        new SmartTooltip().add(Component.translatable("item.mochila.backpack.hold_shift").withStyle(ChatFormatting.GRAY))
+                .shift(Component.translatable(
                         "item.mochila.backpack.size",
                         String.format("%s slots", BackpackContainer.sizeToInt(size))
                 ))
-                .add(Component.translatable(
+                .shift(Component.translatable(
                                 "item.mochila.backpack.mode",
-                                mode == QuickStash.Mode.DUMP ? "§eDump" : "§bStore"
+                                modeText
                         )
                         .withStyle(ChatFormatting.BLUE))
                 .shift(Component.translatable("item.mochila.backpack." + mode.toString().toLowerCase())
                         .withStyle(ChatFormatting.DARK_AQUA))
-                .add(Component.translatable("item.mochila.backpack.shift").withStyle(ChatFormatting.GRAY))
+                .shift(Component.translatable("item.mochila.backpack.shift").withStyle(ChatFormatting.GRAY))
                 .into(tooltipAdder);
     }
 }
