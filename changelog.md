@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the full changelog at https://github.com/iamkaf/mochila2
 
+## 5.0.0
+
+### Changed
+
+- Ported to Minecraft 26.1.
+
 ## 4.1.2
 
 ### Fixed

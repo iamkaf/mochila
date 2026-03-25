@@ -40,6 +40,7 @@ mochila2/
 
 | Minecraft Version | Status | Directory | Format |
 |-------------------|--------|-----------|--------|
+| 26.1              | ✅ Active | `26.1/` | Year-based (26.x) |
 | 1.21.10           | ✅ Active | `1.21.10/` | Legacy (1.x.x) |
 | 1.21.11           | ✅ Active | `1.21.11/` | Legacy (1.x.x) |
 
