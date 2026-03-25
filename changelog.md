@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the full changelog at https://github.com/iamkaf/mochila2
 
+## 4.1.2
+
+### Fixed
+
+- Backpacks and shulker boxes can no longer be moved into backpacks with hotbar swap keys.
+
 ## 4.1.1
 
 ### Changed

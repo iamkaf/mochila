@@ -30,7 +30,7 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
         // TODO: this won't work until I have a real registered menu
 //        if (player.hasContainerOpen() && player.containerMenu instanceof BackpackMenu) {
         if (player.hasContainerOpen()) {
-            boolean illegalBackpackMovementDetected = mochila$checkForBlacklist(slot, type);
+            boolean illegalBackpackMovementDetected = mochila$checkForBlacklist(slot, mouseButton, type);
             if (illegalBackpackMovementDetected) {
                 ci.cancel();
             }
@@ -38,14 +38,25 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
     }
 
     @Unique
-    private boolean mochila$checkForBlacklist(Slot slot, ClickType type) {
+    private boolean mochila$checkForBlacklist(Slot slot, int button, ClickType type) {
         if (type.equals(ClickType.SWAP)) {
             assert Minecraft.getInstance().player != null;
-            if (BackpackUtils.isBlacklistedItem(Minecraft.getInstance().player.getOffhandItem().getItem())) {
+            if (mochila$swapSourceIsBlacklisted(Minecraft.getInstance().player, button)) {
                 return true;
             }
         }
 //        return BackpackUtils.isBlacklistedItem(slot.getItem().getItem());
+        return false;
+    }
+
+    @Unique
+    private boolean mochila$swapSourceIsBlacklisted(LocalPlayer player, int button) {
+        if (button == 40) {
+            return BackpackUtils.isBlacklistedItem(player.getOffhandItem().getItem());
+        }
+        if (button >= 0 && button < 9) {
+            return BackpackUtils.isBlacklistedItem(player.getInventory().getItem(button).getItem());
+        }
         return false;
     }
 }

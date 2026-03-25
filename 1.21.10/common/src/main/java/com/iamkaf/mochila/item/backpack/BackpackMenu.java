@@ -22,8 +22,7 @@ public class BackpackMenu extends ChestMenu {
         if (slotId > -1) {
             Slot slot = this.slots.get(slotId);
 
-            if (clickType.equals(ClickType.SWAP) && BackpackUtils.isBlacklistedItem(player.getOffhandItem()
-                    .getItem())) {
+            if (clickType.equals(ClickType.SWAP) && slotContainsBlacklistedSwapItem(player, button)) {
                 return;
             }
 
@@ -47,5 +46,20 @@ public class BackpackMenu extends ChestMenu {
     private boolean slotContainsBlacklistedItem(int slotId) {
         Item theItem = getSlot(slotId).getItem().getItem();
         return BackpackUtils.isBlacklistedItem(theItem);
+    }
+
+    private boolean slotContainsBlacklistedSwapItem(Player player, int button) {
+        ItemStack stack = getSwapSourceStack(player, button);
+        return !stack.isEmpty() && BackpackUtils.isBlacklistedItem(stack.getItem());
+    }
+
+    private ItemStack getSwapSourceStack(Player player, int button) {
+        if (button == 40) {
+            return player.getOffhandItem();
+        }
+        if (button >= 0 && button < 9) {
+            return player.getInventory().getItem(button);
+        }
+        return ItemStack.EMPTY;
     }
 }
