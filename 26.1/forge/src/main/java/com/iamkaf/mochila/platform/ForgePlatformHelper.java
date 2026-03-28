@@ -1,9 +1,9 @@
 package com.iamkaf.mochila.platform;
 
 import com.iamkaf.mochila.platform.services.IPlatformHelper;
-import net.minecraftforge.fml.ModList;
 import net.minecraftforge.fml.loading.FMLLoader;
 import net.minecraftforge.fml.loading.FMLPaths;
+import net.minecraftforge.fml.loading.LoadingModList;
 import java.nio.file.Path;
 
 public class ForgePlatformHelper implements IPlatformHelper {
@@ -16,8 +16,7 @@ public class ForgePlatformHelper implements IPlatformHelper {
 
     @Override
     public boolean isModLoaded(String modId) {
-
-        return ModList.get().isLoaded(modId);
+        return LoadingModList.getModFileById(modId) != null;
     }
 
     @Override
