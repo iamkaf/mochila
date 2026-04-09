@@ -1,0 +1,18 @@
+plugins {
+    id 'com.iamkaf.multiloader.fabric'
+}
+
+dependencies {
+    compileOnly libs.amber
+    implementation libs.fabric.api
+    runtimeOnly libs.modmenu
+    // Uncomment the next line if you want to use Amber
+    runtimeOnly libs.amber.fabric
+}
+
+sourceSets {
+    main {
+        java.exclude 'com/iamkaf/mochila/fabric/MochilaDatagen.java'
+        java.exclude 'com/iamkaf/mochila/fabric/datagen/**'
+    }
+}

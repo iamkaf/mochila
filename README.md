@@ -31,7 +31,7 @@ mochila2/
 │   ├── fabric/       # Fabric-specific implementation
 │   ├── forge/        # Forge-specific implementation
 │   └── neoforge/     # NeoForge-specific implementation
-├── 26.1.1/           # Minecraft 26.1.1 version (new year-based format)
+├── 26.1.2/           # Minecraft 26.1.2 version (new year-based format)
 ├── 27.0/             # Future versions...
 └── README.md         # This file
 ```
@@ -40,10 +40,10 @@ mochila2/
 
 | Minecraft Version | Status | Directory | Format |
 |-------------------|--------|-----------|--------|
-| 26.1.1            | ✅ Active | `26.1.1/` | Year-based (26.x) |
+| 26.1.2            | ✅ Active | `26.1.2/` | Year-based (26.x) |
 | 1.21.11           | ✅ Active | `1.21.11/` | Legacy (1.x.x) |
 
-*Note: Starting with Minecraft 26.x, versions use year-based format (e.g., 26.1.1, 27.0)*
+*Note: Starting with Minecraft 26.x, versions use year-based format (e.g., 26.1.2, 27.0)*
 
 ## 🛠️ Building
 
@@ -123,10 +123,10 @@ When a new Minecraft version is released:
 1. Copy the closest existing version:
    ```bash
    # For year-based versions (26.x, 27.x, etc.)
-   cp -r 1.21.11 26.1.1
+   cp -r 1.21.11 26.1.2
    
    # Or if copying from another year-based version
-   cp -r 26.1.1 27.0
+   cp -r 26.1.2 27.0
    ```
 
 2. Update version numbers and dependencies.

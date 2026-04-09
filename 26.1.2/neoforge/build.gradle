@@ -1,0 +1,8 @@
+plugins {
+    id 'com.iamkaf.multiloader.neoforge'
+}
+
+dependencies {
+    // Uncomment this line if you want to use Amber
+    implementation libs.amber.neoforge
+}
