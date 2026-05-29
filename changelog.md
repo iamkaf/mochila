@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the full changelog at https://github.com/iamkaf/mochila2
 
+## 6.0.0
+
+### Added
+
+- Added in-game configuration screens for supported loaders.
+- Added quick stash feedback that shows how many items were moved and which container received them.
+- Added configurable quick stash target blocks, with chests, barrels, trapped chests, and copper chest variants enabled by default.
+
+### Changed
+
+- Mochila now requires Konfig for configuration support.
+
 ## 5.0.0
 
 ### Changed
