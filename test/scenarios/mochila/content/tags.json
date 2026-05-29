@@ -1,0 +1,19 @@
+{
+  "name": "mochila-content-tags",
+  "setup": [
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/fixtures/clean-room.json" }
+  ],
+  "steps": [
+    { "action": "assert_command_success", "command": "/item replace entity @s weapon.mainhand with mochila:leather_backpack" },
+    { "action": "assert_command_success", "command": "/execute if items entity @s weapon.mainhand #mochila:backpacks" },
+    { "action": "assert_command_success", "command": "/execute if items entity @s weapon.mainhand #mochila:leather_backpacks" },
+    { "action": "assert_command_success", "command": "/item replace entity @s weapon.mainhand with mochila:iron_backpack" },
+    { "action": "assert_command_success", "command": "/execute if items entity @s weapon.mainhand #mochila:backpacks" },
+    { "action": "assert_command_success", "command": "/execute if items entity @s weapon.mainhand #mochila:iron_backpacks" },
+    { "action": "assert_command_success", "command": "/item replace entity @s weapon.mainhand with mochila:ender_backpack" },
+    { "action": "assert_command_success", "command": "/execute if items entity @s weapon.mainhand #mochila:backpacks" }
+  ],
+  "cleanup": [
+    { "action": "command", "command": "/clear @s" }
+  ]
+}

@@ -1,0 +1,23 @@
+{
+  "name": "mochila-visual-item-lineup",
+  "setup": [
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/fixtures/clean-room.json" }
+  ],
+  "steps": [
+    { "action": "command", "command": "/item replace entity @s hotbar.0 with mochila:leather_backpack" },
+    { "action": "command", "command": "/item replace entity @s hotbar.1 with mochila:iron_backpack" },
+    { "action": "command", "command": "/item replace entity @s hotbar.2 with mochila:gold_backpack" },
+    { "action": "command", "command": "/item replace entity @s hotbar.3 with mochila:diamond_backpack" },
+    { "action": "command", "command": "/item replace entity @s hotbar.4 with mochila:netherite_backpack" },
+    { "action": "command", "command": "/item replace entity @s hotbar.5 with mochila:red_leather_backpack" },
+    { "action": "command", "command": "/item replace entity @s hotbar.6 with mochila:blue_diamond_backpack" },
+    { "action": "command", "command": "/item replace entity @s hotbar.7 with mochila:ender_backpack" },
+    { "action": "open_inventory" },
+    { "action": "wait_for_screen", "screenClass": "net.minecraft.client.gui.screens.inventory.CreativeModeInventoryScreen", "timeoutMs": 5000 },
+    { "action": "screenshot", "name": "mochila-item-lineup-inventory", "hideOverlay": true, "hideWindowDecoration": true },
+    { "action": "close_menu" }
+  ],
+  "cleanup": [
+    { "action": "command", "command": "/clear @s" }
+  ]
+}

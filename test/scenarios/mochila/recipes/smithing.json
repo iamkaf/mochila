@@ -1,0 +1,19 @@
+{
+  "name": "mochila-recipes-smithing",
+  "steps": [
+    {
+      "action": "assert_smithing_transform_recipe",
+      "templateItemId": "minecraft:netherite_upgrade_smithing_template",
+      "baseItemId": "mochila:diamond_backpack",
+      "additionItemId": "minecraft:netherite_ingot",
+      "resultItemId": "mochila:netherite_backpack"
+    },
+    {
+      "action": "assert_smithing_transform_recipe",
+      "templateItemId": "minecraft:netherite_upgrade_smithing_template",
+      "baseItemId": "mochila:red_diamond_backpack",
+      "additionItemId": "minecraft:netherite_ingot",
+      "resultItemId": "mochila:red_netherite_backpack"
+    }
+  ]
+}

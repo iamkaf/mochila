@@ -1,0 +1,18 @@
+{
+  "name": "mochila-quickstash-dump-chest",
+  "setup": [
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/fixtures/container-line.json" }
+  ],
+  "steps": [
+    { "action": "assert_command_success", "command": "/item replace entity @s weapon.mainhand with mochila:leather_backpack[minecraft:container=[{slot:0,item:{id:\"minecraft:cobblestone\",count:16}},{slot:1,item:{id:\"minecraft:oak_log\",count:8}}]]" },
+    { "action": "key_state", "key": 340, "pressed": true },
+    { "action": "use_block", "x": 2, "y": 200, "z": 0, "direction": "north", "hand": "main_hand" },
+    { "action": "key_state", "key": 340, "pressed": false },
+    { "action": "wait_ms", "durationMs": 250 },
+    { "action": "command", "command": "/data get block 2 200 0 Items", "captureOutput": true }
+  ],
+  "cleanup": [
+    { "action": "command", "command": "/clear @s" },
+    { "action": "command", "command": "/setblock 2 200 0 minecraft:air replace" }
+  ]
+}

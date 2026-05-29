@@ -1,0 +1,8 @@
+{
+  "name": "mochila-content-all",
+  "steps": [
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/content/core-items.json" },
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/content/color-items.json" },
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/content/tags.json" }
+  ]
+}

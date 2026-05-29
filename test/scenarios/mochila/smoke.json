@@ -1,0 +1,9 @@
+{
+  "name": "mochila-smoke",
+  "steps": [
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/content/core-items.json" },
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/recipes/base-and-ender.json" },
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/backpack/open-by-use.json" },
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/ender/open-by-use.json" }
+  ]
+}

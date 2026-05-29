@@ -1,0 +1,21 @@
+{
+  "name": "mochila-visual-menus",
+  "setup": [
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/fixtures/clean-room.json" }
+  ],
+  "steps": [
+    { "action": "assert_command_success", "command": "/item replace entity @s weapon.mainhand with mochila:netherite_backpack" },
+    { "action": "use_item", "hand": "main_hand" },
+    { "action": "wait_for_screen", "title": "Netherite Backpack", "titleContains": true, "timeoutMs": 5000 },
+    { "action": "screenshot", "name": "mochila-netherite-backpack-menu", "hideOverlay": true, "hideWindowDecoration": true },
+    { "action": "close_menu" },
+    { "action": "assert_command_success", "command": "/item replace entity @s weapon.mainhand with mochila:ender_backpack" },
+    { "action": "use_item", "hand": "main_hand" },
+    { "action": "wait_for_screen", "title": "Ender Chest", "titleContains": true, "timeoutMs": 5000 },
+    { "action": "screenshot", "name": "mochila-ender-backpack-menu", "hideOverlay": true, "hideWindowDecoration": true },
+    { "action": "close_menu" }
+  ],
+  "cleanup": [
+    { "action": "command", "command": "/clear @s" }
+  ]
+}

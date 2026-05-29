@@ -1,0 +1,12 @@
+{
+  "name": "mochila-fixture-container-line",
+  "steps": [
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/fixtures/clean-room.json" },
+    { "action": "command", "command": "/setblock 2 200 0 minecraft:chest[facing=north] replace" },
+    { "action": "command", "command": "/setblock 4 200 0 minecraft:barrel[facing=up] replace" },
+    { "action": "command", "command": "/setblock 6 200 0 minecraft:trapped_chest[facing=north] replace" },
+    { "action": "wait_for_block", "x": 2, "y": 200, "z": 0, "blockId": "minecraft:chest", "timeoutMs": 3000 },
+    { "action": "wait_for_block", "x": 4, "y": 200, "z": 0, "blockId": "minecraft:barrel", "timeoutMs": 3000 },
+    { "action": "wait_for_block", "x": 6, "y": 200, "z": 0, "blockId": "minecraft:trapped_chest", "timeoutMs": 3000 }
+  ]
+}

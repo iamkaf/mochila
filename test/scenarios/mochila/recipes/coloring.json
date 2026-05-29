@@ -1,0 +1,35 @@
+{
+  "name": "mochila-recipes-coloring",
+  "steps": [
+    {
+      "action": "assert_crafting_recipe",
+      "width": 2,
+      "height": 1,
+      "items": [
+        "mochila:leather_backpack",
+        "minecraft:red_dye"
+      ],
+      "resultItemId": "mochila:red_leather_backpack"
+    },
+    {
+      "action": "assert_crafting_recipe",
+      "width": 2,
+      "height": 1,
+      "items": [
+        "mochila:iron_backpack",
+        "minecraft:blue_dye"
+      ],
+      "resultItemId": "mochila:blue_iron_backpack"
+    },
+    {
+      "action": "assert_crafting_recipe",
+      "width": 2,
+      "height": 1,
+      "items": [
+        "mochila:diamond_backpack",
+        "minecraft:black_dye"
+      ],
+      "resultItemId": "mochila:black_diamond_backpack"
+    }
+  ]
+}

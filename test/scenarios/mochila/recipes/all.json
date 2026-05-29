@@ -1,0 +1,9 @@
+{
+  "name": "mochila-recipes-all",
+  "steps": [
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/recipes/base-and-ender.json" },
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/recipes/coloring.json" },
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/recipes/upgrades.json" },
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/recipes/smithing.json" }
+  ]
+}

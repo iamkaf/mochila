@@ -1,0 +1,7 @@
+{
+  "name": "mochila-visual-all",
+  "steps": [
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/visual/item-lineup.json" },
+    { "action": "run_scenario", "scenario": "test/scenarios/mochila/visual/menus.json" }
+  ]
+}
