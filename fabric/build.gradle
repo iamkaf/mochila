@@ -14,10 +14,13 @@ def useTeaKit = providers.systemProperty('mochila.withTeaKit')
 dependencies {
     if (isModernLine) {
         compileOnly library(libs, 'amber')
+        compileOnly library(libs, 'jei-common-api')
+        compileOnly library(libs, 'jei-fabric-api')
         implementation library(libs, 'fabric-api')
         implementation library(libs, 'konfig-fabric')
         runtimeOnly library(libs, 'modmenu')
         runtimeOnly library(libs, 'amber-fabric')
+        runtimeOnly library(libs, 'jei-fabric')
         if (useTeaKit) {
             runtimeOnly library(libs, 'teakit-fabric')
         }

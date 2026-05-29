@@ -94,6 +94,8 @@
   "item.mochila.yellow_iron_backpack": "Yellow Iron Backpack",
   "item.mochila.yellow_leather_backpack": "Yellow Leather Backpack",
   "item.mochila.yellow_netherite_backpack": "Yellow Netherite Backpack",
+  "jei.mochila.category.backpack_coloring": "Backpack Coloring",
+  "jei.mochila.category.backpack_upgrading": "Backpack Upgrading",
   "key.category.mochila.mochila": "Mochila",
   "key.mochila.open_backpack": "Open Backpack",
   "key.mochila.open_ender_backpack": "Open Ender Backpack",

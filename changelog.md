@@ -12,6 +12,7 @@ See the full changelog at https://github.com/iamkaf/mochila2
 ### Added
 
 - Added in-game configuration screens for supported loaders.
+- Added **JEI** recipe views for backpack coloring and crafting upgrades on Fabric and NeoForge.
 - Added quick stash feedback that shows how many items were moved and which container received them.
 - Added configurable quick stash target blocks, with chests, barrels, trapped chests, and copper chest variants enabled by default.
 

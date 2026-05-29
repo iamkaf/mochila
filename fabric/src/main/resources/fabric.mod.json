@@ -17,6 +17,9 @@
     "entrypoints": {
         "main": [
             "com.iamkaf.mochila.MochilaFabric"
+        ],
+        "jei_mod_plugin": [
+            "com.iamkaf.mochila.compat.jei.MochilaJeiPlugin"
         ]
     },
     "mixins": [
@@ -32,7 +35,8 @@
         "amber": ">=${amber_version}"
     },
     "suggests": {
-        "modmenu": ">=${mod_menu_version}"
+        "modmenu": ">=${mod_menu_version}",
+        "jei": "*"
     }
 }
   
