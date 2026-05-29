@@ -1,166 +1,107 @@
 # Mochila
 
-A colorful backpack mod for Minecraft with multiple tiers and customization options.
+A colorful, upgradable backpack mod for Minecraft.
 
 ![License](https://img.shields.io/badge/license-MIT-blue.svg)
 
-## 🎒 About
+## About
 
-Mochila (Spanish for "backpack") adds customizable backpacks to Minecraft with different material tiers and 16 color variants each. Built using a multi-loader architecture supporting Fabric, Forge, and NeoForge.
+Mochila adds backpack items with multiple storage tiers, dyeable variants, an ender backpack, quick stash actions, and recipe viewer support.
 
-## 📦 Features
+The project is built as a Stonecutter multi-loader mod. Shared code lives in `common/`, loader integrations live in `fabric/`, `forge/`, and `neoforge/`, and Minecraft-version settings live under `versions/`.
 
-- **5 Material Tiers**: Leather, Iron, Gold, Diamond, and Netherite
-- **Special Variant**: Ender Backpack with unique functionality
-- **16 Colors**: All standard Minecraft dye colors available for each tier
-- **85 Total Combinations**: Mix and match materials and colors
-- **Quality of Life**:
-  - Quick stash functionality
-  - Backpack upgrading system
-  - Color customization via crafting
-  - Keybind support for quick access
+## Features
 
-## 🗂️ Monorepo Structure
+- Backpack tiers: leather, iron, gold, diamond, and netherite.
+- Dyeable backpacks using all 16 vanilla dye colors.
+- Ender backpack with separate keybind support.
+- Backpack opening by right click or keybind.
+- Quick stash modes for moving backpack contents into target containers.
+- Configurable quick stash target blocks.
+- In-game configuration screens through Konfig where supported.
+- JEI recipe views for backpack coloring and crafting upgrades on Fabric and NeoForge.
+- TeaKit scenarios for repeatable smoke, recipe, content, visual, and interaction checks.
 
-This repository contains all Minecraft versions of Mochila:
+## Requirements
 
-```
+- [Amber](https://modrinth.com/mod/amber)
+- [Konfig](https://modrinth.com/mod/konfig)
+
+## Supported Versions
+
+| Minecraft | Fabric | Forge | NeoForge |
+| --- | --- | --- | --- |
+| 26.1.2 | Supported | Supported | Supported |
+
+JEI integration is currently enabled for Fabric and NeoForge.
+
+## Project Layout
+
+```text
 mochila2/
-├── 1.21.11/          # Minecraft 1.21.11 version (old format)
-│   ├── common/       # Shared code across loaders
-│   ├── fabric/       # Fabric-specific implementation
-│   ├── forge/        # Forge-specific implementation
-│   └── neoforge/     # NeoForge-specific implementation
-├── 26.1.2/           # Minecraft 26.1.2 version (new year-based format)
-├── 27.0/             # Future versions...
-└── README.md         # This file
+├── common/             # Shared mod code and generated resources
+├── fabric/             # Fabric-specific entrypoints and compat
+├── forge/              # Forge-specific entrypoints
+├── neoforge/           # NeoForge-specific entrypoints and compat
+├── test/scenarios/     # TeaKit scenario suite
+├── versions/26.1.2/    # Stonecutter version properties
+├── justfile            # Common build/test commands
+└── teakitw             # TeaKit scenario runner wrapper
 ```
 
-## 🚀 Supported Versions
+## Building
 
-| Minecraft Version | Status | Directory | Format |
-|-------------------|--------|-----------|--------|
-| 26.1.2            | ✅ Active | `26.1.2/` | Year-based (26.x) |
-| 1.21.11           | ✅ Active | `1.21.11/` | Legacy (1.x.x) |
+Prerequisites:
 
-*Note: Starting with Minecraft 26.x, versions use year-based format (e.g., 26.1.2, 27.0)*
+- Java 25 for the current `26.1.2` target.
+- `just`
 
-## 🛠️ Building
-
-Use `just` from the repo root as the command runner. It can target a single version or run across all versions.
+Useful commands:
 
 ```bash
-# Build all loaders for a specific version
-just build 1.21.11
+# List available version-loader nodes
+just list-nodes
 
-# Build all loaders across all versions
-just build
+# Build one node
+just build 26.1.2-fabric
+just build 26.1.2-forge
+just build 26.1.2-neoforge
 
-# Build a specific loader for a specific version
-just run 1.21.11 :fabric:build
-just run 1.21.11 :forge:build
-just run 1.21.11 :neoforge:build
+# Build all nodes
+just build-all
 
-# Run tests
-just test 1.21.11
-just test
+# Compile all source sets
+just compile-all
 
-# Build only changed versions (vs. origin/main)
-just build-changed
+# Run a client for one node
+just run-client 26.1.2-fabric
+
+# Run a TeaKit scenario
+just scenario-check 26.1.2-neoforge test/scenarios/mochila/smoke.json
 ```
 
-Built jars will be in `<version>/<loader>/build/libs/`
+Built jars are written under each loader/version build directory, for example `fabric/versions/26.1.2/build/libs/`.
 
-## 💻 Development
+## Testing
 
-### Prerequisites
+The TeaKit scenarios under `test/scenarios/mochila/` cover:
 
-- Java 21 or higher
-- Git
-- just (install: `https://github.com/casey/just`)
+- basic launch smoke checks
+- item and tag availability
+- backpack opening and keybind behavior
+- backpack tier sizes and component persistence
+- quick stash behavior
+- crafting, coloring, smithing, and upgrade preservation
+- visual fixture checks
 
-### Setup
+Run a focused scenario with `just scenario-check <node> <scenario>`, or use Gradle tasks such as `:fabric:26.1.2:build`, `:forge:26.1.2:build`, and `:neoforge:26.1.2:build` for loader builds.
 
-1. Clone the repository:
-   ```bash
-   git clone https://github.com/iamkaf/mochila2.git
-   cd mochila2
-   ```
+## Links
 
-2. Open the specific version directory in your IDE:
-   ```bash
-   # Open 1.21.11 in IntelliJ IDEA, for example
-   idea 1.21.11
-   ```
+- CurseForge: https://www.curseforge.com/minecraft/mc-mods/mochila
+- Modrinth: https://modrinth.com/mod/mochila
+- Source: https://github.com/iamkaf/mochila2
 
-3. The IDE should automatically detect the Gradle project and configure itself.
+## License
 
-### Project Structure
-
-Each version follows the same structure:
-
-- **common/**: Shared code for all loaders
-  - Core mod logic
-  - Items, recipes, networking
-  - Data generation
-  
-- **fabric/**: Fabric-specific code
-  - Mod initialization
-  - Platform services implementation
-  
-- **forge/**: Forge-specific code
-  - Mod initialization  
-  - Platform services implementation
-  
-- **neoforge/**: NeoForge-specific code
-  - Mod initialization
-  - Platform services implementation
-
-### Adding a New Version
-
-When a new Minecraft version is released:
-
-1. Copy the closest existing version:
-   ```bash
-   # For year-based versions (26.x, 27.x, etc.)
-   cp -r 1.21.11 26.1.2
-   
-   # Or if copying from another year-based version
-   cp -r 26.1.2 27.0
-   ```
-
-2. Update version numbers and dependencies.
-
-3. Test and make necessary adjustments for the new version.
-
-## 📝 License
-
-This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
-
-## 🤝 Contributing
-
-Contributions are welcome! Please feel free to submit a Pull Request.
-
-1. Fork the repository
-2. Create your feature branch (`git checkout -b feature/AmazingFeature`)
-3. Commit your changes (`git commit -m 'Add some AmazingFeature'`)
-4. Push to the branch (`git push origin feature/AmazingFeature`)
-5. Open a Pull Request
-
-## 🔗 Links
-
-- **CurseForge**: https://www.curseforge.com/minecraft/mc-mods/mochila
-- **Modrinth**: https://modrinth.com/mod/mochila
-- **Issues**: [GitHub Issues](https://github.com/iamkaf/mochila2/issues)
-- **Wiki**: [GitHub Wiki](https://github.com/iamkaf/mochila2/wiki)
-
-## 👤 Author
-
-**iamkaf**
-
-- GitHub: [@iamkaf](https://github.com/iamkaf)
-
-## 🙏 Acknowledgments
-
-- Based on [jaredlll08's MultiLoader-Template](https://github.com/jaredlll08/MultiLoader-Template)
-- My template at [iamkaf/template-mod](https://github.com/iamkaf/template-mod)
+Mochila is licensed under the MIT License. See [LICENSE](LICENSE).
