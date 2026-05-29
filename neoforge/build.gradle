@@ -11,6 +11,7 @@ def useTeaKit = providers.systemProperty('mochila.withTeaKit')
     .get()
 
 dependencies {
+    implementation library(libs, 'konfig-neoforge')
     implementation library(libs, 'amber-neoforge')
     if (useTeaKit) {
         runtimeOnly library(libs, 'teakit-neoforge')

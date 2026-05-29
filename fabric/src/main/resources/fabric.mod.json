@@ -28,6 +28,7 @@
         "fabric-api": "*",
         "minecraft": "${fabric_version_range}",
         "java": ">=${java_version}",
+        "konfig": "*",
         "amber": ">=${amber_version}"
     },
     "suggests": {

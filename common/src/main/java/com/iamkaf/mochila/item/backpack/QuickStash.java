@@ -1,12 +1,17 @@
 package com.iamkaf.mochila.item.backpack;
 
 import com.iamkaf.amber.api.event.v1.events.common.PlayerEvents;
+import com.iamkaf.amber.api.functions.v1.PlayerFunctions;
 import com.iamkaf.amber.api.functions.v1.WorldFunctions;
+import com.iamkaf.mochila.MochilaConfig;
 import com.iamkaf.mochila.item.BackpackItem;
 import com.iamkaf.mochila.registry.DataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
+import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.network.chat.Component;
+import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
@@ -20,27 +25,14 @@ import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.Block;
-import net.minecraft.world.level.block.Blocks;
 import net.minecraft.world.level.block.entity.HopperBlockEntity;
 import net.minecraft.world.level.block.state.BlockState;
 
-import java.util.List;
+import java.util.Set;
+import java.util.stream.Collectors;
+import java.util.stream.Stream;
 
 public class QuickStash {
-    public static final List<Block> CONTAINER_WHITELIST = List.of(
-            Blocks.CHEST,
-            Blocks.TRAPPED_CHEST,
-            Blocks.BARREL,
-            Blocks.COPPER_CHEST,
-            Blocks.EXPOSED_COPPER_CHEST,
-            Blocks.WEATHERED_COPPER_CHEST,
-            Blocks.OXIDIZED_COPPER_CHEST,
-            Blocks.WAXED_COPPER_CHEST,
-            Blocks.WAXED_EXPOSED_COPPER_CHEST,
-            Blocks.WAXED_WEATHERED_COPPER_CHEST,
-            Blocks.WAXED_OXIDIZED_COPPER_CHEST
-    );
-
     static {
         PlayerEvents.ENTITY_INTERACT.register((player, level, hand, entity) -> {
             if (!level.isClientSide() && player.getItemInHand(hand)
@@ -50,7 +42,7 @@ public class QuickStash {
                 BlockPos blockPosBehindFrame = frame.getPos().relative(direction);
                 BlockState blockState = level.getBlockState(blockPosBehindFrame);
 
-                boolean inserted = quickStash(blockState,
+                Result result = quickStash(blockState,
                         player,
                         level,
                         blockPosBehindFrame,
@@ -60,7 +52,7 @@ public class QuickStash {
                         getMode(player.getItemInHand(hand))
                 );
 
-                if (inserted) {
+                if (result.handled()) {
                     return InteractionResult.CONSUME;
                 }
             }
@@ -90,10 +82,14 @@ public class QuickStash {
         }
     }
 
-    public static boolean quickStash(BlockState state, Player player, Level level, BlockPos pos, InteractionHand hand,
+    public static Result quickStash(BlockState state, Player player, Level level, BlockPos pos, InteractionHand hand,
             Direction direction, BackpackContainer.BackpackSize size, Mode mode) {
-        if (CONTAINER_WHITELIST.stream().noneMatch(state::is)) {
-            return false;
+        if (!MochilaConfig.quickstashEnabled()) {
+            return Result.disabled();
+        }
+
+        if (!isConfiguredTarget(state)) {
+            return Result.unsupported();
         }
 
         BackpackContainer backpack = new BackpackContainer(player.getItemInHand(hand), size);
@@ -101,21 +97,31 @@ public class QuickStash {
 
         if (container != null) {
             boolean inserted = false;
+            int movedStacks = 0;
+            int movedItems = 0;
+            boolean attemptedNonEmpty = false;
+            boolean skippedByStoreMode = false;
             for (var i = 0; i < backpack.getContainerSize(); i++) {
                 if (mode.equals(Mode.STORE) && !contains(backpack.getItem(i), container)) {
+                    if (!backpack.getItem(i).isEmpty()) {
+                        skippedByStoreMode = true;
+                    }
                     continue;
                 }
                 ItemStack toInsert = ContainerHelper.takeItem(backpack.getItems(), i);
                 int inCount = toInsert.getCount();
                 boolean insertingEmpty = toInsert.isEmpty();
+                attemptedNonEmpty |= !insertingEmpty;
                 ItemStack remainder = HopperBlockEntity.addItem(backpack, container, toInsert, null);
                 backpack.setItem(i, remainder);
                 if (!insertingEmpty && (remainder.isEmpty() || inCount > remainder.getCount())) {
                     inserted = true;
+                    movedStacks++;
+                    movedItems += inCount - remainder.getCount();
                 }
             }
             if (inserted) {
-                if (player instanceof ServerPlayer serverPlayer) {
+                if (MochilaConfig.quickstashSound() && player instanceof ServerPlayer serverPlayer) {
                     WorldFunctions.playSoundAt(
                             serverPlayer.level(),
                             serverPlayer.blockPosition(),
@@ -125,12 +131,25 @@ public class QuickStash {
                             1f
                     );
                 }
-                sendParticles(direction, level, pos);
+                if (MochilaConfig.quickstashParticles()) {
+                    sendParticles(direction, level, pos);
+                }
             }
             backpack.setChanged();
-            return true;
+            Result result = new Result(
+                    true,
+                    inserted,
+                    movedStacks,
+                    movedItems,
+                    attemptedNonEmpty,
+                    skippedByStoreMode,
+                    state.getBlock().getName(),
+                    mode
+            );
+            sendFeedback(player, result);
+            return result;
         }
-        return false;
+        return Result.unsupported();
     }
 
     public static boolean contains(ItemStack stack, Container container) {
@@ -142,8 +161,65 @@ public class QuickStash {
         return false;
     }
 
+    private static boolean isConfiguredTarget(BlockState state) {
+        return configuredTargets().stream().anyMatch(state::is);
+    }
+
+    private static Set<Block> configuredTargets() {
+        return MochilaConfig.quickstashTargets()
+                .stream()
+                .map(Identifier::tryParse)
+                .flatMap(id -> id == null ? Stream.<Block>empty() : BuiltInRegistries.BLOCK.getOptional(id).stream())
+                .collect(Collectors.toSet());
+    }
+
     public enum Mode {
         DUMP,
         STORE
+    }
+
+    private static void sendFeedback(Player player, Result result) {
+        if (!MochilaConfig.quickstashFeedback()) {
+            return;
+        }
+        if (!result.moved() && !MochilaConfig.quickstashFeedbackNoop()) {
+            return;
+        }
+        PlayerFunctions.sendActionBar(player, result.message());
+    }
+
+    public record Result(
+            boolean handled,
+            boolean moved,
+            int movedStacks,
+            int movedItems,
+            boolean attemptedNonEmpty,
+            boolean skippedByStoreMode,
+            Component targetName,
+            Mode mode
+    ) {
+        static Result unsupported() {
+            return new Result(false, false, 0, 0, false, false, Component.empty(), Mode.DUMP);
+        }
+
+        static Result disabled() {
+            return new Result(false, false, 0, 0, false, false, Component.empty(), Mode.DUMP);
+        }
+
+        public Component message() {
+            if (moved) {
+                String key = mode == Mode.STORE
+                        ? "mochila.quickstash.feedback.stored_matching"
+                        : "mochila.quickstash.feedback.stored";
+                return Component.translatable(key, movedItems, targetName);
+            }
+            if (mode == Mode.STORE && skippedByStoreMode) {
+                return Component.translatable("mochila.quickstash.feedback.no_matching");
+            }
+            if (attemptedNonEmpty) {
+                return Component.translatable("mochila.quickstash.feedback.full", targetName);
+            }
+            return Component.translatable("mochila.quickstash.feedback.empty");
+        }
     }
 }

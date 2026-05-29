@@ -9,5 +9,6 @@ dependencies {
     compileOnly library(libs, 'mixin')
     compileOnly library(libs, 'mixin-extras')
     annotationProcessor library(libs, 'mixin-extras')
+    compileOnly library(libs, 'konfig')
     implementation library(libs, 'amber')
 }

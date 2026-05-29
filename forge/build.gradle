@@ -11,6 +11,7 @@ def useTeaKit = providers.systemProperty('mochila.withTeaKit')
     .get()
 
 dependencies {
+    implementation library(libs, 'konfig-forge')
     implementation library(libs, 'amber-forge')
     if (useTeaKit) {
         runtimeOnly library(libs, 'teakit-forge')

@@ -5,11 +5,9 @@
   ],
   "steps": [
     { "action": "assert_command_success", "command": "/item replace entity @s weapon.mainhand with mochila:iron_backpack[minecraft:container=[{slot:0,item:{id:\"minecraft:dirt\",count:32}}]]" },
-    { "action": "key_state", "key": 340, "pressed": true },
-    { "action": "use_block", "x": 4, "y": 200, "z": 0, "direction": "up", "hand": "main_hand" },
-    { "action": "key_state", "key": 340, "pressed": false },
+    { "action": "assert_command_success", "command": "/mochila debug quickstash 4 200 0 up", "expectOutputContains": ["Stored 32 items in Barrel"] },
     { "action": "wait_ms", "durationMs": 250 },
-    { "action": "command", "command": "/data get block 4 200 0 Items", "captureOutput": true }
+    { "action": "command", "command": "/data get block 4 200 0 Items", "expectOutputContains": ["minecraft:dirt"] }
   ],
   "cleanup": [
     { "action": "command", "command": "/clear @s" },

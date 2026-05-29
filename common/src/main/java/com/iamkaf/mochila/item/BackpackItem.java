@@ -1,6 +1,7 @@
 package com.iamkaf.mochila.item;
 
 import com.iamkaf.amber.api.functions.v1.ClientFunctions.SmartTooltip;
+import com.iamkaf.mochila.MochilaConfig;
 import com.iamkaf.mochila.item.backpack.BackpackContainer;
 import com.iamkaf.mochila.item.backpack.BackpackMenu;
 import com.iamkaf.mochila.item.backpack.QuickStash;
@@ -88,7 +89,7 @@ public class BackpackItem extends Item {
         BlockState state = level.getBlockState(pos);
 
         if (player != null && player.isShiftKeyDown()) {
-            boolean inserted = QuickStash.quickStash(
+            QuickStash.Result result = QuickStash.quickStash(
                     state,
                     player,
                     level,
@@ -98,7 +99,7 @@ public class BackpackItem extends Item {
                     size,
                     QuickStash.getMode(player.getItemInHand(hand))
             );
-            if (inserted) {
+            if (result.handled()) {
                 return InteractionResult.SUCCESS;
             }
 
@@ -107,7 +108,7 @@ public class BackpackItem extends Item {
                 Direction facing = state.getValue(WallSignBlock.FACING);
                 BlockPos blockPosBehindSign = pos.relative(facing.getOpposite());
                 BlockState blockState = level.getBlockState(blockPosBehindSign);
-                boolean insertedx = QuickStash.quickStash(
+                QuickStash.Result signResult = QuickStash.quickStash(
                         blockState,
                         player,
                         level,
@@ -117,7 +118,7 @@ public class BackpackItem extends Item {
                         size,
                         QuickStash.getMode(player.getItemInHand(hand))
                 );
-                if (insertedx) {
+                if (signResult.handled()) {
                     return InteractionResult.SUCCESS;
                 }
             }
@@ -137,20 +138,25 @@ public class BackpackItem extends Item {
         Component modeText = Component.translatable("item.mochila.backpack.mode." + mode.toString().toLowerCase())
                 .withStyle(mode == QuickStash.Mode.DUMP ? ChatFormatting.YELLOW : ChatFormatting.AQUA);
 
-        new SmartTooltip().add(Component.translatable("item.mochila.backpack.hold_shift").withStyle(ChatFormatting.GRAY))
-                .shift(Component.translatable(
-                        "item.mochila.backpack.size",
-                        String.format("%s slots", BackpackContainer.sizeToInt(size))
-                ))
-                .shift(Component.translatable(
-                                "item.mochila.backpack.mode",
-                                modeText
-                        )
-                        .withStyle(ChatFormatting.BLUE))
-                .shift(Component.translatable("item.mochila.backpack." + mode.toString().toLowerCase())
-                        .withStyle(ChatFormatting.DARK_AQUA))
-                .shift(Component.translatable("item.mochila.backpack.shift").withStyle(ChatFormatting.GRAY))
-                .into(tooltipAdder);
+        SmartTooltip tooltip = new SmartTooltip()
+                .add(Component.translatable("item.mochila.backpack.hold_shift").withStyle(ChatFormatting.GRAY));
+        if (MochilaConfig.tooltipShowSize()) {
+            tooltip.shift(Component.translatable(
+                    "item.mochila.backpack.size",
+                    String.format("%s slots", BackpackContainer.sizeToInt(size))
+            ));
+        }
+        if (MochilaConfig.tooltipShowMode()) {
+            tooltip.shift(Component.translatable(
+                            "item.mochila.backpack.mode",
+                            modeText
+                    )
+                    .withStyle(ChatFormatting.BLUE));
+            tooltip.shift(Component.translatable("item.mochila.backpack." + mode.toString().toLowerCase())
+                    .withStyle(ChatFormatting.DARK_AQUA));
+            tooltip.shift(Component.translatable("item.mochila.backpack.shift").withStyle(ChatFormatting.GRAY));
+        }
+        tooltip.into(tooltipAdder);
     }
 
     private static void playEquipSound(Player player) {

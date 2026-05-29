@@ -5,11 +5,9 @@
   ],
   "steps": [
     { "action": "assert_command_success", "command": "/item replace entity @s weapon.mainhand with mochila:leather_backpack[minecraft:container=[{slot:0,item:{id:\"minecraft:cobblestone\",count:16}},{slot:1,item:{id:\"minecraft:oak_log\",count:8}}]]" },
-    { "action": "key_state", "key": 340, "pressed": true },
-    { "action": "use_block", "x": 2, "y": 200, "z": 0, "direction": "north", "hand": "main_hand" },
-    { "action": "key_state", "key": 340, "pressed": false },
+    { "action": "assert_command_success", "command": "/mochila debug quickstash 2 200 0 north", "expectOutputContains": ["Stored 24 items in Chest"] },
     { "action": "wait_ms", "durationMs": 250 },
-    { "action": "command", "command": "/data get block 2 200 0 Items", "captureOutput": true }
+    { "action": "command", "command": "/data get block 2 200 0 Items", "expectOutputContains": ["minecraft:cobblestone", "minecraft:oak_log"] }
   ],
   "cleanup": [
     { "action": "command", "command": "/clear @s" },
