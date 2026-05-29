@@ -17,7 +17,7 @@ See the full changelog at https://github.com/iamkaf/mochila2
 
 ### Changed
 
-- Mochila now requires Konfig for configuration support.
+- BREAKING: Mochila now requires Konfig for configuration support.
 
 ## 5.0.0
 
