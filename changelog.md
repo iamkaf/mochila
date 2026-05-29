@@ -18,6 +18,7 @@ See the full changelog at https://github.com/iamkaf/mochila2
 ### Changed
 
 - BREAKING: Mochila now requires Konfig for configuration support.
+  - Get it from [Modrinth](https://modrinth.com/mod/konfig) or [CurseForge](https://www.curseforge.com/minecraft/mc-mods/konfig)
 
 ## 5.0.0
 
