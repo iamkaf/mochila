@@ -1,9 +1,0 @@
-{
-  "name": "mochila-backpack-all",
-  "steps": [
-    { "action": "run_scenario", "scenario": "test/scenarios/mochila/backpack/open-by-use.json" },
-    { "action": "run_scenario", "scenario": "test/scenarios/mochila/backpack/open-tier-sizes.json" },
-    { "action": "run_scenario", "scenario": "test/scenarios/mochila/backpack/keybind-open-and-mode.json" },
-    { "action": "run_scenario", "scenario": "test/scenarios/mochila/backpack/container-component-persistence.json" }
-  ]
-}

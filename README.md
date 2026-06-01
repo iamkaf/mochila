@@ -76,8 +76,8 @@ just compile-all
 # Run a client for one node
 just run-client 26.1.2-fabric
 
-# Run a TeaKit scenario
-just scenario-check 26.1.2-neoforge test/scenarios/mochila/smoke.json
+# Run the TypeScript TeaKit scenario suite
+./teakitw check --node 26.1.2-neoforge --scenario test/scenarios/mochila/mochila.scenario.ts --no-sync-sdk --timeout 240
 ```
 
 Built jars are written under each loader/version build directory, for example `fabric/versions/26.1.2/build/libs/`.

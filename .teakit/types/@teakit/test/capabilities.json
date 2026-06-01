@@ -1,0 +1,233 @@
+{
+  "schemaVersion" : 1,
+  "runtimeApi" : 1,
+  "capabilities" : {
+    "runtime.capabilities" : {
+      "category" : "runtime",
+      "sdk" : [ "runtime.capabilities()", "teakit.call('runtime.capabilities')" ],
+      "endpoints" : [ "GET /capabilities" ]
+    },
+    "runtime.summary" : {
+      "category" : "runtime",
+      "sdk" : [ "runtime.summary()" ],
+      "endpoints" : [ "GET /runtime/summary" ]
+    },
+    "runtime.lastError" : {
+      "category" : "runtime",
+      "sdk" : [ "runtime.lastError()" ],
+      "endpoints" : [ "GET /runtime/last-error" ]
+    },
+    "runtime.logs" : {
+      "category" : "runtime",
+      "sdk" : [ "logs.text()", "logs.entries()" ],
+      "endpoints" : [ "POST /logs/text", "POST /logs/entries" ]
+    },
+    "runtime.batch" : {
+      "category" : "runtime",
+      "sdk" : [ "runtime.batch()" ],
+      "endpoints" : [ "POST /runtime/batch" ]
+    },
+    "runtime.timing" : {
+      "category" : "runtime",
+      "sdk" : [ "runtime.wait()" ],
+      "endpoints" : [ "POST /runtime/wait" ]
+    },
+    "runtime.events" : {
+      "category" : "runtime",
+      "sdk" : [ "expectEvent()", "expectEvent.stream()", "world.events()" ],
+      "endpoints" : [ "POST /events/expect", "POST /events/drain" ]
+    },
+    "runtime.transactions" : {
+      "category" : "runtime",
+      "sdk" : [ "world.transaction()", "world.container()" ],
+      "endpoints" : [ "POST /world/transactions/run", "GET /world/containers/{x},{y},{z}" ]
+    },
+    "spy.calls" : {
+      "category" : "spy",
+      "sdk" : [ "spy.record()", "spy.calls()", "spy.report()", "spy.assertCalled()", "expect(spy).toHaveBeenCalled()" ],
+      "endpoints" : [ "POST /spies/reset", "POST /spies/record", "POST /spies/assertions/called", "POST /spies/assertions/count", "POST /spies/assertions/order", "POST /spies/assertions/last-arg", "POST /spies/{name}/record", "GET /spies/report", "GET /spies/{name}/calls", "GET /spies/{name}/report", "POST /spies/{name}/assert", "DELETE /spies/{name}" ]
+    },
+    "spy.probes" : {
+      "category" : "spy",
+      "sdk" : [ "spy.observe()", "spy.event()", "spy.method()", "spy.packet()" ],
+      "endpoints" : [ "POST /spies/observe", "DELETE /spies/{name}" ]
+    },
+    "spy.interfaceProxies" : {
+      "category" : "spy",
+      "sdk" : [ "spy.proxy()" ],
+      "endpoints" : [ "POST /spies/proxies", "GET /spies/{name}/calls", "POST /spies/{name}/invocations", "DELETE /spies/{name}" ]
+    },
+    "spy.instrumentation" : {
+      "category" : "spy",
+      "sdk" : [ ],
+      "endpoints" : [ ],
+      "status" : "future"
+    },
+    "server.commands" : {
+      "category" : "server",
+      "sdk" : [ "server.command()", "server.commands()", "commands.run()", "commands.assert()" ],
+      "endpoints" : [ "POST /commands", "POST /commands/batch" ]
+    },
+    "registry.lookup" : {
+      "category" : "registry",
+      "sdk" : [ "registry.lookup()", "registry.missing()" ],
+      "endpoints" : [ "POST /registry/lookup", "POST /registry/missing" ]
+    },
+    "legacy-json-scenarios" : {
+      "category" : "legacy",
+      "sdk" : [ ],
+      "endpoints" : [ "POST /scenario/run" ],
+      "status" : "legacy"
+    },
+    "world.block" : {
+      "category" : "world",
+      "sdk" : [ "world.block()" ],
+      "endpoints" : [ "GET /world/blocks/{x},{y},{z}" ]
+    },
+    "world.setBlock" : {
+      "category" : "world",
+      "sdk" : [ "world.setBlock()" ],
+      "endpoints" : [ "POST /world/blocks" ]
+    },
+    "world.fill" : {
+      "category" : "world",
+      "sdk" : [ "world.fill()" ],
+      "endpoints" : [ "POST /world/fill" ]
+    },
+    "world.clear" : {
+      "category" : "world",
+      "sdk" : [ "world.clear()" ],
+      "endpoints" : [ "POST /world/fill" ]
+    },
+    "world.cleanup" : {
+      "category" : "world",
+      "sdk" : [ "world.cleanupNamespace()" ],
+      "endpoints" : [ "POST /world/cleanup" ]
+    },
+    "world.fixtures" : {
+      "category" : "world",
+      "sdk" : [ "world.fixture().build()" ],
+      "endpoints" : [ "POST /world/fixtures" ]
+    },
+    "world.time" : {
+      "category" : "world",
+      "sdk" : [ "world.time()" ],
+      "endpoints" : [ "GET /world/time" ]
+    },
+    "world.setTime" : {
+      "category" : "world",
+      "sdk" : [ "world.setTime()" ],
+      "endpoints" : [ "POST /world/time" ]
+    },
+    "world.weather" : {
+      "category" : "world",
+      "sdk" : [ "world.weather()" ],
+      "endpoints" : [ "GET /world/weather" ]
+    },
+    "world.setWeather" : {
+      "category" : "world",
+      "sdk" : [ "world.setWeather()" ],
+      "endpoints" : [ "POST /world/weather" ]
+    },
+    "world.signs" : {
+      "category" : "world",
+      "sdk" : [ "signs.place()" ],
+      "endpoints" : [ "POST /world/signs" ]
+    },
+    "world.loot" : {
+      "category" : "world",
+      "sdk" : [ "loot.near()" ],
+      "endpoints" : [ "POST /world/loot/near" ]
+    },
+    "world.entities" : {
+      "category" : "world",
+      "sdk" : [ "entities.spawn()", "entities.nearest()", "entity.inspect()", "entity.kill()", "entity.moveTo()", "entity.pushInto()", "entity.vehicle()" ],
+      "endpoints" : [ "POST /world/entities", "POST /world/entities/nearest", "GET /world/entities/{id}", "DELETE /world/entities/{id}", "POST /world/entities/{id}/move-to", "POST /world/entities/{id}/push-into", "GET /world/entities/{id}/vehicle" ]
+    },
+    "world.recipes" : {
+      "category" : "world",
+      "sdk" : [ "recipes.craftInOpenMenu()", "recipes.assertCrafting()", "recipes.assertSmithingTransform()" ],
+      "endpoints" : [ "POST /recipes/craft-in-open-menu", "POST /recipes/assert-crafting", "POST /recipes/assert-smithing-transform" ]
+    },
+    "world.pathing" : {
+      "category" : "world",
+      "sdk" : [ "world.ensureWalkable()", "world.pool()", "world.ladderTower()", "world.channel()", "world.routeFixture().build()", "player.walkTo()", "player.sprintJumpTo()", "player.swimTo()", "player.climbTo()", "player.rideBoatTo()" ],
+      "endpoints" : [ "POST /world/pathing/ensure-walkable", "POST /world/pathing/pool", "POST /world/pathing/ladder-tower", "POST /world/pathing/channel", "POST /world/pathing/routes", "POST /players/self/actions" ]
+    },
+    "world.explosions" : {
+      "category" : "world",
+      "sdk" : [ "world.explode()" ],
+      "endpoints" : [ "POST /world/explosions" ]
+    },
+    "world.inspection" : {
+      "category" : "world",
+      "sdk" : [ "world.inspectArea()" ],
+      "endpoints" : [ "POST /world/inspect-area" ]
+    },
+    "player.self" : {
+      "category" : "player",
+      "sdk" : [ "player.self()" ],
+      "endpoints" : [ "GET /players/self" ]
+    },
+    "player.position" : {
+      "category" : "player",
+      "sdk" : [ "player.position()" ],
+      "endpoints" : [ "GET /players/self/position" ]
+    },
+    "player.teleport" : {
+      "category" : "player",
+      "sdk" : [ "player.teleport()" ],
+      "endpoints" : [ "POST /players/self/teleport" ]
+    },
+    "player.reset" : {
+      "category" : "player",
+      "sdk" : [ "player.reset()" ],
+      "endpoints" : [ "POST /players/self/reset" ]
+    },
+    "player.give" : {
+      "category" : "player",
+      "sdk" : [ "player.give()" ],
+      "endpoints" : [ "POST /players/self/inventory/give" ]
+    },
+    "player.inventory" : {
+      "category" : "player",
+      "sdk" : [ "player.inventory()", "player.inventory().snapshot()", "expect(player.inventory()).toContainItem()" ],
+      "endpoints" : [ "GET /players/self/inventory", "GET /players/self/inventory/snapshot" ]
+    },
+    "player.useItem" : {
+      "category" : "player",
+      "sdk" : [ "player.useItem()" ],
+      "endpoints" : [ "POST /players/self/use-item" ]
+    },
+    "player.actions" : {
+      "category" : "player",
+      "sdk" : [ "player.craft()", "player.equip()", "player.mine()", "player.place()", "player.openBlock()", "player.lookAt()", "player.useItemOnEntity()", "player.setGameMode()", "player.health()" ],
+      "endpoints" : [ "POST /players/self/actions", "GET /players/self/health" ]
+    },
+    "client.screen" : {
+      "category" : "client",
+      "sdk" : [ "client.screen()" ],
+      "endpoints" : [ "GET /client/screen" ]
+    },
+    "client.screens" : {
+      "category" : "client",
+      "sdk" : [ "client.closeMenus()", "client.openInventory()", "client.waitForScreen()" ],
+      "endpoints" : [ "POST /client/screens/close", "POST /client/screens/open-inventory", "POST /client/screens/wait" ]
+    },
+    "client.screenshot" : {
+      "category" : "client",
+      "sdk" : [ "client.screenshot()", "artifacts.attachScreenshot()" ],
+      "endpoints" : [ "POST /client/screenshots" ]
+    },
+    "client.render.probes" : {
+      "category" : "client",
+      "sdk" : [ "render.block().inspect()", "render.lightAt()", "render.visibleBlocks()", "client.waitForFrames()" ],
+      "endpoints" : [ "GET /client/render/block/{x},{y},{z}", "POST /client/render/light", "POST /client/render/visible-blocks", "POST /client/render/frames/wait" ]
+    },
+    "client.input" : {
+      "category" : "client",
+      "sdk" : [ "client.lookAt()", "client.key()", "client.keyState()" ],
+      "endpoints" : [ "POST /client/look-at", "POST /client/input/key", "POST /client/input/key-state" ]
+    }
+  }
+}

@@ -1,0 +1,15 @@
+{
+  "name": "@teakit/test",
+  "private": true,
+  "version": "0.0.0",
+  "types": "index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./index.d.ts"
+    },
+    "./protocol": {
+      "types": "./protocol.d.ts"
+    },
+    "./capabilities.json": "./capabilities.json"
+  }
+}

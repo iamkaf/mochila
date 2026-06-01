@@ -1,8 +1,0 @@
-{
-  "name": "mochila-quickstash-all",
-  "steps": [
-    { "action": "run_scenario", "scenario": "test/scenarios/mochila/quickstash/dump-chest.json" },
-    { "action": "run_scenario", "scenario": "test/scenarios/mochila/quickstash/dump-barrel.json" },
-    { "action": "run_scenario", "scenario": "test/scenarios/mochila/quickstash/store-mode.json" }
-  ]
-}

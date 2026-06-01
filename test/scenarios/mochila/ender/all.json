@@ -1,7 +1,0 @@
-{
-  "name": "mochila-ender-all",
-  "steps": [
-    { "action": "run_scenario", "scenario": "test/scenarios/mochila/ender/open-by-use.json" },
-    { "action": "run_scenario", "scenario": "test/scenarios/mochila/ender/keybind-open.json" }
-  ]
-}
