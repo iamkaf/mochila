@@ -1,0 +1,19 @@
+plugins {
+    id 'com.iamkaf.multiloader.forge'
+}
+
+def minecraftVersion = requiredProp(project, 'project.minecraft')
+def libs = catalogFor(project, minecraftVersion)
+def useTeaKit = providers.systemProperty('mochila.withTeaKit')
+    .orElse(providers.gradleProperty('mochila.withTeaKit'))
+    .map { it.toBoolean() }
+    .orElse(false)
+    .get()
+
+dependencies {
+    implementation library(libs, 'konfig-forge')
+    implementation library(libs, 'amber-forge')
+    if (useTeaKit) {
+        runtimeOnly library(libs, 'teakit-forge')
+    }
+}

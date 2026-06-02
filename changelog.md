@@ -7,6 +7,20 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the full changelog at https://github.com/iamkaf/mochila2
 
+## 6.0.0
+
+### Added
+
+- Added in-game configuration screens for supported loaders.
+- Added **JEI** recipe views for backpack coloring and crafting upgrades on Fabric and NeoForge.
+- Added quick stash feedback that shows how many items were moved and which container received them.
+- Added configurable quick stash target blocks, with chests, barrels, trapped chests, and copper chest variants enabled by default.
+
+### Changed
+
+- BREAKING: Mochila now requires Konfig for configuration support.
+  - Get it from [Modrinth](https://modrinth.com/mod/konfig) or [CurseForge](https://www.curseforge.com/minecraft/mc-mods/konfig)
+
 ## 5.0.0
 
 ### Changed

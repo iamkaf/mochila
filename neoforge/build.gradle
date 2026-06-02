@@ -1,0 +1,22 @@
+plugins {
+    id 'com.iamkaf.multiloader.neoforge'
+}
+
+def minecraftVersion = requiredProp(project, 'project.minecraft')
+def libs = catalogFor(project, minecraftVersion)
+def useTeaKit = providers.systemProperty('mochila.withTeaKit')
+    .orElse(providers.gradleProperty('mochila.withTeaKit'))
+    .map { it.toBoolean() }
+    .orElse(false)
+    .get()
+
+dependencies {
+    compileOnly library(libs, 'jei-common-api')
+    compileOnly library(libs, 'jei-neoforge-api')
+    implementation library(libs, 'konfig-neoforge')
+    implementation library(libs, 'amber-neoforge')
+    runtimeOnly library(libs, 'jei-neoforge')
+    if (useTeaKit) {
+        runtimeOnly library(libs, 'teakit-neoforge')
+    }
+}
