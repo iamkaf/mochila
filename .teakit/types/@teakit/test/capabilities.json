@@ -49,7 +49,7 @@
     },
     "spy.probes" : {
       "category" : "spy",
-      "sdk" : [ "spy.observe()", "spy.event()", "spy.method()", "spy.packet()" ],
+      "sdk" : [ "spy.observe()" ],
       "endpoints" : [ "POST /spies/observe", "DELETE /spies/{name}" ]
     },
     "spy.interfaceProxies" : {
@@ -59,9 +59,8 @@
     },
     "spy.instrumentation" : {
       "category" : "spy",
-      "sdk" : [ ],
-      "endpoints" : [ ],
-      "status" : "future"
+      "sdk" : [ "spy.method()", "spy.observe({ kind: SpyKind.Method })" ],
+      "endpoints" : [ "POST /spies/observe", "GET /spies/{name}/calls", "DELETE /spies/{name}" ]
     },
     "server.commands" : {
       "category" : "server",

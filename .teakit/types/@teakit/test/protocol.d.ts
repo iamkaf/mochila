@@ -19,6 +19,10 @@ export interface TeaKitHostOperations {
     payload: RuntimeDeleteRequest;
     result: unknown;
   };
+  "runtime.raw": {
+    payload: RuntimeRawRequest;
+    result: RuntimeRawResponse;
+  };
   "artifacts.attachJson": {
     payload: AttachJsonRequest;
     result: ArtifactAttachment;
@@ -52,6 +56,21 @@ export interface RuntimePostRequest extends RuntimeBridgeOptions {
 
 export interface RuntimeDeleteRequest extends RuntimeBridgeOptions {
   path: RuntimePath;
+}
+
+export interface RuntimeRawRequest extends RuntimeBridgeOptions {
+  method?: string;
+  path: RuntimePath;
+  body?: string;
+  includeToken?: boolean;
+  token?: string;
+}
+
+export interface RuntimeRawResponse {
+  status: number;
+  ok: boolean;
+  body: string;
+  json: unknown;
 }
 
 export type RuntimePath = `/${string}`;

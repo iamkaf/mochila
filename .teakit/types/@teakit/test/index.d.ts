@@ -9,6 +9,8 @@ import type {
   RuntimeCapabilityMatrix,
   RuntimeCapabilityMatrixEntry,
   RuntimeHealth,
+  RuntimeRawRequest,
+  RuntimeRawResponse,
   TeaKitHostOperation,
   TeaKitHostPayload,
   TeaKitHostResult,
@@ -27,6 +29,8 @@ export type {
   RuntimeCapabilityMatrixEntry,
   RuntimeGetRequest,
   RuntimeHealth,
+  RuntimeRawRequest,
+  RuntimeRawResponse,
   RuntimePath,
   RuntimePostRequest,
   TeaKitHostOperation,
@@ -92,6 +96,7 @@ export interface RuntimeApi {
   get<T = unknown>(path: string, options?: RuntimeCallOptions): Promise<T>;
   post<T = unknown>(path: string, body?: unknown, options?: RuntimeCallOptions): Promise<T>;
   delete<T = unknown>(path: string, options?: RuntimeCallOptions): Promise<T>;
+  raw(request: RuntimeRawRequest): Promise<RuntimeRawResponse>;
   summary(options?: RuntimeCallOptions): Promise<RuntimeSummary>;
   lastError(options?: RuntimeCallOptions): Promise<RuntimeErrorSummary | null>;
   /** Execute multiple runtime operations as one runtime-owned batch when TeaKit advertises `runtime.batch`. */
@@ -157,28 +162,32 @@ export interface SpyApi {
   /** Assert the last recorded argument at `index` for a spy. */
   assertLastArg(name: string, index: number, value: unknown, options?: RuntimeCallOptions): Promise<SpyOperationResult>;
   /**
-   * Attach a runtime-owned probe such as commands, logs, chat, packets, block changes,
-   * entity lifecycle, sounds, particles, screens, screenshots, or client input.
+   * Attach a runtime-owned spy handle.
+   *
+   * Method handles use TeaKit-owned instrumentation when the runtime advertises
+   * `spy.instrumentation`. Other kinds reserve stable vocabulary for runtimes
+   * that implement those streams.
    */
   observe(source: SpySource, options?: RuntimeCallOptions): Promise<SpyHandle>;
   /**
-   * Attach a first-party server command probe.
+   * Attach a first-party server command probe handle where the runtime supports it.
    *
    * This is equivalent to `spy.observe({ kind: SpyKind.Command, ... })`, but gives
    * scenario authors IDE completion for the stable TeaKit probe vocabulary.
    */
   command(name: string, filters?: SpyProbeFilters, options?: RuntimeCallOptions): Promise<SpyHandle>;
   /**
-   * Attach a first-party runtime event probe.
+   * Attach a first-party runtime event probe handle where the runtime supports it.
    *
-   * `target` should be a stable TeaKit event ID, not a loader-specific Java class.
+   * `target` is reserved TeaKit event vocabulary, not a loader-specific Java class.
    */
   event(name: string, target: SpyEventTarget, filters?: SpyProbeFilters, options?: RuntimeCallOptions): Promise<SpyHandle>;
   /**
-   * Attach a first-party method probe.
+   * Attach a runtime instrumentation method probe.
    *
-   * The Java runtime may implement this with reflection, Mixins, or other hooks,
-   * but TypeScript scenarios should use stable TeaKit method target IDs.
+   * Current TeaKit instrumentation accepts JVM method targets in
+   * `fully.qualified.ClassName#methodName` form. Stable target IDs are reserved
+   * for runtimes that provide explicit mappings.
    */
   method(
     name: string,
@@ -187,9 +196,9 @@ export interface SpyApi {
     options?: RuntimeCallOptions,
   ): Promise<SpyHandle>;
   /**
-   * Attach a first-party network packet probe.
+   * Attach a first-party network packet probe handle where the runtime supports it.
    *
-   * `target` should be a stable packet ID from the TeaKit runtime contract.
+   * `target` is reserved packet vocabulary from the TeaKit runtime contract.
    */
   packet(
     name: string,
@@ -207,11 +216,10 @@ export interface SpyApi {
    */
   detach(spyOrName: string | SpyHandle, options?: RuntimeCallOptions): Promise<SpyOperationResult>;
   /**
-   * Create an interface-backed Java proxy for TeaKit-owned or cooperating mod APIs.
+   * Create a proxy-style invocation recorder for TeaKit-owned or cooperating mod APIs.
    *
    * The returned JavaScript proxy records method invocations through TeaKit runtime.
-   * The runtime owns the Java `Proxy` and call serialization; TypeScript owns the
-   * ergonomic shape.
+   * Current TeaKit records invocations; real Java `Proxy` ownership is not implied.
    */
   proxy<T extends object = Record<string, (...args: any[]) => unknown>>(
     name: string,
@@ -1187,41 +1195,41 @@ export declare const Capability: {
  * `spy.observe()` so IDE completion shows the first-party probe vocabulary.
  */
 export declare const SpyKind: {
-  /** Observe server command execution. */
+  /** Probe kind for server command execution streams. */
   readonly Command: "command";
-  /** Observe a stable TeaKit runtime event. */
+  /** Probe kind for stable TeaKit runtime event streams. */
   readonly Event: "event";
-  /** Observe a stable TeaKit method target implemented by reflection, Mixins, or instrumentation. */
+  /** Probe kind for method targets through TeaKit-owned instrumentation. */
   readonly Method: "method";
-  /** Observe runtime or Minecraft log entries. */
+  /** Probe kind for runtime or Minecraft log entry streams. */
   readonly Log: "log";
-  /** Observe chat messages. */
+  /** Probe kind for chat message streams. */
   readonly Chat: "chat";
-  /** Observe clientbound or serverbound network packets when TeaKit supports the stream. */
+  /** Probe kind for clientbound or serverbound network packet streams. */
   readonly Packet: "packet";
-  /** Observe block changes. */
+  /** Probe kind for block change streams. */
   readonly Block: "block";
-  /** Observe entity lifecycle events. */
+  /** Probe kind for entity lifecycle streams. */
   readonly Entity: "entity";
-  /** Observe played sounds. */
+  /** Probe kind for played sound streams. */
   readonly Sound: "sound";
-  /** Observe spawned particles. */
+  /** Probe kind for spawned particle streams. */
   readonly Particle: "particle";
-  /** Observe active screen changes. */
+  /** Probe kind for active screen change streams. */
   readonly Screen: "screen";
-  /** Observe screenshot capture events. */
+  /** Probe kind for screenshot capture streams. */
   readonly Screenshot: "screenshot";
-  /** Observe synthesized or captured client input. */
+  /** Probe kind for synthesized or captured client input streams. */
   readonly ClientInput: "client-input";
-  /** Observe calls made through a TeaKit-managed Java interface proxy. */
+  /** Probe kind for calls made through a TeaKit-managed proxy-style handle. */
   readonly InterfaceProxy: "interface-proxy";
 };
 
 /**
- * Stable event target IDs for `spy.event()`.
+ * Reserved event target IDs for `spy.event()`.
  *
- * These names are the public TeaKit contract. Loader-specific event classes and
- * Minecraft internals should stay inside the Java runtime.
+ * These names are the public TeaKit vocabulary. Loader-specific event classes
+ * and Minecraft internals should stay inside runtimes that implement the stream.
  */
 export declare const SpyEventTarget: {
   /** Server command execution event. */
@@ -1241,9 +1249,11 @@ export declare const SpyEventTarget: {
 };
 
 /**
- * Stable method target IDs for `spy.method()`.
+ * Reserved method target IDs for `spy.method()`.
  *
- * TeaKit runtime maps these to the right Java symbols per Minecraft version.
+ * Current TeaKit accepts explicit `fully.qualified.ClassName#methodName`
+ * targets when the runtime advertises `spy.instrumentation`. Stable IDs require
+ * runtime-provided mappings.
  */
 export declare const SpyMethodTarget: {
   /** Primary player position setter or teleport path. */
@@ -1257,7 +1267,7 @@ export declare const SpyMethodTarget: {
 };
 
 /**
- * Stable packet target IDs for `spy.packet()`.
+ * Reserved packet target IDs for `spy.packet()`.
  */
 export declare const SpyPacketTarget: {
   /** Any clientbound packet. */
@@ -1275,10 +1285,10 @@ export declare const SpyPacketTarget: {
 };
 
 /**
- * Stable allowlist target IDs for Java interface proxies created by `spy.proxy()`.
+ * Reserved target IDs for proxy-style handles created by `spy.proxy()`.
  *
- * Prefer these constants over raw JVM class names. TeaKit runtime maps each target
- * ID to a concrete allowlisted Java interface per supported Minecraft version.
+ * Prefer these constants over raw JVM class names. Runtime allowlist mapping is
+ * required before a TeaKit implementation creates real Java proxy instances.
  */
 export declare const SpyProxyTarget: {
   /** General callback shape for scenario-owned callback probes. */
