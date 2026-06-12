@@ -26,7 +26,7 @@ mods = [
   "maven:fuzs.forgeconfigapiport:forgeconfigapiport-fabric:26.1.3",
   "maven:com.iamkaf.amber:amber-fabric:11.0.0+26.1.2",
   "maven:com.iamkaf.konfig:konfig-fabric:0.3.1+26.1.2",
-  "maven:com.iamkaf.teakit:teakit-fabric:0.9.0+26.1.2",
+  "maven:com.iamkaf.teakit:teakit-fabric:0.10.0+26.1.2",
 ]
 
 [[instance]]
@@ -40,7 +40,7 @@ mods = [
   "maven:fuzs.forgeconfigapiport:forgeconfigapiport-forge:26.1.3",
   "maven:com.iamkaf.amber:amber-forge:11.0.0+26.1.2",
   "maven:com.iamkaf.konfig:konfig-forge:0.3.1+26.1.2",
-  "maven:com.iamkaf.teakit:teakit-forge:0.9.0+26.1.2",
+  "maven:com.iamkaf.teakit:teakit-forge:0.10.0+26.1.2",
 ]
 
 [[instance]]
@@ -53,5 +53,5 @@ mods = [
   "./neoforge/versions/26.1.2/build/libs/mochila-neoforge-6.0.0+26.1.2.jar",
   "maven:com.iamkaf.amber:amber-neoforge:11.0.0+26.1.2",
   "maven:com.iamkaf.konfig:konfig-neoforge:0.3.1+26.1.2",
-  "maven:com.iamkaf.teakit:teakit-neoforge:0.9.0+26.1.2",
+  "maven:com.iamkaf.teakit:teakit-neoforge:0.10.0+26.1.2",
 ]

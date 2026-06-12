@@ -5,6 +5,7 @@
 
 build/
 .gradle/
+.teakit/
 common/versions/
 fabric/versions/
 forge/versions/
