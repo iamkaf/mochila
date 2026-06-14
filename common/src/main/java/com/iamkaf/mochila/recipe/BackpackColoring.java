@@ -7,10 +7,10 @@ import com.iamkaf.mochila.registry.RecipeSerializers;
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingBookCategory;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CustomRecipe;
@@ -59,7 +59,7 @@ public class BackpackColoring extends CustomRecipe {
     // TODO: add support for coloring higher tiers backpacks
     public @NotNull ItemStack assemble(CraftingInput input) {
         ItemStack backpack = ItemStack.EMPTY;
-        DyeItem dyeItem = (DyeItem) Items.WHITE_DYE;
+        DyeColor dyeColor = DyeColor.WHITE;
 
         for (int i = 0; i < input.size(); i++) {
             ItemStack inputStack = input.getItem(i);
@@ -68,12 +68,12 @@ public class BackpackColoring extends CustomRecipe {
                 if (item instanceof BackpackItem) {
                     backpack = inputStack;
                 } else if (item instanceof DyeItem) {
-                    dyeItem = (DyeItem) item;
+                    dyeColor = inputStack.getOrDefault(DataComponents.DYE, DyeColor.WHITE);
                 }
             }
         }
 
-        Item item = BackpackUtils.getBackpackByColor(backpack, dyeItem.getDefaultInstance().get(DataComponents.DYE));
+        Item item = BackpackUtils.getBackpackByColor(backpack, dyeColor);
         return backpack.transmuteCopy(item, 1);
     }
 
