@@ -21,7 +21,7 @@ dependencies {
         implementation library(libs, 'konfig-fabric')
         runtimeOnly library(libs, 'modmenu')
         runtimeOnly library(libs, 'amber-fabric')
-        // JEI has no 26.2 RC runtime artifact yet; keep the optional integration compileable without crashing validation.
+        // FIXME: JEI has no 26.2 RC runtime artifact yet; keep the optional integration compileable without crashing validation. Remove it when porting to 26.2 and JEI is available.
         if (hasRuntimeJei) {
             runtimeOnly library(libs, 'jei-fabric')
         }
