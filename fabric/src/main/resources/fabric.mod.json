@@ -9,7 +9,7 @@
     ],
     "contact": {
         "homepage": "https://iamkaf.com",
-        "sources": "https://github.com/iamkaf/mochila2"
+        "sources": "https://github.com/iamkaf/mochila"
     },
     "license": "${license}",
     "icon": "icon.png",
