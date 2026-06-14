@@ -38,7 +38,7 @@ JEI integration is currently enabled for Fabric and NeoForge.
 ## Project Layout
 
 ```text
-mochila2/
+mochila/
 ├── common/             # Shared mod code and generated resources
 ├── fabric/             # Fabric-specific entrypoints and compat
 ├── forge/              # Forge-specific entrypoints
@@ -100,7 +100,7 @@ Run a focused scenario with `just scenario-check <node> <scenario>`, or use Grad
 
 - CurseForge: https://www.curseforge.com/minecraft/mc-mods/mochila
 - Modrinth: https://modrinth.com/mod/mochila
-- Source: https://github.com/iamkaf/mochila2
+- Source: https://github.com/iamkaf/mochila
 
 ## License
 
