@@ -4,7 +4,7 @@ plugins {
 
 def minecraftVersion = requiredProp(project, 'project.minecraft')
 def isModernLine = !minecraftVersion.startsWith('1.')
-def hasRuntimeJei = !minecraftVersion.startsWith('26.2-rc')
+def hasRuntimeJei = !minecraftVersion.startsWith('26.2')
 def libs = catalogFor(project, minecraftVersion)
 def useTeaKit = providers.systemProperty('mochila.withTeaKit')
     .orElse(providers.gradleProperty('mochila.withTeaKit'))
@@ -21,7 +21,7 @@ dependencies {
         implementation library(libs, 'konfig-fabric')
         runtimeOnly library(libs, 'modmenu')
         runtimeOnly library(libs, 'amber-fabric')
-        // FIXME: JEI has no 26.2 RC runtime artifact yet; keep the optional integration compileable without crashing validation. Remove it when porting to 26.2 and JEI is available.
+        // FIXME: JEI has no 26.2 runtime artifact yet; keep the optional integration compileable without crashing validation.
         if (hasRuntimeJei) {
             runtimeOnly library(libs, 'jei-fabric')
         }
