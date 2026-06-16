@@ -30,4 +30,4 @@ run-client node:
   @version="{{node}}"; loader="${version##*-}"; version="${version%-*}"; ./gradlew --configure-on-demand ":$loader:$version:runClient" --console=plain
 
 scenario-check node scenario timeout="180":
-  @./teakitw run --node "{{node}}" --scenario "{{scenario}}" --readiness world --timeout "{{timeout}}"
+  @./teakitw check --node "{{node}}" --scenario "{{scenario}}" --timeout "{{timeout}}"
