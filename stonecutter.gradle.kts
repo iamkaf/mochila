@@ -3,7 +3,7 @@ plugins {
     id("com.iamkaf.multiloader.root")
 }
 
-stonecutter active "26.1.2"
+stonecutter active "26.1.2".let { multiloaderStonecutter.active(it) }
 
 tasks.register<Exec>("teakitRunScenario") {
     group = "verification"
