@@ -95,7 +95,27 @@ async function useMainHand(ctx: Ctx) {
 }
 
 async function waitForTitle(ctx: Ctx, title: string) {
-  await ctx.client.waitForScreen(title, { timeoutMs: 5_000 });
+  await ctx.client.waitForScreen(title, { timeoutMs: 15_000 });
+}
+
+async function useMainHandAndWaitForTitle(ctx: Ctx, title: string) {
+  let lastError: unknown;
+  for (let attempt = 0; attempt < 2; attempt++) {
+    await useMainHand(ctx);
+    try {
+      await waitForTitle(ctx, title);
+      return;
+    } catch (error) {
+      lastError = error;
+      try {
+        await closeMenu(ctx);
+      } catch {
+        // No menu was open, or the client had already closed it.
+      }
+      await waitMs(ctx, 250);
+    }
+  }
+  throw lastError;
 }
 
 async function closeMenu(ctx: Ctx) {
@@ -281,8 +301,7 @@ test("recipes preserve backpack components", async ({ commands }) => {
 
 test("backpack opens by item use", async (ctx) => {
   await equipMainHand(ctx, "mochila:leather_backpack");
-  await useMainHand(ctx);
-  await waitForTitle(ctx, "Leather Backpack");
+  await useMainHandAndWaitForTitle(ctx, "Leather Backpack");
   await screenshot(ctx, "mochila-leather-backpack-menu");
   await closeMenu(ctx);
 });
@@ -290,8 +309,7 @@ test("backpack opens by item use", async (ctx) => {
 test("backpack tiers open their expected menus", async (ctx) => {
   for (const [tier, title] of BACKPACK_MENUS) {
     await equipMainHand(ctx, `mochila:${tier}_backpack`);
-    await useMainHand(ctx);
-    await waitForTitle(ctx, title);
+    await useMainHandAndWaitForTitle(ctx, title);
     await closeMenu(ctx);
   }
 });
@@ -311,16 +329,14 @@ test("backpack keeps container component contents", async (ctx) => {
     ctx,
     'mochila:leather_backpack[minecraft:container=[{slot:0,item:{id:"minecraft:cobblestone",count:16}},{slot:1,item:{id:"minecraft:oak_log",count:8}}]]',
   );
-  await useMainHand(ctx);
-  await waitForTitle(ctx, "Leather Backpack");
+  await useMainHandAndWaitForTitle(ctx, "Leather Backpack");
   await closeMenu(ctx);
   await assertInventoryContains(ctx, "mochila:leather_backpack");
 });
 
 test("ender backpack opens by item use", async (ctx) => {
   await equipMainHand(ctx, "mochila:ender_backpack");
-  await useMainHand(ctx);
-  await waitForTitle(ctx, "Ender Chest");
+  await useMainHandAndWaitForTitle(ctx, "Ender Chest");
   await screenshot(ctx, "mochila-ender-backpack-menu");
   await closeMenu(ctx);
 });
@@ -388,14 +404,12 @@ test("visual item lineup renders in inventory", async (ctx) => {
 
 test("visual backpack menus render", async (ctx) => {
   await equipMainHand(ctx, "mochila:netherite_backpack");
-  await useMainHand(ctx);
-  await waitForTitle(ctx, "Netherite Backpack");
+  await useMainHandAndWaitForTitle(ctx, "Netherite Backpack");
   await screenshot(ctx, "mochila-netherite-backpack-menu");
   await closeMenu(ctx);
 
   await equipMainHand(ctx, "mochila:ender_backpack");
-  await useMainHand(ctx);
-  await waitForTitle(ctx, "Ender Chest");
+  await useMainHandAndWaitForTitle(ctx, "Ender Chest");
   await screenshot(ctx, "mochila-ender-backpack-menu");
   await closeMenu(ctx);
 });

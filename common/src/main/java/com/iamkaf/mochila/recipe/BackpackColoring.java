@@ -1,9 +1,11 @@
 package com.iamkaf.mochila.recipe;
 
-import com.mojang.serialization.MapCodec;
 import com.iamkaf.mochila.item.BackpackItem;
 import com.iamkaf.mochila.item.backpack.BackpackUtils;
 import com.iamkaf.mochila.registry.RecipeSerializers;
+import com.mojang.serialization.MapCodec;
+//? if <26.1
+/*import net.minecraft.core.HolderLookup;*/
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.network.RegistryFriendlyByteBuf;
 import net.minecraft.network.codec.StreamCodec;
@@ -25,10 +27,18 @@ public class BackpackColoring extends CustomRecipe {
     public static final BackpackColoring INSTANCE = new BackpackColoring();
     public static final MapCodec<BackpackColoring> MAP_CODEC = MapCodec.unit(INSTANCE);
     public static final StreamCodec<RegistryFriendlyByteBuf, BackpackColoring> STREAM_CODEC = StreamCodec.unit(INSTANCE);
+    //? if >=26.1
     public static final RecipeSerializer<BackpackColoring> SERIALIZER = new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
+    //? if <26.1
+    /*public static final RecipeSerializer<BackpackColoring> SERIALIZER = new CustomRecipe.Serializer<>(BackpackColoring::new);*/
 
     private BackpackColoring() {
+        //? if <26.1
+        /*super(CraftingBookCategory.MISC);*/
     }
+
+    //? if <26.1
+    /*public BackpackColoring(CraftingBookCategory category) { super(category); }*/
 
     public boolean matches(CraftingInput input, Level level) {
         int backpackCount = 0;
@@ -57,7 +67,10 @@ public class BackpackColoring extends CustomRecipe {
     }
 
     // TODO: add support for coloring higher tiers backpacks
+    //? if >=26.1
     public @NotNull ItemStack assemble(CraftingInput input) {
+    //? if <26.1
+    /*public @NotNull ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {*/
         ItemStack backpack = ItemStack.EMPTY;
         DyeColor dyeColor = DyeColor.WHITE;
 
@@ -68,13 +81,23 @@ public class BackpackColoring extends CustomRecipe {
                 if (item instanceof BackpackItem) {
                     backpack = inputStack;
                 } else if (item instanceof DyeItem) {
+                    //? if >=26.1
                     dyeColor = inputStack.getOrDefault(DataComponents.DYE, DyeColor.WHITE);
+                    //? if <26.1
+                    /*dyeColor = ((DyeItem) item).getDyeColor();*/
                 }
             }
         }
 
         Item item = BackpackUtils.getBackpackByColor(backpack, dyeColor);
         return backpack.transmuteCopy(item, 1);
+    }
+
+    public @NotNull ItemStack assembleForCommands(CraftingInput input, Level level) {
+        //? if >=26.1
+        return assemble(input);
+        //? if <26.1
+        /*return assemble(input, level.registryAccess());*/
     }
 
     public boolean canCraftInDimensions(int width, int height) {

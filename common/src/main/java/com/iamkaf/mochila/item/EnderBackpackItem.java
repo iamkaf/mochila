@@ -12,7 +12,10 @@ import net.minecraft.world.InteractionResult;
 import net.minecraft.world.SimpleMenuProvider;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
+//? if >=26.1
 import net.minecraft.world.inventory.ContainerInput;
+//? if <26.1
+/*import net.minecraft.world.inventory.ClickType;*/
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.PlayerEnderChestContainer;
 import net.minecraft.world.item.Item;
@@ -60,7 +63,10 @@ public class EnderBackpackItem extends Item {
                 3
         ) {
             @Override
+            //? if >=26.1
             public void clicked(int slotId, int button, ContainerInput clickType, Player player) {
+            //? if <26.1
+            /*public void clicked(int slotId, int button, ClickType clickType, Player player) {*/
                 if (slotId > -1 && getSlot(slotId).getItem().equals(stack)) {
                     return;
                 }

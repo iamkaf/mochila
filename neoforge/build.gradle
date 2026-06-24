@@ -4,7 +4,7 @@ plugins {
 
 def minecraftVersion = requiredProp(project, 'project.minecraft')
 def libs = catalogFor(project, minecraftVersion)
-def hasRuntimeJei = !minecraftVersion.startsWith('26.2')
+def hasRuntimeJei = !['26.1', '26.1.1', '26.2'].contains(minecraftVersion)
 def useTeaKit = providers.systemProperty('mochila.withTeaKit')
     .orElse(providers.gradleProperty('mochila.withTeaKit'))
     .map { it.toBoolean() }
@@ -16,7 +16,7 @@ dependencies {
     compileOnly library(libs, 'jei-neoforge-api')
     implementation library(libs, 'konfig-neoforge')
     implementation library(libs, 'amber-neoforge')
-    // FIXME: JEI has no 26.2 runtime artifact yet; keep the optional integration compileable without crashing validation.
+    // Keep optional JEI integration compileable without forcing incompatible runtime artifacts into validation.
     if (hasRuntimeJei) {
         runtimeOnly library(libs, 'jei-neoforge')
     }

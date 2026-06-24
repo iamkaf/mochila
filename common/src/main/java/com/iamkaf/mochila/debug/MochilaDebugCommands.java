@@ -34,6 +34,7 @@ import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
 import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.component.ItemContainerContents;
+import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
@@ -82,7 +83,7 @@ public final class MochilaDebugCommands {
 
     private static int sample(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        ItemStack stack = ItemArgument.getItem(context, "item").createItemStack(1);
+        ItemStack stack = createItemStack(ItemArgument.getItem(context, "item"));
         if (!(stack.getItem() instanceof BackpackItem backpackItem)) {
             return fail(context, "Item is not a Mochila backpack.");
         }
@@ -134,7 +135,7 @@ public final class MochilaDebugCommands {
 
     private static int assertSample(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        ItemStack expected = ItemArgument.getItem(context, "item").createItemStack(1);
+        ItemStack expected = createItemStack(ItemArgument.getItem(context, "item"));
         ItemStack actual = player.getMainHandItem();
         if (!actual.is(expected.getItem())) {
             return fail(context, "Expected " + itemId(expected.getItem()) + " but found " + itemId(actual.getItem()) + ".");
@@ -167,7 +168,7 @@ public final class MochilaDebugCommands {
     }
 
     private static int color(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ItemStack dye = ItemArgument.getItem(context, "dye").createItemStack(1);
+        ItemStack dye = createItemStack(ItemArgument.getItem(context, "dye"));
         if (!(dye.getItem() instanceof DyeItem)) {
             return fail(context, "Color recipe requires a dye item.");
         }
@@ -177,14 +178,14 @@ public final class MochilaDebugCommands {
         if (!BackpackColoring.INSTANCE.matches(input, player.level())) {
             return fail(context, "Coloring recipe did not match.");
         }
-        player.setItemInHand(InteractionHand.MAIN_HAND, BackpackColoring.INSTANCE.assemble(input));
+        player.setItemInHand(InteractionHand.MAIN_HAND, BackpackColoring.INSTANCE.assembleForCommands(input, player.level()));
         context.getSource().sendSuccess(() -> Component.literal("Applied coloring recipe."), false);
         return Command.SINGLE_SUCCESS;
     }
 
     private static int upgrade(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        ItemStack result = assembleUpgrade(player.getMainHandItem(), ItemArgument.getItem(context, "material"));
+        ItemStack result = assembleUpgrade(player.getMainHandItem(), ItemArgument.getItem(context, "material"), player.level());
         if (result.isEmpty()) {
             return fail(context, "Upgrade recipe did not match.");
         }
@@ -195,7 +196,7 @@ public final class MochilaDebugCommands {
 
     private static int assertInvalidUpgrade(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        ItemStack result = assembleUpgrade(player.getMainHandItem(), ItemArgument.getItem(context, "material"));
+        ItemStack result = assembleUpgrade(player.getMainHandItem(), ItemArgument.getItem(context, "material"), player.level());
         if (!result.isEmpty()) {
             return fail(context, "Upgrade recipe unexpectedly matched.");
         }
@@ -224,8 +225,9 @@ public final class MochilaDebugCommands {
         return Command.SINGLE_SUCCESS;
     }
 
-    private static ItemStack assembleUpgrade(ItemStack backpack, ItemInput materialInput) throws CommandSyntaxException {
-        ItemStack material = materialInput.createItemStack(1);
+    private static ItemStack assembleUpgrade(ItemStack backpack, ItemInput materialInput, Level level)
+            throws CommandSyntaxException {
+        ItemStack material = createItemStack(materialInput);
         List<ItemStack> items = new ArrayList<>(9);
         for (int i = 0; i < 9; i++) {
             items.add(material.copy());
@@ -233,7 +235,16 @@ public final class MochilaDebugCommands {
         items.set(4, backpack);
 
         CraftingInput input = CraftingInput.of(3, 3, items);
-        return BackpackUpgrading.INSTANCE.matches(input, null) ? BackpackUpgrading.INSTANCE.assemble(input) : ItemStack.EMPTY;
+        return BackpackUpgrading.INSTANCE.matches(input, null)
+                ? BackpackUpgrading.INSTANCE.assembleForCommands(input, level)
+                : ItemStack.EMPTY;
+    }
+
+    private static ItemStack createItemStack(ItemInput input) throws CommandSyntaxException {
+        //? if >=26.1
+        return input.createItemStack(1);
+        //? if <26.1
+        /*return input.createItemStack(1, false);*/
     }
 
     private static boolean isStack(ItemStack stack, Item item, int count) {

@@ -4,6 +4,9 @@ import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
+//? if <26.1
+/*import net.minecraft.world.inventory.ClickType;*/
+//? if >=26.1
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.inventory.Slot;
@@ -18,11 +21,17 @@ public class BackpackMenu extends ChestMenu {
     }
 
     @Override
+    //? if >=26.1
     public void clicked(int slotId, int button, ContainerInput clickType, Player player) {
+    //? if <26.1
+    /*public void clicked(int slotId, int button, ClickType clickType, Player player) {*/
         if (slotId > -1) {
             Slot slot = this.slots.get(slotId);
 
+            //? if >=26.1
             if (clickType.equals(ContainerInput.SWAP) && slotContainsBlacklistedSwapItem(player, button)) {
+            //? if <26.1
+            /*if (clickType.equals(ClickType.SWAP) && slotContainsBlacklistedSwapItem(player, button)) {*/
                 return;
             }
 

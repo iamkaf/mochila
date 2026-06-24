@@ -29,6 +29,8 @@ dependencies {
             runtimeOnly library(libs, 'teakit-fabric')
         }
     } else {
+        modCompileOnly library(libs, 'jei-common-api')
+        modCompileOnly library(libs, 'jei-fabric-api')
         modImplementation library(libs, 'fabric-api')
         modImplementation library(libs, 'modmenu')
         modImplementation library(libs, 'konfig-fabric')

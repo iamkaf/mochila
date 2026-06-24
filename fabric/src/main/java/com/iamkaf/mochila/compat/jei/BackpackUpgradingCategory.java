@@ -9,6 +9,9 @@ import mezz.jei.api.helpers.IGuiHelper;
 import mezz.jei.api.recipe.IFocusGroup;
 import mezz.jei.api.recipe.category.IRecipeCategory;
 import mezz.jei.api.recipe.types.IRecipeType;
+//? if <26.1
+/*import net.minecraft.client.gui.GuiGraphics;*/
+//? if >=26.1
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.network.chat.Component;
 
@@ -79,7 +82,10 @@ public class BackpackUpgradingCategory implements IRecipeCategory<BackpackJeiRec
     public void draw(
             BackpackJeiRecipes.UpgradeDisplay recipe,
             IRecipeSlotsView recipeSlotsView,
+            //? if >=26.1
             GuiGraphicsExtractor guiGraphics,
+            //? if <26.1
+            /*GuiGraphics guiGraphics,*/
             double mouseX,
             double mouseY
     ) {
