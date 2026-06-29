@@ -198,14 +198,14 @@ test("content item tags classify backpacks", async (ctx) => {
 test("recipes include base and ender backpack shapes", async (ctx) => {
   await assertRecipe(ctx, 3, 3, [
     "minecraft:leather",
-    "minecraft:air",
+    "minecraft:iron_ingot",
     "minecraft:leather",
     "minecraft:leather",
     "minecraft:chest",
+    "minecraft:string",
     "minecraft:leather",
-    "minecraft:air",
-    "minecraft:leather",
-    "minecraft:air",
+    "minecraft:white_wool",
+    "minecraft:iron_ingot",
   ], "mochila:leather_backpack");
 
   await assertRecipe(ctx, 3, 3, [
