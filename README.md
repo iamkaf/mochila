@@ -27,10 +27,16 @@ The project is built as a Stonecutter multi-loader mod. Shared code lives in `co
 - [Amber](https://modrinth.com/mod/amber)
 - [Konfig](https://modrinth.com/mod/konfig)
 
+Mochila must be installed on both the client and the server. If a client has
+Mochila but the server does not, backpack items can still appear in the
+client's Creative inventory, but taking one may disconnect the player with a
+`Failed to decode packet 'serverbound/minecraft:set_creative_mode_slot'` error.
+
 ## Supported Versions
 
 | Minecraft | Fabric | Forge | NeoForge |
 | --- | --- | --- | --- |
+| 26.2 | Supported | Supported | Supported |
 | 26.1.2 | Supported | Supported | Supported |
 
 JEI integration is currently enabled for Fabric and NeoForge.
