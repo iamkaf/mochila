@@ -2,28 +2,43 @@ package com.iamkaf.mochila.fabric.datagen;
 
 import com.iamkaf.mochila.Constants;
 import com.iamkaf.mochila.tags.MochilaTags;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
-import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;
+//? if <26.1
+/*import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;*/
+//? if >=26.1
+import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
+//? if <26.1
+/*import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagProvider;*/
+//? if >=26.1
+import net.fabricmc.fabric.api.datagen.v1.provider.FabricTagsProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
+import net.minecraft.data.tags.TagAppender;
+import net.minecraft.resources.ResourceKey;
 import net.minecraft.resources.Identifier;
+import net.minecraft.world.item.Item;
 
 import java.util.concurrent.CompletableFuture;
 
-public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
-    public ModItemTagProvider(FabricDataOutput output,
+//? if >=26.1
+public class ModItemTagProvider extends FabricTagsProvider.ItemTagsProvider {
+//? if <26.1
+/*public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {*/
+    //? if >=26.1
+    public ModItemTagProvider(FabricPackOutput output,
+    //? if <26.1
+    /*public ModItemTagProvider(FabricDataOutput output,*/
             CompletableFuture<HolderLookup.Provider> completableFuture) {
         super(output, completableFuture);
     }
 
     @Override
     protected void addTags(HolderLookup.Provider provider) {
-        var backpacks = valueLookupBuilder(MochilaTags.Items.BACKPACKS);
-        var leather_backpacks = valueLookupBuilder(MochilaTags.Items.LEATHER_BACKPACKS);
-        var iron_backpacks = valueLookupBuilder(MochilaTags.Items.IRON_BACKPACKS);
-        var gold_backpacks = valueLookupBuilder(MochilaTags.Items.GOLD_BACKPACKS);
-        var diamond_backpacks = valueLookupBuilder(MochilaTags.Items.DIAMOND_BACKPACKS);
-        var netherite_backpacks = valueLookupBuilder(MochilaTags.Items.NETHERITE_BACKPACKS);
+        var backpacks = tagAppender(MochilaTags.Items.BACKPACKS);
+        var leather_backpacks = tagAppender(MochilaTags.Items.LEATHER_BACKPACKS);
+        var iron_backpacks = tagAppender(MochilaTags.Items.IRON_BACKPACKS);
+        var gold_backpacks = tagAppender(MochilaTags.Items.GOLD_BACKPACKS);
+        var diamond_backpacks = tagAppender(MochilaTags.Items.DIAMOND_BACKPACKS);
+        var netherite_backpacks = tagAppender(MochilaTags.Items.NETHERITE_BACKPACKS);
 
         for (var item : BuiltInRegistries.ITEM) {
             Identifier id = BuiltInRegistries.ITEM.getKey(item);
@@ -48,6 +63,27 @@ public class ModItemTagProvider extends FabricTagProvider.ItemTagProvider {
             if (id.getPath().contains("netherite")) {
                 netherite_backpacks.add(item);
             }
+        }
+    }
+
+    private ItemTagAppender tagAppender(net.minecraft.tags.TagKey<Item> tag) {
+        return new ItemTagAppender(builder(tag));
+    }
+
+    private record ItemTagAppender(
+            //? if >=26.2
+            TagAppender<Item> delegate
+            //? if <26.2
+            /*TagAppender<ResourceKey<Item>, Item> delegate*/
+    ) {
+        ItemTagAppender add(Item item) {
+            delegate.add(itemKey(item));
+            return this;
+        }
+
+        private static ResourceKey<Item> itemKey(Item item) {
+            return BuiltInRegistries.ITEM.getResourceKey(item)
+                    .orElseThrow(() -> new IllegalStateException("Unregistered item " + item));
         }
     }
 }
