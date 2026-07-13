@@ -19,7 +19,9 @@ Fixtures build explicit safe world state at Y=200:
 Run the suite with the current TypeScript runner:
 
 ```sh
-./teakitw check --node 26.1.2-fabric --scenario test/scenarios/mochila/mochila.scenario.ts --no-sync-sdk --timeout 240
+./gradlew teakitCheck -Pteakit.node=26.1.2-fabric -Pteakit.scenario=test/scenarios/mochila/mochila.scenario.ts -Pteakit.timeout=240
 ```
+
+The checked-in `teakitw` wrapper remains available as a direct Runner fallback.
 
 Some state-heavy checks use vanilla commands. If those become too brittle across Minecraft versions, add Mochila debug commands for exact backpack component, quickstash, and container assertions.

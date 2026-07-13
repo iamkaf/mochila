@@ -46,7 +46,7 @@ mochila/
 ├── test/scenarios/     # TeaKit scenario suite
 ├── versions/26.1.2/    # Stonecutter version properties
 ├── justfile            # Common build/test commands
-└── teakitw             # TeaKit scenario runner wrapper
+└── teakitw             # Direct TeaKit Runner fallback
 ```
 
 ## Building
@@ -76,8 +76,11 @@ just compile-all
 # Run a client for one node
 just run-client 26.1.2-fabric
 
-# Run the TypeScript TeaKit scenario suite
-./teakitw check --node 26.1.2-neoforge --scenario test/scenarios/mochila/mochila.scenario.ts --no-sync-sdk --timeout 240
+# Run the TypeScript TeaKit scenario suite through Gradle
+./gradlew teakitCheck -Pteakit.node=26.1.2-neoforge -Pteakit.scenario=test/scenarios/mochila/mochila.scenario.ts -Pteakit.timeout=240
+
+# Use the direct Runner wrapper when debugging outside Gradle
+./teakitw check --node 26.1.2-neoforge --scenario test/scenarios/mochila/mochila.scenario.ts --timeout 240
 ```
 
 Built jars are written under each loader/version build directory, for example `fabric/versions/26.1.2/build/libs/`.

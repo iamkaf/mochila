@@ -42,6 +42,21 @@
       "sdk" : [ "world.transaction()", "world.container()" ],
       "endpoints" : [ "POST /world/transactions/run", "GET /world/containers/{x},{y},{z}" ]
     },
+    "gametest.list" : {
+      "category" : "gametest",
+      "sdk" : [ "gametest.capabilities()", "gametest.list()" ],
+      "endpoints" : [ "GET /gametest/capabilities", "GET /gametest/tests" ]
+    },
+    "gametest.run" : {
+      "category" : "gametest",
+      "sdk" : [ "gametest.run()" ],
+      "endpoints" : [ "POST /gametest/run" ]
+    },
+    "gametest.verify" : {
+      "category" : "gametest",
+      "sdk" : [ "gametest.verify()" ],
+      "endpoints" : [ "POST /gametest/verify" ]
+    },
     "spy.calls" : {
       "category" : "spy",
       "sdk" : [ "spy.record()", "spy.calls()", "spy.report()", "spy.assertCalled()", "expect(spy).toHaveBeenCalled()" ],
@@ -225,8 +240,8 @@
     },
     "client.input" : {
       "category" : "client",
-      "sdk" : [ "client.lookAt()", "client.key()", "client.keyState()" ],
-      "endpoints" : [ "POST /client/look-at", "POST /client/input/key", "POST /client/input/key-state" ]
+      "sdk" : [ "client.lookAt()", "client.key()", "client.keyState()", "client.chat()" ],
+      "endpoints" : [ "POST /client/look-at", "POST /client/input/key", "POST /client/input/key-state", "POST /client/chat" ]
     }
   }
 }

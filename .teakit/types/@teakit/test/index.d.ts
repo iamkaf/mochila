@@ -60,6 +60,7 @@ export interface TeaKitTestContext {
     ): Promise<T>;
   };
   runtime: RuntimeApi;
+  gametest: GameTestApi;
   scenario: ScenarioApi;
   commands: CommandApi;
   server: ServerApi;
@@ -107,6 +108,83 @@ export interface RuntimeApi {
 
 export interface ScenarioApi {
   run(definition: ScenarioDefinition, options?: RuntimeCallOptions): Promise<ScenarioResult>;
+}
+
+export type GameTestStrategy = "native_modern" | "native_legacy" | "polyfilled" | "mixed" | "unsupported";
+
+export type GameTestSelection =
+  | string
+  | string[]
+  | {
+      namespace?: string;
+      tests?: string[];
+      requiredOnly?: boolean;
+      pattern?: string;
+    };
+
+export interface GameTestCapabilities {
+  available: boolean;
+  strategy: GameTestStrategy;
+  nativeAvailable: boolean;
+  nativeStrategy: Exclude<GameTestStrategy, "mixed">;
+  polyfillAvailable: boolean;
+  supportsSelection: boolean;
+  supportsVerify: boolean;
+  supportsRequiredOnly: boolean;
+  supportsPattern: boolean;
+  supportsRepeat: boolean;
+  reason?: string;
+  message?: string;
+}
+
+export interface GameTestDescriptor {
+  id: string;
+  required: boolean;
+  setupTicks?: number;
+  timeoutTicks?: number;
+  strategy: GameTestStrategy;
+  native?: boolean;
+}
+
+export interface GameTestResultEntry {
+  id: string;
+  required: boolean;
+  status: "passed" | "failed" | "timed_out" | "cancelled" | (string & {});
+  startedAtTick: number;
+  finishedAtTick: number;
+  durationTicks: number;
+  attempt: number;
+  message?: string;
+}
+
+export interface GameTestRunOptions extends RuntimeCallOptions {
+  repeat?: number;
+  haltOnFailure?: boolean;
+  timeoutSeconds?: number;
+  /** Attach the structured result to the TeaKit report. Defaults to true. */
+  attachResult?: boolean;
+  artifactName?: string;
+}
+
+export interface GameTestRunResult {
+  ok: boolean;
+  strategy: GameTestStrategy;
+  startedAt: string;
+  finishedAt: string;
+  requested: string[];
+  repeat: number;
+  verify: boolean;
+  passed: GameTestResultEntry[];
+  failed: GameTestResultEntry[];
+  skipped: GameTestResultEntry[];
+  results: GameTestResultEntry[];
+}
+
+export interface GameTestApi {
+  capabilities(options?: RuntimeCallOptions): Promise<GameTestCapabilities>;
+  list(selection?: GameTestSelection, options?: RuntimeCallOptions): Promise<GameTestDescriptor[]>;
+  run(selection: GameTestSelection, options?: GameTestRunOptions): Promise<GameTestRunResult>;
+  verify(selection: GameTestSelection, options?: GameTestRunOptions): Promise<GameTestRunResult>;
 }
 
 export interface CommandCallOptions extends RuntimeCallOptions {
@@ -516,6 +594,8 @@ export interface ClientApi {
   key(key: number, options?: ClientKeyOptions): Promise<ClientScreen>;
   /** Set whether a client key is currently held down. */
   keyState(key: number, held: boolean, options?: ClientKeyOptions): Promise<ClientScreen>;
+  /** Send an ordinary non-command message through Minecraft's real signed public-chat path. */
+  chat(message: string, options?: RuntimeCallOptions): Promise<{ message?: string; signedPath?: boolean; [key: string]: unknown }>;
 }
 
 export interface RenderApi {
@@ -1112,6 +1192,12 @@ export declare const Capability: {
   readonly RuntimeEvents: "runtime.events";
   /** TeaKit runtime can run world/player transactions with rollback and diagnostics. */
   readonly RuntimeTransactions: "runtime.transactions";
+  /** TeaKit runtime can discover registered GameTests. */
+  readonly GameTestList: "gametest.list";
+  /** TeaKit runtime can execute GameTests and return structured results. */
+  readonly GameTestRun: "gametest.run";
+  /** TeaKit runtime can repeat GameTests as a verification run. */
+  readonly GameTestVerify: "gametest.verify";
   /** TeaKit runtime can reset spies, record calls, report calls, and assert counts/order. */
   readonly SpyCalls: "spy.calls";
   /** TeaKit runtime can attach first-party probes to game behavior. */

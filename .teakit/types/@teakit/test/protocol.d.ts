@@ -91,6 +91,19 @@ export interface RuntimeHealth {
     resourceReloadComplete?: boolean;
     [key: string]: unknown;
   };
+  loaderError?: RuntimeLoaderError;
+  [key: string]: unknown;
+}
+
+export interface RuntimeLoaderError {
+  active: boolean;
+  source: "client-screen" | "launch-log" | (string & {});
+  loader?: LoaderId;
+  severity?: "error" | "warning" | (string & {});
+  screenClass?: string;
+  title?: string;
+  message?: string;
+  matchedLogLines?: string[];
   [key: string]: unknown;
 }
 
@@ -116,6 +129,9 @@ export type RuntimeCapability =
   | "runtime.timing"
   | "runtime.events"
   | "runtime.transactions"
+  | "gametest.list"
+  | "gametest.run"
+  | "gametest.verify"
   | "spy.calls"
   | "spy.probes"
   | "spy.interfaceProxies"
