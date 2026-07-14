@@ -1,79 +1,6 @@
-export interface TeaKitHostOperations {
-  "runtime.health": {
-    payload: RuntimeBridgeOptions;
-    result: RuntimeHealth;
-  };
-  "runtime.capabilities": {
-    payload: RuntimeBridgeOptions;
-    result: RuntimeCapabilities;
-  };
-  "runtime.get": {
-    payload: RuntimeGetRequest;
-    result: unknown;
-  };
-  "runtime.post": {
-    payload: RuntimePostRequest;
-    result: unknown;
-  };
-  "runtime.delete": {
-    payload: RuntimeDeleteRequest;
-    result: unknown;
-  };
-  "runtime.raw": {
-    payload: RuntimeRawRequest;
-    result: RuntimeRawResponse;
-  };
-  "artifacts.attachJson": {
-    payload: AttachJsonRequest;
-    result: ArtifactAttachment;
-  };
-  "artifacts.attachText": {
-    payload: AttachTextRequest;
-    result: ArtifactAttachment;
-  };
-}
-
-export type TeaKitHostOperation = keyof TeaKitHostOperations;
-export type TeaKitHostPayload<K extends TeaKitHostOperation> = TeaKitHostOperations[K]["payload"];
-export type TeaKitHostResult<K extends TeaKitHostOperation> = TeaKitHostOperations[K]["result"];
-
 export interface RuntimeCallOptions {
   timeoutMs?: number;
 }
-
-export interface RuntimeBridgeOptions {
-  timeoutSeconds?: number;
-}
-
-export interface RuntimeGetRequest extends RuntimeBridgeOptions {
-  path: RuntimePath;
-}
-
-export interface RuntimePostRequest extends RuntimeBridgeOptions {
-  path: RuntimePath;
-  body?: unknown;
-}
-
-export interface RuntimeDeleteRequest extends RuntimeBridgeOptions {
-  path: RuntimePath;
-}
-
-export interface RuntimeRawRequest extends RuntimeBridgeOptions {
-  method?: string;
-  path: RuntimePath;
-  body?: string;
-  includeToken?: boolean;
-  token?: string;
-}
-
-export interface RuntimeRawResponse {
-  status: number;
-  ok: boolean;
-  body: string;
-  json: unknown;
-}
-
-export type RuntimePath = `/${string}`;
 
 export interface RuntimeHealth {
   ok?: boolean;
@@ -110,14 +37,18 @@ export interface RuntimeLoaderError {
 export interface RuntimeCapabilities {
   available?: boolean;
   runtimeApi?: number;
-  teakitRuntimeApi?: number;
   minecraftVersion?: string;
   loader?: LoaderId;
-  actions?: RuntimeCapability[];
-  probes?: RuntimeCapability[];
-  features?: RuntimeCapability[];
+  capabilities?: RuntimeCapability[];
+  endpoints?: RuntimeEndpointMetadata[];
   reason?: string;
   [key: string]: unknown;
+}
+
+export interface RuntimeEndpointMetadata {
+  method: string;
+  path: string;
+  family?: string;
 }
 
 export type RuntimeCapability =
@@ -125,7 +56,6 @@ export type RuntimeCapability =
   | "runtime.summary"
   | "runtime.lastError"
   | "runtime.logs"
-  | "runtime.batch"
   | "runtime.timing"
   | "runtime.events"
   | "runtime.transactions"
@@ -138,7 +68,6 @@ export type RuntimeCapability =
   | "spy.instrumentation"
   | "server.commands"
   | "registry.lookup"
-  | "legacy-json-scenarios"
   | "world.block"
   | "world.setBlock"
   | "world.fill"
@@ -163,7 +92,8 @@ export type RuntimeCapability =
   | "player.give"
   | "player.inventory"
   | "player.useItem"
-  | "player.actions"
+  | "player.interactions"
+  | "player.driver"
   | "client.screen"
   | "client.screens"
   | "client.screenshot"

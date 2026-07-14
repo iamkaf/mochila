@@ -1,6 +1,6 @@
-# Mochila TeaKit Scenarios
+# Mochila TeaKit Tests
 
-TeaKit scenarios live in `mochila.scenario.ts`. The file registers one TypeScript test per behavioral leaf and keeps reusable setup, cleanup, and recipe helpers in the same module.
+TeaKit tests live in `mochila.test.ts`. The file registers one TypeScript test per behavioral leaf and keeps reusable setup, cleanup, and recipe helpers in the same module.
 
 ## Coverage
 
@@ -19,7 +19,7 @@ Fixtures build explicit safe world state at Y=200:
 Run the suite with the current TypeScript runner:
 
 ```sh
-./gradlew teakitCheck -Pteakit.node=26.1.2-fabric -Pteakit.scenario=test/scenarios/mochila/mochila.scenario.ts -Pteakit.timeout=240
+./gradlew teakitCheck -Pteakit.node=26.1.2-fabric -Pteakit.testFile=test/teakit/mochila.test.ts -Pteakit.timeout=240
 ```
 
 The checked-in `teakitw` wrapper remains available as a direct Runner fallback.
