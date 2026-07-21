@@ -21,6 +21,6 @@ dependencies {
         runtimeOnly library(libs, 'jei-neoforge')
     }
     if (useTeaKit) {
-        runtimeOnly library(libs, 'teakit-neoforge')
+        runtimeOnly "com.iamkaf.teakit:teakit-neoforge:0.13.2+${minecraftVersion}"
     }
 }

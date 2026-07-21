@@ -26,7 +26,7 @@ dependencies {
             runtimeOnly library(libs, 'jei-fabric')
         }
         if (useTeaKit) {
-            runtimeOnly library(libs, 'teakit-fabric')
+            runtimeOnly "com.iamkaf.teakit:teakit-fabric:0.13.2+${minecraftVersion}"
         }
     } else {
         modCompileOnly library(libs, 'jei-common-api')
@@ -36,7 +36,7 @@ dependencies {
         modImplementation library(libs, 'konfig-fabric')
         modImplementation library(libs, 'amber-fabric')
         if (useTeaKit) {
-            modLocalRuntime library(libs, 'teakit-fabric')
+            modLocalRuntime "com.iamkaf.teakit:teakit-fabric:0.13.2+${minecraftVersion}"
         }
     }
 }

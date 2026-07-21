@@ -14,6 +14,6 @@ dependencies {
     implementation library(libs, 'konfig-forge')
     implementation library(libs, 'amber-forge')
     if (useTeaKit) {
-        runtimeOnly library(libs, 'teakit-forge')
+        runtimeOnly "com.iamkaf.teakit:teakit-forge:0.13.2+${minecraftVersion}"
     }
 }
