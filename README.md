@@ -83,7 +83,7 @@ just compile-all
 just run-client 26.1.2-fabric
 
 # Run the TypeScript TeaKit suite through Gradle
-./gradlew teakitCheck -Pteakit.node=26.1.2-neoforge -Pteakit.testFile=test/teakit/mochila.test.ts -Pteakit.timeout=240
+./gradlew teakitCheck -Pteakit.node=26.1.2-neoforge
 
 # Use the direct Runner wrapper when debugging outside Gradle
 ./teakitw run --node 26.1.2-neoforge --test-file test/teakit/mochila.test.ts --timeout 240
@@ -103,7 +103,7 @@ The TeaKit tests under `test/teakit/` cover:
 - crafting, coloring, smithing, and upgrade preservation
 - visual fixture checks
 
-Run the suite with `just teakit-check <node> [test_file]`, or use Gradle tasks such as `:fabric:26.1.2:build`, `:forge:26.1.2:build`, and `:neoforge:26.1.2:build` for loader builds.
+Run the suite with `just teakit-check <node>`. TeaKit discovers the checked-in tests and runs Minecraft on a managed background display. Use Gradle tasks such as `:fabric:26.1.2:build`, `:forge:26.1.2:build`, and `:neoforge:26.1.2:build` for loader builds.
 
 ## Links
 
