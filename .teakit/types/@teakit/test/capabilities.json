@@ -204,8 +204,8 @@
     },
     "player.interactions" : {
       "category" : "player",
-      "sdk" : [ "player.equip()", "player.place()", "player.openBlock()", "player.useBlock()", "player.lookAt()", "player.useItemOnEntity()", "player.setGameMode()", "player.setFallDistance()", "player.forceFishingBite()", "player.dropMainHand()", "player.health()" ],
-      "endpoints" : [ "POST /players/self/inventory/drop-main-hand", "POST /players/self/equipment", "POST /players/self/look-at", "POST /players/self/interactions/entities", "POST /players/self/game-mode", "POST /players/self/fall-distance", "POST /players/self/fishing/force-bite", "POST /players/self/interactions/blocks", "POST /players/self/placement", "GET /players/self/health" ]
+      "sdk" : [ "player.equip()", "player.place()", "player.openBlock()", "player.useBlock()", "player.useBlockServer()", "player.lookAt()", "player.useItemOnEntity()", "player.setGameMode()", "player.setFallDistance()", "player.forceFishingBite()", "player.dropMainHand()", "player.health()" ],
+      "endpoints" : [ "POST /players/self/inventory/drop-main-hand", "POST /players/self/equipment", "POST /players/self/look-at", "POST /players/self/interactions/entities", "POST /players/self/game-mode", "POST /players/self/fall-distance", "POST /players/self/fishing/force-bite", "POST /players/self/interactions/blocks", "POST /players/self/interactions/blocks/server", "POST /players/self/placement", "GET /players/self/health" ]
     },
     "player.driver" : {
       "category" : "player",

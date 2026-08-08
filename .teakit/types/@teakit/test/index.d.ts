@@ -527,6 +527,8 @@ export interface PlayerApi {
   openBlock(pos: BlockPos, options?: RuntimeCallOptions): Promise<PlayerOperationResult>;
   /** Use a block face without assuming it opens a menu. */
   useBlock(pos: BlockPos, useOptions?: PlayerUseBlockOptions, options?: RuntimeCallOptions): Promise<PlayerOperationResult>;
+  /** Use a block face directly on the logical server without client-side interaction callbacks. */
+  useBlockServer(pos: BlockPos, useOptions?: PlayerUseBlockOptions, options?: RuntimeCallOptions): Promise<PlayerOperationResult>;
   /** Rotate the client or player toward a world target. */
   lookAt(target: BlockPos | Vec3, options?: RuntimeCallOptions): Promise<PlayerOperationResult>;
   /** Use an item on an entity reference. */
@@ -2194,13 +2196,13 @@ export interface ClientWorldWaitOptions {
 
 export interface ClientConnectResult {
   address: string;
-  hasLevel: boolean;
-  hasPlayer: boolean;
+  worldLoaded: boolean;
+  playerLoaded: boolean;
 }
 
 export interface ClientWorldResult {
-  ready: boolean;
-  player?: string;
+  worldLoaded: boolean;
+  playerName?: string;
 }
 
 export type CookingRecipeType = "smelting" | "blasting" | "smoking" | "campfire_cooking" | (string & {});
