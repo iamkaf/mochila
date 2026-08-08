@@ -3,7 +3,10 @@ package com.iamkaf.mochila.fabric.datagen;
 import com.iamkaf.mochila.Constants;
 import com.iamkaf.mochila.recipe.BackpackColoring;
 import com.iamkaf.mochila.recipe.BackpackUpgrading;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+//? if <26.1
+/*import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;*/
+//? if >=26.1
+import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
@@ -55,8 +58,15 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_eye_of_ender", has(Items.ENDER_EYE))
                 .save(output);
 
-        SpecialRecipeBuilder.special(BackpackColoring::new).save(output, Constants.resource("backpack_coloring").toString());
-        SpecialRecipeBuilder.special(BackpackUpgrading::new)
+        //? if >=26.1
+        SpecialRecipeBuilder.special(() -> BackpackColoring.INSTANCE)
+                //? if <26.1
+                /*SpecialRecipeBuilder.special(category -> BackpackColoring.INSTANCE)*/
+                .save(output, Constants.resource("backpack_coloring").toString());
+        //? if >=26.1
+        SpecialRecipeBuilder.special(() -> BackpackUpgrading.INSTANCE)
+                //? if <26.1
+                /*SpecialRecipeBuilder.special(category -> BackpackUpgrading.INSTANCE)*/
                 .save(output, Constants.resource("backpack_upgrading").toString());
 
 //        SmithingTransformRecipeBuilder.smithing(Ingredient.of(Items.NETHERITE_UPGRADE_SMITHING_TEMPLATE),
@@ -149,7 +159,10 @@ public class ModRecipeProvider extends RecipeProvider {
     }
 
     public static class Runner extends FabricRecipeProvider {
-        public Runner(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
+        //? if >=26.1
+        public Runner(FabricPackOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {
+        //? if <26.1
+        /*public Runner(FabricDataOutput output, CompletableFuture<HolderLookup.Provider> registriesFuture) {*/
             super(output, registriesFuture);
         }
 

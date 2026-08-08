@@ -1,7 +1,10 @@
 package com.iamkaf.mochila.fabric.datagen;
 
 import com.iamkaf.mochila.Constants;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+//? if <26.1
+/*import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;*/
+//? if >=26.1
+import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
 import net.minecraft.core.HolderLookup;
 import org.apache.commons.lang3.StringUtils;
@@ -34,7 +37,10 @@ public class ModLanguageProvider extends FabricLanguageProvider {
             "pink"
     );
 
-    public ModLanguageProvider(FabricDataOutput dataOutput, CompletableFuture<HolderLookup.Provider> registryLookup) {
+    //? if >=26.1
+    public ModLanguageProvider(FabricPackOutput dataOutput, CompletableFuture<HolderLookup.Provider> registryLookup) {
+    //? if <26.1
+    /*public ModLanguageProvider(FabricDataOutput dataOutput, CompletableFuture<HolderLookup.Provider> registryLookup) {*/
         super(dataOutput, registryLookup);
     }
 
@@ -66,6 +72,11 @@ public class ModLanguageProvider extends FabricLanguageProvider {
         );
         translationBuilder.add("item.mochila.backpack.shift", "Use SHIFT+B to swap modes.");
         translationBuilder.add("mochila.keybind_mode_changed", "Backpack mode changed: %s");
+        translationBuilder.add("mochila.quickstash.feedback.empty", "Nothing to stash");
+        translationBuilder.add("mochila.quickstash.feedback.full", "%s is full");
+        translationBuilder.add("mochila.quickstash.feedback.no_matching", "No matching stacks for Store mode");
+        translationBuilder.add("mochila.quickstash.feedback.stored", "Stored %s items in %s");
+        translationBuilder.add("mochila.quickstash.feedback.stored_matching", "Stored %s matching items in %s");
     }
 
     private void addBackpackTranslations(TranslationBuilder translationBuilder) {

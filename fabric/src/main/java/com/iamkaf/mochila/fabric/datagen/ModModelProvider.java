@@ -3,10 +3,17 @@ package com.iamkaf.mochila.fabric.datagen;
 import com.iamkaf.mochila.Constants;
 import com.iamkaf.mochila.registry.Items;
 import net.fabricmc.fabric.api.client.datagen.v1.provider.FabricModelProvider;
-import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;
+//? if <26.1
+/*import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;*/
+//? if >=26.1
+import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.minecraft.client.data.models.BlockModelGenerators;
 import net.minecraft.client.data.models.ItemModelGenerators;
 import net.minecraft.client.data.models.model.*;
+//? if <26.1
+/*import net.minecraft.client.resources.model.Material;*/
+//? if >=26.1
+import net.minecraft.client.resources.model.sprite.Material;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
@@ -15,7 +22,10 @@ import java.util.List;
 import java.util.Optional;
 
 public class ModModelProvider extends FabricModelProvider {
-    public ModModelProvider(FabricDataOutput output) {
+    //? if >=26.1
+    public ModModelProvider(FabricPackOutput output) {
+    //? if <26.1
+    /*public ModModelProvider(FabricDataOutput output) {*/
         super(output);
     }
 
@@ -69,7 +79,10 @@ public class ModModelProvider extends FabricModelProvider {
                 itemModelGenerators.itemModelOutput.accept(
                         theBackpack, ItemModelUtils.plainModel(model.create(
                                 theBackpack,
-                                TextureMapping.layer0(Constants.resource("item/backpack" + i)),
+                                //? if >=26.1
+                                TextureMapping.layer0(new Material(Constants.resource("item/backpack" + i))),
+                                //? if <26.1
+                                /*TextureMapping.layer0(Constants.resource("item/backpack" + i)),*/
                                 itemModelGenerators.modelOutput
                         ))
                 );

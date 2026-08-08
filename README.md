@@ -20,17 +20,23 @@ The project is built as a Stonecutter multi-loader mod. Shared code lives in `co
 - Configurable quick stash target blocks.
 - In-game configuration screens through Konfig where supported.
 - JEI recipe views for backpack coloring and crafting upgrades on Fabric and NeoForge.
-- TeaKit scenarios for repeatable smoke, recipe, content, visual, and interaction checks.
+- TeaKit tests for repeatable smoke, recipe, content, visual, and interaction checks.
 
 ## Requirements
 
 - [Amber](https://modrinth.com/mod/amber)
 - [Konfig](https://modrinth.com/mod/konfig)
 
+Mochila must be installed on both the client and the server. If a client has
+Mochila but the server does not, backpack items can still appear in the
+client's Creative inventory, but taking one may disconnect the player with a
+`Failed to decode packet 'serverbound/minecraft:set_creative_mode_slot'` error.
+
 ## Supported Versions
 
 | Minecraft | Fabric | Forge | NeoForge |
 | --- | --- | --- | --- |
+| 26.2 | Supported | Supported | Supported |
 | 26.1.2 | Supported | Supported | Supported |
 
 JEI integration is currently enabled for Fabric and NeoForge.
@@ -43,10 +49,10 @@ mochila/
 ├── fabric/             # Fabric-specific entrypoints and compat
 ├── forge/              # Forge-specific entrypoints
 ├── neoforge/           # NeoForge-specific entrypoints and compat
-├── test/scenarios/     # TeaKit scenario suite
+├── test/teakit/        # TeaKit test suite
 ├── versions/26.1.2/    # Stonecutter version properties
 ├── justfile            # Common build/test commands
-└── teakitw             # TeaKit scenario runner wrapper
+└── teakitw             # Direct TeaKit Runner fallback
 ```
 
 ## Building
@@ -76,15 +82,18 @@ just compile-all
 # Run a client for one node
 just run-client 26.1.2-fabric
 
-# Run the TypeScript TeaKit scenario suite
-./teakitw check --node 26.1.2-neoforge --scenario test/scenarios/mochila/mochila.scenario.ts --no-sync-sdk --timeout 240
+# Run the TypeScript TeaKit suite through Gradle
+./gradlew teakitCheck -Pteakit.node=26.1.2-neoforge
+
+# Use the direct Runner wrapper when debugging outside Gradle
+./teakitw run --node 26.1.2-neoforge --test-file test/teakit/mochila.test.ts --timeout 240
 ```
 
 Built jars are written under each loader/version build directory, for example `fabric/versions/26.1.2/build/libs/`.
 
 ## Testing
 
-The TeaKit scenarios under `test/scenarios/mochila/` cover:
+The TeaKit tests under `test/teakit/` cover:
 
 - basic launch smoke checks
 - item and tag availability
@@ -94,7 +103,7 @@ The TeaKit scenarios under `test/scenarios/mochila/` cover:
 - crafting, coloring, smithing, and upgrade preservation
 - visual fixture checks
 
-Run a focused scenario with `just scenario-check <node> <scenario>`, or use Gradle tasks such as `:fabric:26.1.2:build`, `:forge:26.1.2:build`, and `:neoforge:26.1.2:build` for loader builds.
+Run the suite with `just teakit-check <node>`. TeaKit discovers the checked-in tests and runs Minecraft on a managed background display. Use Gradle tasks such as `:fabric:26.1.2:build`, `:forge:26.1.2:build`, and `:neoforge:26.1.2:build` for loader builds.
 
 ## Links
 
