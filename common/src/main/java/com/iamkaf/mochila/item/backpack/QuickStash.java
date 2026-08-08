@@ -2,7 +2,6 @@ package com.iamkaf.mochila.item.backpack;
 
 import com.iamkaf.amber.api.event.v1.events.common.PlayerEvents;
 import com.iamkaf.amber.api.functions.v1.PlayerFunctions;
-import com.iamkaf.amber.api.functions.v1.WorldFunctions;
 import com.iamkaf.mochila.MochilaConfig;
 import com.iamkaf.mochila.item.BackpackItem;
 import com.iamkaf.mochila.registry.DataComponents;
@@ -13,7 +12,6 @@ import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
@@ -121,11 +119,11 @@ public class QuickStash {
                 }
             }
             if (inserted) {
-                if (MochilaConfig.quickstashSound() && player instanceof ServerPlayer serverPlayer) {
-                    WorldFunctions.playSoundAt(
-                            serverPlayer.level(),
-                            serverPlayer.blockPosition(),
-                            SoundEvents.ARMOR_EQUIP_NETHERITE,
+                if (MochilaConfig.quickstashSound()) {
+                    level.playSound(
+                            null,
+                            player.blockPosition(),
+                            SoundEvents.ARMOR_EQUIP_NETHERITE.value(),
                             SoundSource.PLAYERS,
                             0.5f,
                             1f

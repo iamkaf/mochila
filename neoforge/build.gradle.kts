@@ -9,6 +9,11 @@ plugins {
 val minecraftVersion = project.name
 val hasRuntimeJei = minecraftVersion !in setOf("26.1", "26.1.1", "26.2")
 val catalog = mcCatalog(minecraftVersion)
+val useTeaKit = providers.systemProperty("mochila.withTeaKit")
+    .orElse(providers.gradleProperty("mochila.withTeaKit"))
+    .map { it.toBoolean() }
+    .orElse(false)
+    .get()
 
 fun mcCatalog(minecraftVersion: String): VersionCatalog {
     val catalogs = extensions.getByType<VersionCatalogsExtension>()
@@ -24,5 +29,8 @@ dependencies {
     compileOnly(catalog.requiredDependency("jei-neoforge-api"))
     if (hasRuntimeJei) {
         runtimeOnly(catalog.requiredDependency("jei-neoforge"))
+    }
+    if (useTeaKit) {
+        runtimeOnly("com.iamkaf.teakit:teakit-neoforge:0.13.2+$minecraftVersion")
     }
 }

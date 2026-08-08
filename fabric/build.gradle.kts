@@ -11,6 +11,11 @@ val minecraftVersion = project.name
 val isModernLine = !minecraftVersion.startsWith("1.")
 val hasRuntimeJei = !minecraftVersion.startsWith("26.2")
 val catalog = mcCatalog(minecraftVersion)
+val useTeaKit = providers.systemProperty("mochila.withTeaKit")
+    .orElse(providers.gradleProperty("mochila.withTeaKit"))
+    .map { it.toBoolean() }
+    .orElse(false)
+    .get()
 
 fun mcCatalog(minecraftVersion: String): VersionCatalog {
     val catalogs = extensions.getByType<VersionCatalogsExtension>()
@@ -32,8 +37,14 @@ dependencies {
         if (hasRuntimeJei) {
             runtimeOnly(catalog.requiredDependency("jei-fabric"))
         }
+        if (useTeaKit) {
+            runtimeOnly("com.iamkaf.teakit:teakit-fabric:0.13.2+$minecraftVersion")
+        }
     } else {
         "modCompileOnly"(catalog.requiredDependency("jei-common-api"))
         "modCompileOnly"(catalog.requiredDependency("jei-fabric-api"))
+        if (useTeaKit) {
+            "modLocalRuntime"("com.iamkaf.teakit:teakit-fabric:0.13.2+$minecraftVersion")
+        }
     }
 }

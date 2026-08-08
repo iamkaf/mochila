@@ -16,6 +16,7 @@ const ROOM_MIN: BlockPos = { x: -10, y: ROOM_Y - 1, z: -10 };
 const ROOM_MAX: BlockPos = { x: 10, y: ROOM_Y + 7, z: 10 };
 const FLOOR_MIN: BlockPos = { x: -10, y: ROOM_Y - 1, z: -10 };
 const FLOOR_MAX: BlockPos = { x: 10, y: ROOM_Y - 1, z: 10 };
+const LEFT_SHIFT_KEY = 340;
 
 const TIERS = ["leather", "iron", "gold", "diamond", "netherite"] as const;
 const COLOR_TIERS = ["leather", "iron", "gold", "diamond", "netherite"] as const;
@@ -37,6 +38,7 @@ describe.configure({
     Capability.RuntimeCapabilities,
     Capability.RuntimeTiming,
     Capability.PlayerInventory,
+    Capability.PlayerInteractions,
     Capability.PlayerUseItem,
     Capability.ClientScreen,
     Capability.ClientInput,
@@ -127,6 +129,16 @@ async function keyTap(ctx: Ctx, key: number) {
   await ctx.client.keyState(key, false);
 }
 
+async function sneakUseBlock(ctx: Ctx, target: BlockPos, face: "north" | "up") {
+  await ctx.client.keyState(LEFT_SHIFT_KEY, true);
+  try {
+    await waitMs(ctx, 250);
+    await ctx.player.useBlockServer(target, { face, hand: "main_hand" });
+  } finally {
+    await ctx.client.keyState(LEFT_SHIFT_KEY, false);
+  }
+}
+
 async function openInventory(ctx: Ctx) {
   await ctx.client.openInventory();
 }
@@ -139,12 +151,6 @@ async function assertSmithing(ctx: Ctx, baseItemId: ItemId, resultItemId: ItemId
   await ctx.recipes.assertSmithingTransform(baseItemId, resultItemId, {
     templateItemId: "minecraft:netherite_upgrade_smithing_template",
     additionItemId: "minecraft:netherite_ingot",
-  });
-}
-
-async function assertCommandOutput(ctx: Ctx, command: string, expectOutputContains: string[]) {
-  await ctx.commands.assert(command, {
-    expectOutputContains,
   });
 }
 
@@ -354,7 +360,7 @@ test("quickstash dumps backpack contents into a chest", async (ctx) => {
     ctx,
     'mochila:leather_backpack[minecraft:container=[{slot:0,item:{id:"minecraft:cobblestone",count:16}},{slot:1,item:{id:"minecraft:oak_log",count:8}}]]',
   );
-  await assertCommandOutput(ctx, "/mochila debug quickstash 2 200 0 north", ["Stored 24 items in Chest"]);
+  await sneakUseBlock(ctx, pos(2), "north");
   await waitMs(ctx, 250);
   await commandOutput(ctx, "/data get block 2 200 0 Items", ["minecraft:cobblestone", "minecraft:oak_log"]);
 });
@@ -362,7 +368,7 @@ test("quickstash dumps backpack contents into a chest", async (ctx) => {
 test("quickstash dumps backpack contents into a barrel", async (ctx) => {
   await buildContainerLine(ctx);
   await equipMainHand(ctx, 'mochila:iron_backpack[minecraft:container=[{slot:0,item:{id:"minecraft:dirt",count:32}}]]');
-  await assertCommandOutput(ctx, "/mochila debug quickstash 4 200 0 up", ["Stored 32 items in Barrel"]);
+  await sneakUseBlock(ctx, pos(4), "up");
   await waitMs(ctx, 250);
   await commandOutput(ctx, "/data get block 4 200 0 Items", ["minecraft:dirt"]);
 });
@@ -374,7 +380,7 @@ test("quickstash store mode only stores matching items", async (ctx) => {
     ctx,
     'mochila:leather_backpack[mochila:quickstash_mode=1,minecraft:container=[{slot:0,item:{id:"minecraft:cobblestone",count:16}},{slot:1,item:{id:"minecraft:oak_log",count:8}}]]',
   );
-  await assertCommandOutput(ctx, "/mochila debug quickstash 2 200 0 north", ["Stored 16 matching items in Chest"]);
+  await sneakUseBlock(ctx, pos(2), "north");
   await waitMs(ctx, 250);
   await commandOutput(ctx, "/data get block 2 200 0 Items", ["minecraft:cobblestone"]);
 });

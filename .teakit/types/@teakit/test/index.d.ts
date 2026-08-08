@@ -9,11 +9,6 @@ import type {
   RuntimeCapabilityMatrix,
   RuntimeCapabilityMatrixEntry,
   RuntimeHealth,
-  RuntimeRawRequest,
-  RuntimeRawResponse,
-  TeaKitHostOperation,
-  TeaKitHostPayload,
-  TeaKitHostResult,
 } from "./protocol";
 
 export type {
@@ -21,46 +16,17 @@ export type {
   AttachJsonRequest,
   AttachTextRequest,
   LoaderId,
-  RuntimeBridgeOptions,
   RuntimeCallOptions,
   RuntimeCapabilities,
   RuntimeCapability,
   RuntimeCapabilityMatrix,
   RuntimeCapabilityMatrixEntry,
-  RuntimeGetRequest,
   RuntimeHealth,
-  RuntimeRawRequest,
-  RuntimeRawResponse,
-  RuntimePath,
-  RuntimePostRequest,
-  TeaKitHostOperation,
-  TeaKitHostOperations,
-  TeaKitHostPayload,
-  TeaKitHostResult,
 } from "./protocol";
 
-type RequiredKeys<T> = {
-  [K in keyof T]-?: Record<never, never> extends Pick<T, K> ? never : K;
-}[keyof T];
-
-type HostPayloadArgs<K extends TeaKitHostOperation> =
-  RequiredKeys<TeaKitHostPayload<K>> extends never
-    ? [payload?: TeaKitHostPayload<K>]
-    : [payload: TeaKitHostPayload<K>];
-
 export interface TeaKitTestContext {
-  teakit: {
-    call<K extends TeaKitHostOperation>(
-      operation: K,
-      ...args: HostPayloadArgs<K>
-    ): Promise<TeaKitHostResult<K>>;
-    call<T = unknown, K extends string = string>(
-      operation: K extends TeaKitHostOperation ? never : K,
-      payload?: unknown,
-    ): Promise<T>;
-  };
   runtime: RuntimeApi;
-  scenario: ScenarioApi;
+  gametest: GameTestApi;
   commands: CommandApi;
   server: ServerApi;
   registry: RegistryApi;
@@ -91,22 +57,89 @@ export interface TeaKitTestInfo {
 export interface RuntimeApi {
   /** Read the TeaKit runtime health endpoint, including readiness and basic environment metadata. */
   health(options?: RuntimeCallOptions): Promise<RuntimeHealth>;
-  /** Read advertised runtime capabilities used for scenario feature negotiation. */
+  /** Read advertised runtime capabilities used for test feature negotiation. */
   capabilities(options?: RuntimeCallOptions): Promise<RuntimeCapabilities>;
-  get<T = unknown>(path: string, options?: RuntimeCallOptions): Promise<T>;
-  post<T = unknown>(path: string, body?: unknown, options?: RuntimeCallOptions): Promise<T>;
-  delete<T = unknown>(path: string, options?: RuntimeCallOptions): Promise<T>;
-  raw(request: RuntimeRawRequest): Promise<RuntimeRawResponse>;
   summary(options?: RuntimeCallOptions): Promise<RuntimeSummary>;
   lastError(options?: RuntimeCallOptions): Promise<RuntimeErrorSummary | null>;
-  /** Execute multiple runtime operations as one runtime-owned batch when TeaKit advertises `runtime.batch`. */
-  batch<T = unknown>(operations: RuntimeBatchOperation[], options?: RuntimeCallOptions): Promise<RuntimeBatchResult<T>>;
-  /** Wait inside the TeaKit runtime without routing through a legacy scenario action. */
+  /** Wait inside the TeaKit runtime. */
   wait(durationMs: number, options?: RuntimeCallOptions): Promise<RuntimeWaitResult>;
 }
 
-export interface ScenarioApi {
-  run(definition: ScenarioDefinition, options?: RuntimeCallOptions): Promise<ScenarioResult>;
+export type GameTestStrategy = "native_modern" | "native_legacy" | "polyfilled" | "mixed" | "unsupported";
+
+export type GameTestSelection =
+  | string
+  | string[]
+  | {
+      namespace?: string;
+      tests?: string[];
+      requiredOnly?: boolean;
+      pattern?: string;
+    };
+
+export interface GameTestCapabilities {
+  available: boolean;
+  strategy: GameTestStrategy;
+  nativeAvailable: boolean;
+  nativeStrategy: Exclude<GameTestStrategy, "mixed">;
+  polyfillAvailable: boolean;
+  supportsSelection: boolean;
+  supportsVerify: boolean;
+  supportsRequiredOnly: boolean;
+  supportsPattern: boolean;
+  supportsRepeat: boolean;
+  reason?: string;
+  message?: string;
+}
+
+export interface GameTestDescriptor {
+  id: string;
+  required: boolean;
+  setupTicks?: number;
+  timeoutTicks?: number;
+  strategy: GameTestStrategy;
+  native?: boolean;
+}
+
+export interface GameTestResultEntry {
+  id: string;
+  required: boolean;
+  status: "passed" | "failed" | "timed_out" | "cancelled" | (string & {});
+  startedAtTick: number;
+  finishedAtTick: number;
+  durationTicks: number;
+  attempt: number;
+  message?: string;
+}
+
+export interface GameTestRunOptions extends RuntimeCallOptions {
+  repeat?: number;
+  haltOnFailure?: boolean;
+  timeoutSeconds?: number;
+  /** Attach the structured result to the TeaKit report. Defaults to true. */
+  attachResult?: boolean;
+  artifactName?: string;
+}
+
+export interface GameTestRunResult {
+  ok: boolean;
+  strategy: GameTestStrategy;
+  startedAt: string;
+  finishedAt: string;
+  requested: string[];
+  repeat: number;
+  verify: boolean;
+  passed: GameTestResultEntry[];
+  failed: GameTestResultEntry[];
+  skipped: GameTestResultEntry[];
+  results: GameTestResultEntry[];
+}
+
+export interface GameTestApi {
+  capabilities(options?: RuntimeCallOptions): Promise<GameTestCapabilities>;
+  list(selection?: GameTestSelection, options?: RuntimeCallOptions): Promise<GameTestDescriptor[]>;
+  run(selection: GameTestSelection, options?: GameTestRunOptions): Promise<GameTestRunResult>;
+  verify(selection: GameTestSelection, options?: GameTestRunOptions): Promise<GameTestRunResult>;
 }
 
 export interface CommandCallOptions extends RuntimeCallOptions {
@@ -116,13 +149,19 @@ export interface CommandCallOptions extends RuntimeCallOptions {
 }
 
 export interface CommandApi {
-  run(command: string, options?: CommandCallOptions): Promise<ScenarioResult | ServerCommandResult>;
-  assert(command: string, options?: CommandCallOptions): Promise<ScenarioResult | ServerCommandResult>;
+  /** Run a command as the connected player. Use `server.command()` for a server command source. */
+  run(command: string, options?: CommandCallOptions): Promise<ServerCommandResult>;
+  /** Assert that a command executed successfully as the connected player. */
+  assert(command: string, options?: CommandCallOptions): Promise<ServerCommandResult>;
+  /** Run multiple commands as the connected player. */
+  batch(commands: string[], options?: CommandCallOptions): Promise<ServerCommandBatchResult>;
 }
 
 export interface ServerApi {
+  /** Run one command from the server command source. */
   command(command: string, options?: CommandCallOptions): Promise<ServerCommandResult>;
-  commands(commands: string[], options?: CommandCallOptions): Promise<ServerCommandResult>;
+  /** Run multiple commands from the server command source. */
+  commands(commands: string[], options?: CommandCallOptions): Promise<ServerCommandBatchResult>;
 }
 
 export interface RegistryApi {
@@ -139,8 +178,7 @@ export interface SpyApi {
   /**
    * Reset one spy, or all spies when no name is provided.
    *
-   * Legacy runtimes may implement this through JSON scenario actions. Newer runtimes
-   * should expose the `spy.calls` capability and preserve the same behavior.
+   * The runtime must expose the `spy.calls` capability.
    */
   reset(name?: string, options?: RuntimeCallOptions): Promise<SpyOperationResult>;
   /**
@@ -148,7 +186,7 @@ export interface SpyApi {
    */
   report(name?: string, options?: RuntimeCallOptions): Promise<SpyReport>;
   /**
-   * Record a synthetic call from the scenario itself.
+   * Record a synthetic call from the test itself.
    *
    * This is useful for correlating helper activity with runtime-owned probes.
    */
@@ -173,7 +211,7 @@ export interface SpyApi {
    * Attach a first-party server command probe handle where the runtime supports it.
    *
    * This is equivalent to `spy.observe({ kind: SpyKind.Command, ... })`, but gives
-   * scenario authors IDE completion for the stable TeaKit probe vocabulary.
+   * test authors IDE completion for the stable TeaKit probe vocabulary.
    */
   command(name: string, filters?: SpyProbeFilters, options?: RuntimeCallOptions): Promise<SpyHandle>;
   /**
@@ -312,8 +350,6 @@ export interface SpyReport {
   calls?: SpyCall[];
   /** Aggregate reports keyed by spy name when requesting all spies. */
   spies?: Record<string, SpyReport>;
-  /** Legacy scenario-run shape when a runtime without `/capabilities` served the fallback path. */
-  legacyScenario?: ScenarioResult;
   [key: string]: unknown;
 }
 
@@ -326,8 +362,6 @@ export interface SpyOperationResult {
   count?: number;
   /** Assertion or operation message when returned by the runtime. */
   message?: string;
-  /** Legacy scenario-run shape when a runtime without `/capabilities` served the fallback path. */
-  legacyScenario?: ScenarioResult;
   [key: string]: unknown;
 }
 
@@ -353,6 +387,8 @@ export interface WorldApi {
   fixture(name: string): WorldFixtureBuilder;
   /** Read the block state at a position. */
   block(pos: BlockPos, options?: RuntimeCallOptions): Promise<BlockState>;
+  /** Trigger one random tick at a block position. */
+  randomTick(pos: BlockPos, options?: RuntimeCallOptions): Promise<BlockTickResult>;
   /** Set a single block at a position. */
   setBlock(pos: BlockPos, block: BlockId | BlockStateInput, options?: RuntimeCallOptions): Promise<unknown>;
   /** Fill an inclusive block volume. */
@@ -360,7 +396,7 @@ export interface WorldApi {
   /** Clear an inclusive block volume to air. */
   clear(from: BlockPos, to: BlockPos, options?: RuntimeCallOptions): Promise<unknown>;
   /**
-   * Remove runtime-owned world fixtures and markers associated with a scenario namespace.
+   * Remove runtime-owned world fixtures and markers associated with a test namespace.
    *
    * This is intended for fast per-test cleanup without relaunching Minecraft.
    */
@@ -381,7 +417,7 @@ export interface WorldApi {
   container(pos: BlockPos): WorldContainerProbe;
   /** Ensure the target block has a stable floor and headroom for player movement. */
   ensureWalkable(pos: BlockPos, options?: RuntimeCallOptions): Promise<PathingResult>;
-  /** Build a water or fluid pool used by movement scenarios. */
+  /** Build a water or fluid pool used by movement tests. */
   pool(pos: BlockPos, options: PoolOptions, callOptions?: RuntimeCallOptions): Promise<PathingResult>;
   /** Build a ladder tower fixture for vertical pathing. */
   ladderTower(pos: BlockPos, options: LadderTowerOptions, callOptions?: RuntimeCallOptions): Promise<PathingResult>;
@@ -458,45 +494,73 @@ export interface RouteFixtureBuilder {
 export interface PlayerApi {
   self(options?: RuntimeCallOptions): Promise<PlayerRef>;
   position(options?: RuntimeCallOptions): Promise<Vec3>;
+  /** Read position, rotation, effects, and held-use state in one observed snapshot. */
+  pose(options?: RuntimeCallOptions): Promise<PlayerPose>;
+  /** Read the player's active effects. */
+  effects(options?: RuntimeCallOptions): Promise<PlayerEffect[]>;
+  /** Poll until the requested active effect is observed. */
+  waitForEffect(effect: string, options?: PlayerEffectWaitOptions): Promise<PlayerEffect>;
   teleport(pos: BlockPos | Vec3, options?: RuntimeCallOptions): Promise<unknown>;
   /** Reset player state such as game mode, health, food, effects, and inventory. */
   reset(state?: PlayerResetState, options?: RuntimeCallOptions): Promise<PlayerResetResult>;
   give(item: ItemId | ItemStackInput, count?: number, options?: RuntimeCallOptions): Promise<unknown>;
   inventory(options?: RuntimeCallOptions): PlayerInventoryProbe;
-  useItem(options?: RuntimeCallOptions): Promise<unknown>;
-  /** Craft a recipe through the player action facade. */
-  craft(recipe: ItemId, craftOptions?: CraftOptions, options?: RuntimeCallOptions): Promise<PlayerActionResult>;
+  useItem(options?: PlayerUseItemOptions): Promise<unknown>;
+  /** Drop one item or the selected stack from the main hand and return observed state. */
+  dropMainHand(options?: DropMainHandOptions, callOptions?: RuntimeCallOptions): Promise<PlayerDropResult>;
+  /** Hold or release Minecraft's use input. Held input is released automatically during test cleanup. */
+  holdUse(held: boolean, options?: RuntimeCallOptions): Promise<ClientScreen>;
   /** Equip an item in the player's hand or armor slot. */
-  equip(item: ItemId | ItemStackInput, options?: RuntimeCallOptions): Promise<PlayerActionResult>;
+  equip(item: ItemId | ItemStackInput, options?: RuntimeCallOptions): Promise<PlayerOperationResult>;
+  /** Start mining and return a cancellable task handle. */
+  mine(pos: BlockPos, mineOptions: PlayerOperationOptions & { wait: false }, options?: RuntimeCallOptions): DriverTaskHandle;
   /** Mine a block as the player, waiting until the runtime reports completion. */
-  mine(pos: BlockPos, mineOptions?: PlayerActionOptions, options?: RuntimeCallOptions): Promise<PlayerActionResult>;
+  mine(pos: BlockPos, mineOptions?: PlayerOperationOptions, options?: RuntimeCallOptions): Promise<DriverTaskSnapshot>;
   /** Place an item or block at a target position. */
   place(
     item: ItemId | ItemStackInput,
     pos: BlockPos,
-    placeOptions?: PlayerActionOptions,
+    placeOptions?: PlayerOperationOptions,
     options?: RuntimeCallOptions,
-  ): Promise<PlayerActionResult>;
+  ): Promise<PlayerOperationResult>;
   /** Open a block menu, such as a crafting table or container. */
-  openBlock(pos: BlockPos, options?: RuntimeCallOptions): Promise<PlayerActionResult>;
+  openBlock(pos: BlockPos, options?: RuntimeCallOptions): Promise<PlayerOperationResult>;
+  /** Use a block face without assuming it opens a menu. */
+  useBlock(pos: BlockPos, useOptions?: PlayerUseBlockOptions, options?: RuntimeCallOptions): Promise<PlayerOperationResult>;
+  /** Use a block face directly on the logical server without client-side interaction callbacks. */
+  useBlockServer(pos: BlockPos, useOptions?: PlayerUseBlockOptions, options?: RuntimeCallOptions): Promise<PlayerOperationResult>;
   /** Rotate the client or player toward a world target. */
-  lookAt(target: BlockPos | Vec3, options?: RuntimeCallOptions): Promise<PlayerActionResult>;
+  lookAt(target: BlockPos | Vec3, options?: RuntimeCallOptions): Promise<PlayerOperationResult>;
   /** Use an item on an entity reference. */
-  useItemOnEntity(entity: EntityRef, item: ItemId | ItemStackInput, options?: RuntimeCallOptions): Promise<PlayerActionResult>;
+  useItemOnEntity(
+    entity: EntityRef,
+    item?: ItemId | ItemStackInput,
+    interactionOptions?: PlayerEntityInteractionOptions,
+    options?: RuntimeCallOptions,
+  ): Promise<PlayerOperationResult>;
   /** Change the primary player's game mode. */
-  setGameMode(gameMode: "survival" | "creative" | "adventure" | "spectator" | string, options?: RuntimeCallOptions): Promise<PlayerActionResult>;
+  setGameMode(gameMode: "survival" | "creative" | "adventure" | "spectator" | string, options?: RuntimeCallOptions): Promise<PlayerOperationResult>;
+  /** Set and return the observed player fall distance. */
+  setFallDistance(value: number, options?: RuntimeCallOptions): Promise<PlayerOperationResult>;
+  /** Force the active fishing hook into its bite state. */
+  forceFishingBite(options?: RuntimeCallOptions): Promise<FishingBiteResult>;
   /** Read the player's current health. */
   health(options?: RuntimeCallOptions): Promise<number>;
   /** Walk to a target block position. */
-  walkTo(pos: BlockPos, options?: PlayerActionOptions): Promise<PlayerActionResult>;
+  walkTo(pos: BlockPos, options: PlayerOperationOptions & { wait: false }): DriverTaskHandle;
+  walkTo(pos: BlockPos, options?: PlayerOperationOptions): Promise<DriverTaskSnapshot>;
   /** Sprint-jump to a target block position. */
-  sprintJumpTo(pos: BlockPos, options?: PlayerActionOptions): Promise<PlayerActionResult>;
+  sprintJumpTo(pos: BlockPos, options: PlayerOperationOptions & { wait: false }): DriverTaskHandle;
+  sprintJumpTo(pos: BlockPos, options?: PlayerOperationOptions): Promise<DriverTaskSnapshot>;
   /** Swim to a target block position. */
-  swimTo(pos: BlockPos, options?: PlayerActionOptions): Promise<PlayerActionResult>;
+  swimTo(pos: BlockPos, options: PlayerOperationOptions & { wait: false }): DriverTaskHandle;
+  swimTo(pos: BlockPos, options?: PlayerOperationOptions): Promise<DriverTaskSnapshot>;
   /** Climb to a target block position. */
-  climbTo(pos: BlockPos, options?: PlayerActionOptions): Promise<PlayerActionResult>;
+  climbTo(pos: BlockPos, options: PlayerOperationOptions & { wait: false }): DriverTaskHandle;
+  climbTo(pos: BlockPos, options?: PlayerOperationOptions): Promise<DriverTaskSnapshot>;
   /** Ride a boat to a target block position. */
-  rideBoatTo(pos: BlockPos, options?: PlayerActionOptions): Promise<PlayerActionResult>;
+  rideBoatTo(pos: BlockPos, options: PlayerOperationOptions & { wait: false }): DriverTaskHandle;
+  rideBoatTo(pos: BlockPos, options?: PlayerOperationOptions): Promise<DriverTaskSnapshot>;
 }
 
 export interface ClientApi {
@@ -509,13 +573,29 @@ export interface ClientApi {
   waitForScreen(screen: string, options?: RuntimeCallOptions): Promise<ClientScreen>;
   /** Wait for at least `frames` rendered client frames before continuing. */
   waitForFrames(frames?: number, options?: RuntimeCallOptions): Promise<RenderFrameWaitResult>;
-  screenshot(name: string, options?: RuntimeCallOptions): Promise<ArtifactAttachment>;
+  screenshot(name: string, options?: ScreenshotOptions): Promise<ArtifactAttachment>;
   /** Rotate the client camera toward a world target. */
   lookAt(target: BlockPos | Vec3, options?: RuntimeCallOptions): Promise<unknown>;
   /** Send a client key press, optionally releasing it in the same call. */
   key(key: number, options?: ClientKeyOptions): Promise<ClientScreen>;
   /** Set whether a client key is currently held down. */
   keyState(key: number, held: boolean, options?: ClientKeyOptions): Promise<ClientScreen>;
+  /** Send an ordinary non-command message through Minecraft's real signed public-chat path. */
+  chat(message: string, options?: RuntimeCallOptions): Promise<{ message?: string; signedPath?: boolean; [key: string]: unknown }>;
+  /** Click an absolute client coordinate. Prefer semantic handles when possible. */
+  click(click: ClientMouseClick, options?: RuntimeCallOptions): Promise<ClientScreen>;
+  /** Scroll at an absolute client coordinate. Prefer semantic screen handles when possible. */
+  scroll(scroll: ClientMouseScroll, options?: RuntimeCallOptions): Promise<ClientScreen>;
+  /** Connect the client to a multiplayer server and wait for its world. */
+  connect(address: string, connectOptions?: ClientWorldWaitOptions, options?: RuntimeCallOptions): Promise<ClientConnectResult>;
+  /** Wait until the client has joined a world and has a player. */
+  waitForWorld(waitOptions?: ClientWorldWaitOptions, options?: RuntimeCallOptions): Promise<ClientWorldResult>;
+  /** Leave the current world and return to the appropriate menu. */
+  leaveWorld(options?: RuntimeCallOptions): Promise<LeaveWorldResult>;
+  /** Dispatch a command through Minecraft's client command path. */
+  command(command: string, options?: RuntimeCallOptions): Promise<ClientCommandResult>;
+  /** Sample rendered frame rate for a bounded period. */
+  measureFrames(options?: FrameMeasurementOptions, callOptions?: RuntimeCallOptions): Promise<FrameMeasurement>;
 }
 
 export interface RenderApi {
@@ -529,19 +609,33 @@ export interface RenderApi {
 
 export interface LootApi {
   /** Find dropped loot entities near a position. */
-  near(pos: BlockPos, query?: LootQuery, options?: RuntimeCallOptions): Promise<LootEntity[]>;
+  near(pos: BlockPos, query?: LootQuery, options?: RuntimeCallOptions): LootQueryHandle;
 }
 
 export interface EntitiesApi {
   /** Spawn an entity through the TeaKit runtime and return its stable reference. */
   spawn(type: EntityTypeId, pos: BlockPos | Vec3, options?: RuntimeCallOptions): Promise<EntityRef>;
+  /** Spawn a dropped item at the primary player's position. */
+  spawnItem(item: ItemId, count?: number, options?: RuntimeCallOptions): Promise<SpawnedItemResult>;
+  /** Damage the nearest matching entity around the primary player. */
+  damageNearest(type: EntityTypeId, options?: DamageNearestOptions, callOptions?: RuntimeCallOptions): Promise<EntityDamageResult>;
   /** Find the nearest entity of a type around a position. */
   nearest(type: EntityTypeId, pos: BlockPos | Vec3, options?: RuntimeCallOptions): Promise<EntityRef | null>;
+  /** Build an arbitrary-origin, waitable entity query. */
+  query(query: EntityQueryInput, options?: RuntimeCallOptions): EntityQueryHandle;
 }
 
 export interface RecipesApi {
   /** Craft a recipe in the currently open menu. */
   craftInOpenMenu(recipe: ItemId, craftOptions?: CraftOptions, options?: RuntimeCallOptions): Promise<CraftResult>;
+  /** Assert that one cooking recipe resolves to the expected result. */
+  assertCooking(
+    recipeType: CookingRecipeType,
+    input: ItemId,
+    result: ItemId,
+    recipeOptions?: RecipeAssertionOptions,
+    options?: RuntimeCallOptions,
+  ): Promise<CookingRecipeResult>;
   /** Assert that a crafting grid resolves to the expected item result. */
   assertCrafting(
     width: number,
@@ -623,28 +717,6 @@ export interface RuntimeErrorSummary {
   code?: string;
   message?: string;
   stack?: string;
-  details?: unknown;
-  [key: string]: unknown;
-}
-
-export interface RuntimeBatchOperation {
-  /** Runtime HTTP method used for this batched operation. */
-  method: "GET" | "POST" | "DELETE";
-  /** Runtime HTTP path beginning with `/`. */
-  path: `/${string}`;
-  /** JSON payload for `POST` operations. */
-  body?: unknown;
-  /** Optional stable operation ID used by runtime reports. */
-  id?: string;
-  [key: string]: unknown;
-}
-
-export interface RuntimeBatchResult<T = unknown> {
-  /** Whether every operation in the batch completed successfully. */
-  ok?: boolean;
-  /** Ordered runtime results, or runtime-defined transaction output. */
-  results?: T[];
-  /** Runtime-defined rollback or failure metadata. */
   details?: unknown;
   [key: string]: unknown;
 }
@@ -837,7 +909,7 @@ export interface WorldAreaSummary {
 export interface WorldCleanupResult {
   /** Whether the runtime accepted and completed cleanup. */
   ok?: boolean;
-  /** Scenario namespace that was cleaned up. */
+  /** Test namespace that was cleaned up. */
   namespace?: string;
   /** Runtime-owned fixture/entity/block count removed, when available. */
   removed?: number;
@@ -854,9 +926,9 @@ export interface PlayerResetState {
   /** Requested saturation value after reset. */
   saturation?: number;
   /** Use `"clear"` to remove active potion/status effects. */
-  effects?: "clear" | string[] | Record<string, unknown>;
+  effects?: "clear";
   /** Use `"clear"` to remove inventory contents. */
-  inventory?: "clear" | ItemStackInput[] | Record<string, unknown>;
+  inventory?: "clear";
   [key: string]: unknown;
 }
 
@@ -868,17 +940,103 @@ export interface PlayerResetResult {
   [key: string]: unknown;
 }
 
-export interface PlayerActionOptions {
+export interface PlayerOperationOptions {
   timeout?: string | number;
+  timeoutMs?: number;
+  interval?: string | number;
+  pollMs?: number;
+  wait?: boolean;
+  /** Select this hotbar slot only for a mining operation. */
+  toolSlot?: number;
   [key: string]: unknown;
 }
 
-export interface PlayerActionResult {
-  /** Whether the runtime accepted and completed the player action. */
+export interface PlayerUseItemOptions extends RuntimeCallOptions {
+  hand?: HandId;
+}
+
+export interface PlayerEntityInteractionOptions {
+  hand?: HandId;
+  count?: number;
+}
+
+export interface PlayerOperationResult {
+  /** Whether the runtime accepted and completed the player operation. */
   ok?: boolean;
-  /** Stable action name reported by the runtime. */
-  action?: string;
+  /** Stable operation name reported by the runtime. */
+  operation?: string;
   [key: string]: unknown;
+}
+
+export interface PlayerPose extends PlayerRef {
+  dimension?: string;
+  position: Vec3;
+  yaw: number;
+  pitch: number;
+  health?: number;
+  foodLevel?: number;
+  usingItem?: boolean;
+  blocking?: boolean;
+  usedHand?: string | null;
+  useItemRemainingTicks?: number;
+  useItemId?: ItemId | null;
+  activeEffects?: PlayerEffect[];
+}
+
+export interface PlayerEffect {
+  effectId: string;
+  duration: number;
+  amplifier: number;
+  ambient?: boolean;
+  visible?: boolean;
+  showIcon?: boolean;
+}
+
+export interface PlayerEffectWaitOptions extends RuntimeCallOptions {
+  minDuration?: number;
+  minAmplifier?: number;
+  timeout?: string | number;
+  interval?: string | number;
+  pollMs?: number;
+}
+
+export interface PlayerUseBlockOptions {
+  face?: DirectionId;
+  direction?: DirectionId;
+  hand?: HandId;
+  [key: string]: unknown;
+}
+
+export interface DropMainHandOptions {
+  count?: number;
+}
+
+export interface PlayerDropResult extends PlayerOperationResult {
+  dropped?: LootEntity;
+  inventory?: PlayerInventory;
+}
+
+export type DriverTaskStatus = "idle" | "planning" | "running" | "interacting" | "mining" | "succeeded" | "failed" | "cancelled" | string;
+
+export interface DriverTaskSnapshot {
+  taskId: string;
+  status: DriverTaskStatus;
+  done: boolean;
+  message?: string;
+  feet?: BlockPos | null;
+  goal?: BlockPos | null;
+  remainingPath?: number;
+  inputs?: string[];
+}
+
+export interface DriverTaskHandle {
+  readonly taskId: Promise<string>;
+  started(): Promise<PlayerOperationResult>;
+  status(options?: RuntimeCallOptions): Promise<DriverTaskSnapshot>;
+  wait(options?: PlayerOperationOptions): Promise<DriverTaskSnapshot>;
+  cancel(options?: RuntimeCallOptions): Promise<DriverTaskSnapshot>;
+  /** Internal inspection hook used by TeaKit driver matchers. */
+  $inspect(options?: RuntimeCallOptions): Promise<DriverTaskSnapshot>;
 }
 
 export interface SignPlacementResult {
@@ -894,10 +1052,36 @@ export interface SignPlacementResult {
 export interface RenderFrameWaitResult {
   /** Whether the runtime observed the requested frames. */
   ok?: boolean;
-  /** Number of frames requested by the scenario. */
+  /** Number of frames requested by the test. */
   frames?: number;
   /** Render tick or frame counter after the wait, when available. */
   currentFrame?: number;
+  [key: string]: unknown;
+}
+
+export interface FrameMeasurementOptions {
+  duration?: string | number;
+  durationMs?: number;
+  warmup?: string | number;
+  warmupMs?: number;
+  interval?: string | number;
+  pollMs?: number;
+}
+
+export interface FrameMeasurement {
+  durationMs: number;
+  pollMs: number;
+  warmupMs: number;
+  elapsedMs: number;
+  sampleCount: number;
+  minFps: number;
+  maxFps: number;
+  averageFps: number;
+  samples: number[];
+}
+
+export interface ClientCommandResult {
+  command: string;
   [key: string]: unknown;
 }
 
@@ -954,17 +1138,60 @@ export interface RenderedBlock {
 }
 
 export interface LootQuery {
+  item?: ItemId;
   itemLike?: ItemId;
   radius?: number;
   [key: string]: unknown;
 }
 
 export interface LootEntity {
+  id?: string;
+  uuid?: string;
+  type?: EntityTypeId;
   item?: ItemId;
   itemId?: ItemId;
   count?: number;
   pos?: Vec3;
   [key: string]: unknown;
+}
+
+export interface CountWaitOptions extends RuntimeCallOptions {
+  timeout?: string | number;
+  interval?: string | number;
+  pollMs?: number;
+}
+
+export interface WaitableQuery<T> extends PromiseLike<T[]> {
+  list(): Promise<T[]>;
+  catch<TResult = never>(onrejected?: ((reason: any) => TResult | PromiseLike<TResult>) | null): Promise<T[] | TResult>;
+  finally(onfinally?: (() => void) | null): Promise<T[]>;
+  waitForCount(count: number, options?: CountWaitOptions): Promise<T[]>;
+  waitForCountAtLeast(count: number, options?: CountWaitOptions): Promise<T[]>;
+  waitForCountAtMost(count: number, options?: CountWaitOptions): Promise<T[]>;
+}
+
+export interface LootQueryHandle extends WaitableQuery<LootEntity> {}
+
+export interface EntityQueryInput {
+  origin: BlockPos | Vec3;
+  radius?: number;
+  type?: EntityTypeId;
+  item?: ItemId;
+  sheared?: boolean;
+  readyForShearing?: boolean;
+  limit?: number;
+}
+
+export interface EntityRemovalResult {
+  ok: boolean;
+  removed: number;
+  entities: EntityRef[];
+  results: EntityActionResult[];
+}
+
+export interface EntityQueryHandle extends WaitableQuery<EntityRef> {
+  nearest(): Promise<EntityRef | null>;
+  removeAll(options?: RuntimeCallOptions): Promise<EntityRemovalResult>;
 }
 
 export interface CraftOptions {
@@ -1040,6 +1267,12 @@ export interface ServerCommandResult {
   [key: string]: unknown;
 }
 
+export interface ServerCommandBatchResult {
+  ok?: boolean;
+  results?: ServerCommandResult[];
+  [key: string]: unknown;
+}
+
 export interface RegistryLookupResult {
   missing?: string[];
   entries?: Record<string, unknown>;
@@ -1068,6 +1301,14 @@ export interface TestOptions {
   tags?: string[];
   readiness?: RuntimeReadiness[];
   capabilities?: RuntimeCapability[];
+  target?: TestTargetConstraint;
+}
+
+export interface TestTargetConstraint {
+  /** Minecraft version expression, for example `>=1.20 <1.22` or `26.2`. */
+  minecraft?: string;
+  /** One or more loader IDs accepted by this test. */
+  loader?: LoaderId | LoaderId[];
 }
 
 export type SuiteOptions = TestOptions;
@@ -1093,10 +1334,10 @@ export type RuntimeReadiness =
 
 /**
  * Runtime capability constants for `describe.configure()` and per-test `capabilities`.
- * Use these instead of raw protocol strings so scenario requirements stay typed and discoverable.
+ * Use these instead of raw protocol strings so test requirements stay typed and discoverable.
  */
 export declare const Capability: {
-  /** TeaKit runtime can report its supported actions, probes, and features. */
+  /** TeaKit runtime can report its supported capabilities and endpoints. */
   readonly RuntimeCapabilities: "runtime.capabilities";
   /** TeaKit runtime can return a diagnostic summary for the current client/session. */
   readonly RuntimeSummary: "runtime.summary";
@@ -1104,14 +1345,18 @@ export declare const Capability: {
   readonly RuntimeLastError: "runtime.lastError";
   /** TeaKit runtime can return log text and structured log entries. */
   readonly RuntimeLogs: "runtime.logs";
-  /** TeaKit runtime can execute multiple runtime operations as one batch. */
-  readonly RuntimeBatch: "runtime.batch";
-  /** TeaKit runtime can wait without routing through legacy scenario actions. */
+  /** TeaKit runtime can wait without blocking the host. */
   readonly RuntimeTiming: "runtime.timing";
   /** TeaKit runtime can record, query, and assert structured runtime events. */
   readonly RuntimeEvents: "runtime.events";
   /** TeaKit runtime can run world/player transactions with rollback and diagnostics. */
   readonly RuntimeTransactions: "runtime.transactions";
+  /** TeaKit runtime can discover registered GameTests. */
+  readonly GameTestList: "gametest.list";
+  /** TeaKit runtime can execute GameTests and return structured results. */
+  readonly GameTestRun: "gametest.run";
+  /** TeaKit runtime can repeat GameTests as a verification run. */
+  readonly GameTestVerify: "gametest.verify";
   /** TeaKit runtime can reset spies, record calls, report calls, and assert counts/order. */
   readonly SpyCalls: "spy.calls";
   /** TeaKit runtime can attach first-party probes to game behavior. */
@@ -1124,8 +1369,6 @@ export declare const Capability: {
   readonly ServerCommands: "server.commands";
   /** TeaKit runtime can look up registry IDs and report missing entries. */
   readonly RegistryLookup: "registry.lookup";
-  /** TeaKit runtime can execute legacy JSON scenario definitions. */
-  readonly LegacyJsonScenarios: "legacy-json-scenarios";
   /** TeaKit runtime can read block state at a position. */
   readonly WorldBlock: "world.block";
   /** TeaKit runtime can set a single block. */
@@ -1174,8 +1417,10 @@ export declare const Capability: {
   readonly PlayerInventory: "player.inventory";
   /** TeaKit runtime can make the primary player use the held item. */
   readonly PlayerUseItem: "player.useItem";
-  /** TeaKit runtime can perform higher-level player actions such as crafting, mining, and interacting. */
-  readonly PlayerActions: "player.actions";
+  /** TeaKit runtime can perform typed player interactions. */
+  readonly PlayerInteractions: "player.interactions";
+  /** TeaKit runtime can run and observe player driver tasks. */
+  readonly PlayerDriver: "player.driver";
   /** TeaKit runtime can inspect the current client screen. */
   readonly ClientScreen: "client.screen";
   /** TeaKit runtime can close menus and wait for stable screen IDs. */
@@ -1291,8 +1536,8 @@ export declare const SpyPacketTarget: {
  * required before a TeaKit implementation creates real Java proxy instances.
  */
 export declare const SpyProxyTarget: {
-  /** General callback shape for scenario-owned callback probes. */
-  readonly ScenarioCallback: "teakit.scenarioCallback";
+  /** General callback shape for test-owned callback probes. */
+  readonly TestCallback: "teakit.testCallback";
   /** TeaKit runtime lifecycle callback interface. */
   readonly RuntimeLifecycle: "teakit.runtimeLifecycle";
   /** Amber platform hook interface exposed through the cooperating runtime. */
@@ -1330,7 +1575,7 @@ export declare const Readiness: {
   readonly ClientReady: "client-ready";
   /** The primary player has spawned. */
   readonly PlayerSpawned: "player-spawned";
-  /** The integrated server is ready, when running singleplayer/client scenarios. */
+  /** The integrated server is ready, when running singleplayer/client tests. */
   readonly IntegratedServerReady: "integrated-server-ready";
   /** Resource reload has completed. */
   readonly ResourceReloadComplete: "resource-reload-complete";
@@ -1477,6 +1722,8 @@ export interface Matchers<T> {
   toEventuallyBeLessThan(expected: number, options?: EventuallyOptions): Promise<void>;
   /** Poll a function, or await a promise/value once, until it looks like a dead/removed entity. */
   toEventuallyBeDead(options?: EventuallyOptions): Promise<void>;
+  /** Inspect a driver task handle or snapshot and assert its current status. */
+  toHaveStatus(expected: DriverTaskStatus): Promise<void>;
   not: Matchers<T>;
   resolves: Matchers<Awaited<T>>;
   rejects: Matchers<unknown>;
@@ -1715,307 +1962,11 @@ export interface FixtureAnimalPenResult {
   [key: string]: unknown;
 }
 
-export interface ScenarioDefinition {
-  name?: string;
-  player?: string;
-  setup?: ScenarioStep[];
-  steps: ScenarioStep[];
-  cleanup?: ScenarioStep[];
-  [key: string]: unknown;
-}
-
-export type ScenarioStep =
-  | ActivateWidgetStep
-  | AssertSpyCalledStep
-  | AssertSpyCalledBeforeStep
-  | AssertSpyCountStep
-  | AssertSpyLastArgStep
-  | BreakBlockStep
-  | ClearNearbyEntitiesStep
-  | ClickMenuButtonStep
-  | ClickMenuSlotStep
-  | CloseMenuStep
-  | CommandStep
-  | DamageNearestEntityStep
-  | DropMainHandItemStep
-  | ForceFishingBiteStep
-  | InteractNearestEntityStep
-  | KeyStateStep
-  | LeaveWorldStep
-  | LookAtStep
-  | OpenInventoryStep
-  | ProbePlayerStep
-  | RandomTickBlockStep
-  | RunScenarioStep
-  | ScrollMouseStep
-  | SetUseHeldStep
-  | SpawnEntityStep
-  | SpawnItemStep
-  | SpyResetStep
-  | UseBlockStep
-  | UseBlockServerStep
-  | UseItemStep
-  | WaitForBlockStep
-  | WaitForEntityCountStep
-  | WaitForInventoryItemStep
-  | WaitForNoScreenStep
-  | WaitForScreenStep
-  | WaitMsStep;
-
-export interface StepFilters {
-  versions?: VersionSelector;
-  loaders?: LoaderSelector;
-}
-
-export interface VersionSelector {
-  include?: string | string[];
-  exclude?: string | string[];
-  min?: string;
-  max?: string;
-}
-
-export interface LoaderSelector {
-  include?: LoaderId | LoaderId[];
-  exclude?: LoaderId | LoaderId[];
-}
-
-export type HandId = "main_hand" | "off_hand" | string;
+ export type HandId = "main_hand" | "off_hand" | string;
 export type DirectionId = "up" | "down" | "north" | "south" | "east" | "west" | string;
 export type ClickTypeId = "PICKUP" | "QUICK_MOVE" | "SWAP" | "CLONE" | "THROW" | "QUICK_CRAFT" | "PICKUP_ALL" | string;
 
-export interface ScenarioStepBase extends StepFilters {
-  action: string;
-  comment?: string;
-}
-
-export interface ActivateWidgetStep extends ScenarioStepBase {
-  action: "activate_widget";
-  label: string;
-  waitAfterMs?: number;
-}
-
-export interface AssertSpyCalledStep extends ScenarioStepBase {
-  action: "assert_spy_called";
-  name: string;
-}
-
-export interface AssertSpyCalledBeforeStep extends ScenarioStepBase {
-  action: "assert_spy_called_before";
-  before: string;
-  after: string;
-}
-
-export interface AssertSpyCountStep extends ScenarioStepBase {
-  action: "assert_spy_count";
-  name: string;
-  count: number;
-}
-
-export interface AssertSpyLastArgStep extends ScenarioStepBase {
-  action: "assert_spy_last_arg";
-  name: string;
-  index: number;
-  value: unknown;
-}
-
-export interface BreakBlockStep extends ScenarioStepBase, BlockPos {
-  action: "break_block";
-  timeoutMs?: number;
-}
-
-export interface ClearNearbyEntitiesStep extends ScenarioStepBase {
-  action: "clear_nearby_entities";
-  radius: number;
-  entityType?: EntityTypeId;
-  timeoutMs?: number;
-}
-
-export interface ClickMenuButtonStep extends ScenarioStepBase {
-  action: "click_menu_button";
-  button: number;
-}
-
-export interface ClickMenuSlotStep extends ScenarioStepBase {
-  action: "click_menu_slot";
-  slot: number;
-  button?: number;
-  clickType?: ClickTypeId;
-}
-
-export interface CloseMenuStep extends ScenarioStepBase {
-  action: "close_menu";
-}
-
-export interface CommandStep extends ScenarioStepBase {
-  action: "command" | "assert_command";
-  command: string;
-  waitAfterMs?: number;
-}
-
-export interface DamageNearestEntityStep extends ScenarioStepBase {
-  action: "damage_nearest_entity";
-  radius: number;
-  amount: number;
-  entityType?: EntityTypeId;
-}
-
-export interface DropMainHandItemStep extends ScenarioStepBase {
-  action: "drop_main_hand_item";
-  count?: number;
-}
-
-export interface ForceFishingBiteStep extends ScenarioStepBase {
-  action: "force_fishing_bite";
-}
-
-export interface InteractNearestEntityStep extends ScenarioStepBase {
-  action: "interact_nearest_entity";
-  radius: number;
-  entityType?: EntityTypeId;
-  hand?: HandId;
-  targetX?: number;
-  targetY?: number;
-  targetZ?: number;
-  waitAfterMs?: number;
-}
-
-export interface KeyStateStep extends ScenarioStepBase {
-  action: "key_state";
-  key: number;
-  pressed: boolean;
-}
-
-export interface LeaveWorldStep extends ScenarioStepBase {
-  action: "leave_world";
-  waitAfterMs?: number;
-}
-
-export interface LookAtStep extends ScenarioStepBase, Vec3 {
-  action: "look_at";
-}
-
-export interface OpenInventoryStep extends ScenarioStepBase {
-  action: "open_inventory";
-}
-
-export interface ProbePlayerStep extends ScenarioStepBase {
-  action: "probe_player";
-  radius?: number;
-}
-
-export interface RandomTickBlockStep extends ScenarioStepBase, BlockPos {
-  action: "random_tick_block";
-}
-
-export interface RunScenarioStep extends ScenarioStepBase {
-  action: "run_scenario";
-  scenario: string;
-}
-
-export interface ScrollMouseStep extends ScenarioStepBase {
-  action: "scroll_mouse";
-  verticalAmount: number;
-  x?: number;
-  y?: number;
-}
-
-export interface SetUseHeldStep extends ScenarioStepBase {
-  action: "set_use_held";
-  held: boolean;
-}
-
-export interface SpawnEntityStep extends ScenarioStepBase {
-  action: "spawn_entity";
-  entityType: EntityTypeId;
-}
-
-export interface SpawnItemStep extends ScenarioStepBase {
-  action: "spawn_item";
-  itemId: ItemId;
-}
-
-export interface SpyResetStep extends ScenarioStepBase {
-  action: "spy_reset";
-  name?: string;
-}
-
-export interface UseBlockStep extends ScenarioStepBase, BlockPos {
-  action: "use_block";
-  direction?: DirectionId;
-  hand?: HandId;
-}
-
-export interface UseBlockServerStep extends ScenarioStepBase, BlockPos {
-  action: "use_block_server";
-  direction?: DirectionId;
-  hand?: HandId;
-}
-
-export interface UseItemStep extends ScenarioStepBase {
-  action: "use_item";
-}
-
-export interface WaitForBlockStep extends ScenarioStepBase, BlockPos {
-  action: "wait_for_block";
-  blockId?: BlockId;
-  block?: BlockId | BlockStateInput;
-  air?: boolean;
-  timeoutMs?: number;
-}
-
-export interface WaitForEntityCountStep extends ScenarioStepBase {
-  action: "wait_for_entity_count";
-  radius: number;
-  entityType?: EntityTypeId;
-  count: number;
-  timeoutMs?: number;
-  readyForShearing?: boolean;
-  sheared?: boolean;
-}
-
-export interface WaitForInventoryItemStep extends ScenarioStepBase {
-  action: "wait_for_inventory_item";
-  itemId?: ItemId;
-  count?: number;
-  displayNameContains?: string;
-  timeoutMs?: number;
-}
-
-export interface WaitForNoScreenStep extends ScenarioStepBase {
-  action: "wait_for_no_screen";
-  timeoutMs?: number;
-}
-
-export interface WaitForScreenStep extends ScenarioStepBase {
-  action: "wait_for_screen";
-  screenClass: string;
-  timeoutMs?: number;
-}
-
-export interface WaitMsStep extends ScenarioStepBase {
-  action: "wait_ms";
-  durationMs: number;
-}
-
-export interface ScenarioResult {
-  name?: string;
-  player?: string;
-  durationMs?: number;
-  setup?: ScenarioStepResult[];
-  steps?: ScenarioStepResult[];
-  cleanup?: ScenarioStepResult[];
-  [key: string]: unknown;
-}
-
-export interface ScenarioStepResult {
-  index?: number;
-  action?: string;
-  comment?: string;
-  result?: unknown;
-  [key: string]: unknown;
-}
-
-export interface BlockState {
+ export interface BlockState {
   id: BlockId;
   properties?: Record<string, string | number | boolean>;
   [key: string]: unknown;
@@ -2047,6 +1998,12 @@ export interface PlayerInventory {
 export type PlayerInventoryProbe = Promise<PlayerInventory> & {
   /** Read a stable inventory snapshot for artifact attachment or later comparison. */
   snapshot(options?: RuntimeCallOptions): Promise<PlayerInventorySnapshot>;
+  /** Select a hotbar slot and return the observed selected item. */
+  selectHotbar(slot: number, options?: RuntimeCallOptions): Promise<HotbarSelectionResult>;
+  /** Poll until a matching item is present. */
+  waitForItem(item: ItemId, options?: InventoryWaitOptions): Promise<PlayerInventory>;
+  /** Poll until no matching item remains. */
+  waitForItemAbsent(item: ItemId, options?: InventoryWaitOptions): Promise<PlayerInventory>;
 };
 
 export interface PlayerInventorySnapshot extends PlayerInventory {
@@ -2072,6 +2029,19 @@ export interface InventoryItemExpectationOptions {
   nbt?: Record<string, unknown>;
 }
 
+export interface InventoryWaitOptions extends InventoryItemExpectationOptions, RuntimeCallOptions {
+  timeout?: string | number;
+  interval?: string | number;
+  pollMs?: number;
+}
+
+export interface HotbarSelectionResult {
+  player?: string;
+  beforeSlot: number;
+  afterSlot: number;
+  selectedItem?: ItemStack | null;
+}
+
 export type InventoryMatcherResult<T> = T extends WorldContainerProbe | PlayerInventoryProbe ? Promise<void> : void;
 
 export interface WorldTime {
@@ -2093,6 +2063,205 @@ export interface WorldWeather {
 export interface ClientScreen {
   id?: string;
   title?: string;
-  widgets?: unknown[];
+  screenClass?: string;
+  open?: boolean;
+  widgets(): ScreenWidgetCollection;
+  lists(role?: string): ScreenListCollection;
+  menu(): ScreenMenuFacade;
+  scroll(options: ScreenScrollOptions, callOptions?: RuntimeCallOptions): Promise<ClientScreen>;
   [key: string]: unknown;
+}
+
+export interface ScreenWidgetSelector {
+  label?: string;
+  widgetClass?: string;
+  contains?: boolean;
+  nth?: number;
+}
+
+export interface ScreenWidgetSnapshot {
+  index: number;
+  widgetClass: string;
+  label: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  active: boolean;
+  visible: boolean;
+}
+
+export interface ScreenWidgetHandle {
+  activate(options?: RuntimeCallOptions): Promise<ClientScreen>;
+  click(options?: ScreenClickOptions, callOptions?: RuntimeCallOptions): Promise<ClientScreen>;
+}
+
+export interface ScreenWidgetCollection {
+  all(): ScreenWidgetSnapshot[];
+  activate(selector: string | ScreenWidgetSelector, options?: RuntimeCallOptions): Promise<ClientScreen>;
+  find(selector: string | ScreenWidgetSelector): ScreenWidgetHandle;
+}
+
+export interface ScreenListEntrySelector {
+  label: string;
+  contains?: boolean;
+  nth?: number;
+}
+
+export interface ScreenListEntrySnapshot {
+  listIndex: number;
+  entryIndex: number;
+  listRole?: string;
+  entryClass?: string;
+  label: string;
+  x: number;
+  y: number;
+  width: number;
+  height: number;
+  selected?: boolean;
+  visible?: boolean;
+}
+
+export interface ScreenListEntryHandle {
+  activate(options?: RuntimeCallOptions): Promise<ClientScreen>;
+}
+
+export interface ScreenListCollection {
+  entries(): ScreenListEntrySnapshot[];
+  entry(selector: string | ScreenListEntrySelector): ScreenListEntryHandle;
+}
+
+export interface ScreenMenuSlotSnapshot {
+  slot: number;
+  containerSlot?: number;
+  x?: number;
+  y?: number;
+  active?: boolean;
+  item?: ItemStack | null;
+}
+
+export interface ScreenMenuSlotHandle {
+  snapshot?: ScreenMenuSlotSnapshot;
+  click(options?: ScreenMenuClickOptions, callOptions?: RuntimeCallOptions): Promise<ClientScreen>;
+}
+
+export interface ScreenMenuFacade {
+  readonly snapshot?: Record<string, unknown>;
+  slots(): ScreenMenuSlotSnapshot[];
+  slot(slot: number): ScreenMenuSlotHandle;
+  button(button: number): ScreenMenuButtonHandle;
+}
+
+export interface ScreenMenuButtonHandle {
+  click(options?: RuntimeCallOptions): Promise<ClientScreen>;
+}
+
+export interface ScreenClickOptions {
+  button?: number;
+  modifiers?: number;
+  release?: boolean;
+}
+
+export interface ScreenMenuClickOptions {
+  button?: number;
+  clickType?: ClickTypeId;
+}
+
+export interface ScreenScrollOptions {
+  horizontal?: number;
+  vertical?: number;
+}
+
+export interface ClientMouseClick extends ScreenClickOptions {
+  x: number;
+  y: number;
+}
+
+export interface ClientMouseScroll {
+  x: number;
+  y: number;
+  horizontalAmount?: number;
+  verticalAmount?: number;
+}
+
+export interface ScreenshotOptions extends RuntimeCallOptions {
+  hideOverlay?: boolean;
+  hideWindowDecoration?: boolean;
+}
+
+export interface ClientWorldWaitOptions {
+  timeoutMs?: number;
+  pollMs?: number;
+}
+
+export interface ClientConnectResult {
+  address: string;
+  worldLoaded: boolean;
+  playerLoaded: boolean;
+}
+
+export interface ClientWorldResult {
+  worldLoaded: boolean;
+  playerName?: string;
+}
+
+export type CookingRecipeType = "smelting" | "blasting" | "smoking" | "campfire_cooking" | (string & {});
+
+export interface CookingRecipeResult {
+  recipeId: string;
+  recipeType: string;
+  inputItemId: ItemId;
+  result: ItemStack;
+  cookingTime: number;
+  experience: number;
+}
+
+export interface BlockTickResult {
+  x: number;
+  y: number;
+  z: number;
+  beforeBlock: BlockId;
+  afterBlock: BlockId;
+  dimension: string;
+}
+
+export interface FishingBiteResult {
+  player: string;
+  hookUuid: string;
+  hookType: EntityTypeId;
+  position: Vec3;
+  dimension: string;
+}
+
+export interface SpawnedItemResult {
+  action: string;
+  id: ItemId;
+  uuid: string;
+  player: string;
+  position: Vec3;
+  dimension: string;
+}
+
+export interface DamageNearestOptions {
+  radius?: number;
+  amount?: number;
+}
+
+export interface EntityDamageResult {
+  uuid: string;
+  type: EntityTypeId;
+  amount: number;
+  damaged: boolean;
+  healthBefore: number;
+  healthAfter: number;
+  alive: boolean;
+  position: Vec3;
+  dimension: string;
+}
+
+export interface LeaveWorldResult {
+  hadLevel: boolean;
+  beforeScreenClass?: string | null;
+  afterScreenClass?: string | null;
+  afterTitle?: string | null;
 }
