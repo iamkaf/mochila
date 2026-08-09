@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the full changelog at https://github.com/iamkaf/mochila
 
+## 6.1.1
+
+### Fixed
+
+- Fixed a dedicated-server crash when using quick stash.
+
 ## 6.1.0
 
 ### Changed
