@@ -100,6 +100,14 @@ async function waitForTitle(ctx: Ctx, title: string) {
   await ctx.client.waitForScreen(title, { timeoutMs: 15_000 });
 }
 
+async function waitForContainerSlots(ctx: Ctx, slots: number) {
+  await expect(() => ctx.client.screen()).toEventuallyEqual(expect.objectContaining({ open: true }), {
+    timeout: "15s",
+  });
+  const screen = await ctx.client.screen();
+  expect(screen.menu().slots().length).toEqual(slots);
+}
+
 async function useMainHandAndWaitForTitle(ctx: Ctx, title: string) {
   let lastError: unknown;
   for (let attempt = 0; attempt < 2; attempt++) {
@@ -126,7 +134,37 @@ async function closeMenu(ctx: Ctx) {
 
 async function keyTap(ctx: Ctx, key: number) {
   await ctx.client.keyState(key, true);
+  await waitMs(ctx, 100);
   await ctx.client.keyState(key, false);
+  await waitMs(ctx, 100);
+}
+
+async function shiftedKeyTap(ctx: Ctx, key: number) {
+  await ctx.client.keyState(LEFT_SHIFT_KEY, true);
+  try {
+    await keyTap(ctx, key);
+  } finally {
+    await ctx.client.keyState(LEFT_SHIFT_KEY, false);
+    await waitMs(ctx, 100);
+  }
+}
+
+async function equipCurio(ctx: Ctx, item: ItemId | string) {
+  await ctx.commands.run("/curios list", { expectOutputContains: ["back"] });
+  await ctx.commands.assert("/curios clear @p");
+  await ctx.commands.assert(`/mochila debug equip-accessory curios ${item}`);
+  await waitMs(ctx, 500);
+}
+
+async function equipTrinket(ctx: Ctx, item: ItemId, settleMs: number) {
+  await ctx.commands.assert("/gamemode survival");
+  await ctx.commands.run("/clear @s");
+  await ctx.commands.assert(`/mochila debug equip-accessory trinkets ${item}`);
+  if (settleMs > 0) {
+    await waitMs(ctx, settleMs);
+  }
+  await ctx.commands.assert("/mochila debug assert-equipped-mode 0");
+  await expect(ctx.player.inventory()).not.toContainItem(item);
 }
 
 async function sneakUseBlock(ctx: Ctx, target: BlockPos, face: "north" | "up") {
@@ -136,6 +174,7 @@ async function sneakUseBlock(ctx: Ctx, target: BlockPos, face: "north" | "up") {
     await ctx.player.useBlockServer(target, { face, hand: "main_hand" });
   } finally {
     await ctx.client.keyState(LEFT_SHIFT_KEY, false);
+    await waitMs(ctx, 100);
   }
 }
 
@@ -200,6 +239,13 @@ test("content item tags classify backpacks", async (ctx) => {
   await equipMainHand(ctx, "mochila:ender_backpack");
   await ctx.commands.assert("/execute if items entity @s weapon.mainhand #mochila:backpacks");
 });
+
+test("Accessories back slot tag includes backpacks", async (ctx) => {
+  await equipMainHand(ctx, "mochila:leather_backpack");
+  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #accessories:back");
+  await equipMainHand(ctx, "mochila:ender_backpack");
+  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #accessories:back");
+}, { tags: ["accessories"] });
 
 test("recipes include base and ender backpack shapes", async (ctx) => {
   await assertRecipe(ctx, 3, 3, [
@@ -328,7 +374,7 @@ test("backpack keybind opens and quickstash mode component persists", async (ctx
 
   await equipMainHand(ctx, "mochila:leather_backpack[mochila:quickstash_mode=1]");
   await ctx.commands.assert("/execute if items entity @s weapon.mainhand mochila:leather_backpack[mochila:quickstash_mode=1]");
-});
+}, { tags: ["keybind"] });
 
 test("backpack keeps container component contents", async (ctx) => {
   await equipMainHand(
@@ -352,7 +398,7 @@ test("ender backpack keybind opens menu", async (ctx) => {
   await keyTap(ctx, 86);
   await waitForTitle(ctx, "Ender Chest");
   await closeMenu(ctx);
-});
+}, { tags: ["keybind"] });
 
 test("quickstash dumps backpack contents into a chest", async (ctx) => {
   await buildContainerLine(ctx);
@@ -418,4 +464,134 @@ test("visual backpack menus render", async (ctx) => {
   await useMainHandAndWaitForTitle(ctx, "Ender Chest");
   await screenshot(ctx, "mochila-ender-backpack-menu");
   await closeMenu(ctx);
+});
+
+test("Curios accepts backpacks in the back slot", async (ctx) => {
+  await equipMainHand(ctx, "mochila:leather_backpack");
+  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #curios:back");
+  await equipMainHand(ctx, "mochila:ender_backpack");
+  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #curios:back");
+}, { tags: ["curios"], target: { loader: "neoforge" } });
+
+test("worn Curios backpacks open from their keybinds", async (ctx) => {
+  try {
+    await equipCurio(ctx, "mochila:ender_backpack");
+    await keyTap(ctx, 86);
+    await waitForContainerSlots(ctx, 63);
+    await closeMenu(ctx);
+
+    await equipCurio(ctx, "mochila:leather_backpack");
+    await ctx.commands.assert("/gamemode survival");
+    await openInventory(ctx);
+    const curiosInventory = await ctx.client.screen();
+    const curiosButton = curiosInventory.widgets().all().find(widget =>
+      widget.widgetClass === "top.theillusivec4.curios.client.screen.button.CuriosButton");
+    expect(curiosButton).toBeDefined();
+    if (!curiosButton) {
+      throw new Error("Curios did not expose its inventory button");
+    }
+    await ctx.client.click({
+      x: curiosButton.x + Math.floor(curiosButton.width / 2),
+      y: curiosButton.y + Math.floor(curiosButton.height / 2),
+    });
+    await ctx.client.waitForFrames(2);
+    const expandedCurios = await ctx.client.screen();
+    expect(expandedCurios.menu().slots().some(slot => slot.slot >= 46
+      && slot.item?.itemId === "mochila:leather_backpack")).toBe(true);
+    await screenshot(ctx, "mochila-curios-worn-backpack-inventory");
+    await closeMenu(ctx);
+    await keyTap(ctx, 66);
+    await waitForContainerSlots(ctx, 54);
+    await screenshot(ctx, "mochila-curios-worn-backpack-keybind-menu");
+    await closeMenu(ctx);
+  } finally {
+    await ctx.commands.run("/curios clear @p");
+  }
+}, { tags: ["curios"], target: { loader: "neoforge" } });
+
+test("worn Curios backpack mode changes from its keybind", async (ctx) => {
+  try {
+    await equipCurio(ctx, "mochila:leather_backpack");
+    await shiftedKeyTap(ctx, 66);
+    await waitMs(ctx, 250);
+    await ctx.commands.assert("/mochila debug assert-equipped-mode 1");
+  } finally {
+    await ctx.commands.run("/curios clear @p");
+  }
+}, { tags: ["curios"], target: { loader: "neoforge" } });
+
+async function assertTrinketsAcceptBackpacks(ctx: Ctx) {
+  await equipMainHand(ctx, "mochila:leather_backpack");
+  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #trinkets:chest/back");
+  await equipMainHand(ctx, "mochila:ender_backpack");
+  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #trinkets:chest/back");
+}
+
+async function assertWornTrinketsBackpacksOpen(ctx: Ctx, settleMs: number) {
+  await equipTrinket(ctx, "mochila:leather_backpack", settleMs);
+  await ctx.commands.assert("/mochila debug assert-equipped-mode 0");
+  await keyTap(ctx, 66);
+  await waitForContainerSlots(ctx, 54);
+  await screenshot(ctx, "mochila-trinkets-worn-backpack-keybind-menu");
+  await closeMenu(ctx);
+
+  await equipTrinket(ctx, "mochila:ender_backpack", settleMs);
+  await keyTap(ctx, 86);
+  await waitForContainerSlots(ctx, 63);
+  await closeMenu(ctx);
+
+  await equipTrinket(ctx, "mochila:leather_backpack", settleMs);
+  await ctx.client.openInventory();
+  const trinketsInventory = await ctx.client.screen();
+  const recipeButton = trinketsInventory.widgets().all().find(widget =>
+    widget.widgetClass === "net.minecraft.client.gui.components.ImageButton");
+  expect(recipeButton).toBeDefined();
+  if (!recipeButton) {
+    throw new Error("The player inventory did not expose its recipe button");
+  }
+  await ctx.client.click({ x: recipeButton.x - 88, y: recipeButton.y - 27 });
+  await ctx.client.waitForFrames(2);
+  const expandedTrinkets = await ctx.client.screen();
+  expect(expandedTrinkets.menu().slots().some(slot => slot.slot >= 46
+    && slot.active
+    && slot.item?.itemId === "mochila:leather_backpack")).toBe(true);
+  await screenshot(ctx, "mochila-trinkets-worn-backpack-inventory");
+  await keyTap(ctx, 256);
+}
+
+async function assertWornTrinketsModeChanges(ctx: Ctx, settleMs: number) {
+  await equipTrinket(ctx, "mochila:leather_backpack", settleMs);
+  await shiftedKeyTap(ctx, 66);
+  await waitMs(ctx, 250);
+  await ctx.commands.assert("/mochila debug assert-equipped-mode 1");
+}
+
+test("Trinkets accepts backpacks in the back slot on Fabric", assertTrinketsAcceptBackpacks, {
+  tags: ["trinkets"],
+  target: { loader: "fabric" },
+});
+
+test("worn Trinkets backpacks open from their keybinds on Fabric", (ctx) => assertWornTrinketsBackpacksOpen(ctx, 500), {
+  tags: ["trinkets", "keybind"],
+  target: { loader: "fabric" },
+});
+
+test("worn Trinkets backpack mode changes from its keybind on Fabric", (ctx) => assertWornTrinketsModeChanges(ctx, 500), {
+  tags: ["trinkets", "keybind"],
+  target: { loader: "fabric" },
+});
+
+test("Trinkets accepts backpacks in the back slot on NeoForge", assertTrinketsAcceptBackpacks, {
+  tags: ["trinkets"],
+  target: { minecraft: ">=26.1", loader: "neoforge" },
+});
+
+test("worn Trinkets backpacks open from their keybinds on NeoForge", (ctx) => assertWornTrinketsBackpacksOpen(ctx, 500), {
+  tags: ["trinkets", "keybind"],
+  target: { minecraft: ">=26.1", loader: "neoforge" },
+});
+
+test("worn Trinkets backpack mode changes from its keybind on NeoForge", (ctx) => assertWornTrinketsModeChanges(ctx, 500), {
+  tags: ["trinkets", "keybind"],
+  target: { minecraft: ">=26.1", loader: "neoforge" },
 });

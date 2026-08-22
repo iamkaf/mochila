@@ -3,6 +3,7 @@ package com.iamkaf.mochila.network;
 import com.iamkaf.amber.api.networking.v1.Packet;
 import com.iamkaf.amber.api.networking.v1.PacketContext;
 import com.iamkaf.mochila.item.BackpackItem;
+import com.iamkaf.mochila.item.backpack.BackpackAccess;
 import com.iamkaf.mochila.item.backpack.QuickStash;
 import com.iamkaf.mochila.registry.DataComponents;
 import net.minecraft.ChatFormatting;
@@ -10,7 +11,7 @@ import net.minecraft.network.FriendlyByteBuf;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSystemChatPacket;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.world.item.ItemStack;
+import net.minecraft.sounds.SoundEvents;
 
 public class ChangeBackpackModePacket implements Packet<ChangeBackpackModePacket> {
     private final int button;
@@ -35,21 +36,20 @@ public class ChangeBackpackModePacket implements Packet<ChangeBackpackModePacket
     public static void handle(ChangeBackpackModePacket packet, PacketContext context) {
         context.execute(() -> {
             ServerPlayer player = context.getServerPlayer();
-            ItemStack stack = player.getMainHandItem();
-
-            if (stack.getItem() instanceof BackpackItem) {
+            BackpackAccess.find(player, stack -> stack.getItem() instanceof BackpackItem).ifPresent(stack -> {
                 int oldMode = stack.getOrDefault(
                                 DataComponents.QUICKSTASH_MODE.get(),
                                 0
-                        );
+                );
                 int newMode = oldMode == 0 ? 1 : 0;
                 stack.set(DataComponents.QUICKSTASH_MODE.get(), newMode);
+                player.playSound(SoundEvents.UI_BUTTON_CLICK.value());
                 player.connection.send(new ClientboundSystemChatPacket(
                         Component.translatable("mochila.keybind_mode_changed", "§e" + QuickStash.getMode(stack))
                                 .withStyle(ChatFormatting.BLUE),
                         true
                 ));
-            }
+            });
         });
     }
 }

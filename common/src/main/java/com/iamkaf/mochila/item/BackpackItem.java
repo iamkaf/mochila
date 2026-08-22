@@ -3,6 +3,7 @@ package com.iamkaf.mochila.item;
 import com.iamkaf.amber.api.functions.v1.ClientFunctions.SmartTooltip;
 import com.iamkaf.mochila.MochilaConfig;
 import com.iamkaf.mochila.item.backpack.BackpackContainer;
+import com.iamkaf.mochila.item.backpack.BackpackAccess;
 import com.iamkaf.mochila.item.backpack.BackpackMenu;
 import com.iamkaf.mochila.item.backpack.QuickStash;
 import com.iamkaf.mochila.registry.DataComponents;
@@ -42,16 +43,8 @@ public class BackpackItem extends Item {
     }
 
     public static void onBackpackKeybindPressed(ServerPlayer player) {
-        // TODO: test if this works for backpacks in the armor slots and backpacks in a
-        //  trinket/curio/accessory slot.
-        var inventory = player.getInventory();
-        for (int i = 0; i < inventory.getContainerSize(); ++i) {
-            ItemStack stack = inventory.getItem(i);
-            if (stack.getItem() instanceof BackpackItem backpack) {
-                backpack.openForPlayer(player, stack);
-                return;
-            }
-        }
+        BackpackAccess.find(player, stack -> stack.getItem() instanceof BackpackItem)
+                .ifPresent(stack -> ((BackpackItem) stack.getItem()).openForPlayer(player, stack));
     }
 
     public void openForPlayer(Player player, ItemStack stack) {

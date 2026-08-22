@@ -11,3 +11,9 @@ pluginManagement {
 plugins {
     id("com.iamkaf.multiloader.settings") version providers.gradleProperty("project.plugins").get()
 }
+
+dependencyResolutionManagement {
+    versionCatalogs.named("libsMc262") {
+        version("neoforge", "26.2.0.26-beta")
+    }
+}

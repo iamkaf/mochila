@@ -2,13 +2,17 @@ package com.iamkaf.mochila.debug;
 
 import com.iamkaf.amber.api.event.v1.events.common.CommandEvents;
 import com.iamkaf.mochila.item.BackpackItem;
+import com.iamkaf.mochila.item.EnderBackpackItem;
+import com.iamkaf.mochila.item.backpack.BackpackAccess;
 import com.iamkaf.mochila.item.backpack.BackpackContainer;
-import com.iamkaf.mochila.item.backpack.QuickStash;
 import com.iamkaf.mochila.item.backpack.BackpackUtils;
+import com.iamkaf.mochila.item.backpack.QuickStash;
+import com.iamkaf.mochila.platform.Services;
 import com.iamkaf.mochila.recipe.BackpackColoring;
 import com.iamkaf.mochila.recipe.BackpackUpgrading;
 import com.iamkaf.mochila.registry.DataComponents;
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.IntegerArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -67,6 +71,13 @@ public final class MochilaDebugCommands {
                         .then(Commands.literal("assert-sample")
                                 .then(Commands.argument("item", ItemArgument.item(registryAccess))
                                         .executes(MochilaDebugCommands::assertSample)))
+                        .then(Commands.literal("assert-equipped-mode")
+                                .then(Commands.argument("mode", IntegerArgumentType.integer(0, 1))
+                                        .executes(MochilaDebugCommands::assertEquippedMode)))
+                        .then(Commands.literal("equip-accessory")
+                                .then(Commands.argument("backend", StringArgumentType.word())
+                                        .then(Commands.argument("item", ItemArgument.item(registryAccess))
+                                                .executes(MochilaDebugCommands::equipAccessory))))
                         .then(Commands.literal("recipe")
                                 .then(Commands.literal("color")
                                         .then(Commands.argument("dye", ItemArgument.item(registryAccess))
@@ -164,6 +175,36 @@ public final class MochilaDebugCommands {
         }
 
         context.getSource().sendSuccess(() -> Component.literal("Sample backpack assertions passed."), false);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int assertEquippedMode(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        int expected = IntegerArgumentType.getInteger(context, "mode");
+        ItemStack backpack = BackpackAccess.find(player, stack -> stack.getItem() instanceof BackpackItem)
+                .orElse(ItemStack.EMPTY);
+        if (backpack.isEmpty()) {
+            return fail(context, "No equipped backpack found.");
+        }
+        int actual = backpack.getOrDefault(DataComponents.QUICKSTASH_MODE.get(), 0);
+        if (actual != expected) {
+            return fail(context, "Expected equipped backpack mode " + expected + " but found " + actual + ".");
+        }
+        context.getSource().sendSuccess(() -> Component.literal("Equipped backpack mode assertion passed."), false);
+        return Command.SINGLE_SUCCESS;
+    }
+
+    private static int equipAccessory(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        ItemStack stack = createItemStack(ItemArgument.getItem(context, "item"));
+        if (!(stack.getItem() instanceof BackpackItem || stack.getItem() instanceof EnderBackpackItem)) {
+            return fail(context, "Item is not a Mochila backpack.");
+        }
+        String backend = StringArgumentType.getString(context, "backend");
+        if (!Services.PLATFORM.equipAccessoryForDebug(player, backend, stack)) {
+            return fail(context, "No " + backend + " back slot is available.");
+        }
+        context.getSource().sendSuccess(() -> Component.literal("Equipped backpack in " + backend + "."), false);
         return Command.SINGLE_SUCCESS;
     }
 

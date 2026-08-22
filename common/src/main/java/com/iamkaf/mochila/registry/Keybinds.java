@@ -3,8 +3,6 @@ package com.iamkaf.mochila.registry;
 import com.iamkaf.amber.api.event.v1.events.common.client.ClientTickEvents;
 import com.iamkaf.amber.api.registry.v1.KeybindHelper;
 import com.iamkaf.mochila.Constants;
-import com.iamkaf.mochila.item.BackpackItem;
-import com.iamkaf.mochila.item.EnderBackpackItem;
 import com.iamkaf.mochila.network.ChangeBackpackModePacket;
 import com.iamkaf.mochila.network.MochilaNetworking;
 import com.iamkaf.mochila.network.OpenBackpackPacket;
@@ -12,11 +10,7 @@ import com.iamkaf.mochila.network.OpenEnderBackpackPacket;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.sounds.SoundEvents;
-import net.minecraft.world.item.ItemStack;
 import org.lwjgl.glfw.GLFW;
-
-import static com.iamkaf.mochila.item.BackpackItem.BACKPACK_EQUIP_SOUND;
 
 public class Keybinds {
     public static final KeyMapping.Category MOCHILA_CATEGORY = KeyMapping.Category.register(Constants.resource("mochila"));
@@ -44,26 +38,9 @@ public class Keybinds {
                 }
 
                 if (minecraft.hasShiftDown()) {
-                    if (player.getMainHandItem().getItem() instanceof BackpackItem) {
-                        player.playSound(SoundEvents.UI_BUTTON_CLICK.value());
-                        MochilaNetworking.CHANNEL.sendToServer(new ChangeBackpackModePacket(0));
-                    }
+                    MochilaNetworking.CHANNEL.sendToServer(new ChangeBackpackModePacket(0));
                 } else {
-                    // Check if player has backpack before playing sound
-                    boolean hasBackpack = false;
-                    var inventory = player.getInventory();
-                    for (int i = 0; i < inventory.getContainerSize(); ++i) {
-                        ItemStack stack = inventory.getItem(i);
-                        if (stack.getItem() instanceof BackpackItem) {
-                            hasBackpack = true;
-                            break;
-                        }
-                    }
-                    
-                    if (hasBackpack) {
-                        player.playSound(BACKPACK_EQUIP_SOUND.value());
-                        MochilaNetworking.CHANNEL.sendToServer(new OpenBackpackPacket(0));
-                    }
+                    MochilaNetworking.CHANNEL.sendToServer(new OpenBackpackPacket(0));
                 }
             }
 
@@ -73,19 +50,7 @@ public class Keybinds {
                     return;
                 }
 
-                boolean hasEnderBackpack = false;
-                var inventory = player.getInventory();
-                for (int i = 0; i < inventory.getContainerSize(); ++i) {
-                    ItemStack stack = inventory.getItem(i);
-                    if (stack.getItem() instanceof EnderBackpackItem) {
-                        hasEnderBackpack = true;
-                        break;
-                    }
-                }
-
-                if (hasEnderBackpack) {
-                    MochilaNetworking.CHANNEL.sendToServer(new OpenEnderBackpackPacket());
-                }
+                MochilaNetworking.CHANNEL.sendToServer(new OpenEnderBackpackPacket());
             }
         });
     }

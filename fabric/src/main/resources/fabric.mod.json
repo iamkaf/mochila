@@ -39,7 +39,9 @@
     },
     "suggests": {
         "modmenu": ">=${mod_menu_version}",
-        "jei": "*"
+        "jei": "*",
+        "trinkets": "*",
+        "accessories": "*"
     }
 }
   

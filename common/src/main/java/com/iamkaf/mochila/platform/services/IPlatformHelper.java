@@ -1,5 +1,11 @@
 package com.iamkaf.mochila.platform.services;
 
+import net.minecraft.server.level.ServerPlayer;
+import net.minecraft.world.item.ItemStack;
+
+import java.util.Optional;
+import java.util.function.Predicate;
+
 public interface IPlatformHelper {
 
     /**
@@ -30,6 +36,14 @@ public interface IPlatformHelper {
      * @return The config directory path.
      */
     java.nio.file.Path getConfigDirectory();
+
+    default Optional<ItemStack> findEquippedItem(ServerPlayer player, Predicate<ItemStack> predicate) {
+        return Optional.empty();
+    }
+
+    default boolean equipAccessoryForDebug(ServerPlayer player, String backend, ItemStack stack) {
+        return false;
+    }
 
     /**
      * Gets the name of the environment type as a string.

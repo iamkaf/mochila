@@ -1,5 +1,6 @@
 package com.iamkaf.mochila.item;
 
+import com.iamkaf.mochila.item.backpack.BackpackAccess;
 import net.minecraft.core.Holder;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.protocol.game.ClientboundSoundPacket;
@@ -29,14 +30,8 @@ public class EnderBackpackItem extends Item {
     }
 
     public static void onEnderBackpackKeybindPressed(ServerPlayer player) {
-        var inventory = player.getInventory();
-        for (int i = 0; i < inventory.getContainerSize(); ++i) {
-            ItemStack stack = inventory.getItem(i);
-            if (stack.getItem() instanceof EnderBackpackItem enderBackpack) {
-                enderBackpack.openForPlayer(player, stack);
-                return;
-            }
-        }
+        BackpackAccess.find(player, stack -> stack.getItem() instanceof EnderBackpackItem)
+                .ifPresent(stack -> ((EnderBackpackItem) stack.getItem()).openForPlayer(player, stack));
     }
 
     @Override
