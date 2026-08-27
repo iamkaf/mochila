@@ -7,11 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the full changelog at https://github.com/iamkaf/mochila
 
-## 6.1.1
+## 6.2.0
 
-### Fixed
+### Added
 
-- Fixed a dedicated-server crash when using quick stash.
+- Backpacks can now be equipped in Curios and Trinkets back slots. Accessories also recognizes them as back-slot items.
+- Backpack controls now find equipped backpacks, including the ender backpack and quick-stash mode controls.
 
 ## 6.1.0
 
