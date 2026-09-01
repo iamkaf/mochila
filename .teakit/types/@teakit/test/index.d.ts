@@ -25,6 +25,7 @@ export type {
 } from "./protocol";
 
 export interface TeaKitTestContext {
+  session: SessionApi;
   runtime: RuntimeApi;
   gametest: GameTestApi;
   commands: CommandApi;
@@ -42,6 +43,27 @@ export interface TeaKitTestContext {
   recipes: RecipesApi;
   expectEvent: ExpectEventApi;
   artifacts: ArtifactApi;
+}
+
+export interface SessionInfo {
+  paired: boolean;
+  client: boolean;
+  server: boolean;
+}
+
+export interface SessionControlPlaneApi {
+  health(options?: RuntimeCallOptions): Promise<RuntimeHealth>;
+  capabilities(options?: RuntimeCallOptions): Promise<RuntimeCapabilities>;
+}
+
+/**
+ * The control planes owned by this test run. Domain APIs route client actions
+ * to `client` and authoritative world/server operations to `server`.
+ */
+export interface SessionApi {
+  info(): Promise<SessionInfo>;
+  client: SessionControlPlaneApi;
+  server: SessionControlPlaneApi;
 }
 
 export interface TeaKitTestInfo {
