@@ -9,7 +9,7 @@ plugins {
 
 val minecraftVersion = project.name
 val isModernLine = !minecraftVersion.startsWith("1.")
-val hasRuntimeJei = !minecraftVersion.startsWith("26.2")
+val hasRuntimeJei = !minecraftVersion.startsWith("26.2") && !minecraftVersion.startsWith("26.3")
 val catalog = mcCatalog(minecraftVersion)
 val useTeaKit = providers.systemProperty("mochila.withTeaKit")
     .orElse(providers.gradleProperty("mochila.withTeaKit"))
