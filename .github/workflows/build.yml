@@ -20,4 +20,3 @@ jobs:
 
     with:
       teakit-runner: gradle
-      teakit-loaders: fabric,forge,neoforge
