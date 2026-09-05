@@ -12,6 +12,11 @@
       "sdk" : [ "runtime.summary()" ],
       "endpoints" : [ "GET /runtime/summary" ]
     },
+    "runtime.mods" : {
+      "category" : "runtime",
+      "sdk" : [ "runtime.mods.isLoaded()" ],
+      "endpoints" : [ "POST /runtime/mods/lookup" ]
+    },
     "runtime.lastError" : {
       "category" : "runtime",
       "sdk" : [ "runtime.lastError()" ],

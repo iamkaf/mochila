@@ -54,6 +54,7 @@ export interface RuntimeEndpointMetadata {
 export type RuntimeCapability =
   | "runtime.capabilities"
   | "runtime.summary"
+  | "runtime.mods"
   | "runtime.lastError"
   | "runtime.logs"
   | "runtime.timing"

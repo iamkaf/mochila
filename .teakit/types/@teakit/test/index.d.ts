@@ -25,6 +25,7 @@ export type {
 } from "./protocol";
 
 export interface TeaKitTestContext {
+  session: SessionApi;
   runtime: RuntimeApi;
   gametest: GameTestApi;
   commands: CommandApi;
@@ -44,6 +45,27 @@ export interface TeaKitTestContext {
   artifacts: ArtifactApi;
 }
 
+export interface SessionInfo {
+  paired: boolean;
+  client: boolean;
+  server: boolean;
+}
+
+export interface SessionControlPlaneApi {
+  health(options?: RuntimeCallOptions): Promise<RuntimeHealth>;
+  capabilities(options?: RuntimeCallOptions): Promise<RuntimeCapabilities>;
+}
+
+/**
+ * The control planes owned by this test run. Domain APIs route client actions
+ * to `client` and authoritative world/server operations to `server`.
+ */
+export interface SessionApi {
+  info(): Promise<SessionInfo>;
+  client: SessionControlPlaneApi;
+  server: SessionControlPlaneApi;
+}
+
 export interface TeaKitTestInfo {
   name: string;
   slug: string;
@@ -60,9 +82,20 @@ export interface RuntimeApi {
   /** Read advertised runtime capabilities used for test feature negotiation. */
   capabilities(options?: RuntimeCallOptions): Promise<RuntimeCapabilities>;
   summary(options?: RuntimeCallOptions): Promise<RuntimeSummary>;
+  mods: RuntimeModsApi;
   lastError(options?: RuntimeCallOptions): Promise<RuntimeErrorSummary | null>;
   /** Wait inside the TeaKit runtime. */
   wait(durationMs: number, options?: RuntimeCallOptions): Promise<RuntimeWaitResult>;
+}
+
+export interface RuntimeModCallOptions extends RuntimeCallOptions {
+  /** Select a control plane in paired client/server sessions. */
+  side?: "client" | "server";
+}
+
+export interface RuntimeModsApi {
+  /** Return whether the selected runtime control plane loaded this mod ID. */
+  isLoaded(modId: string, options?: RuntimeModCallOptions): Promise<boolean>;
 }
 
 export type GameTestStrategy = "native_modern" | "native_legacy" | "polyfilled" | "mixed" | "unsupported";
@@ -1309,6 +1342,8 @@ export interface TestTargetConstraint {
   minecraft?: string;
   /** One or more loader IDs accepted by this test. */
   loader?: LoaderId | LoaderId[];
+  /** One or more mod IDs that must all be loaded for this test to run. */
+  mods?: string | string[];
 }
 
 export type SuiteOptions = TestOptions;
@@ -1341,6 +1376,8 @@ export declare const Capability: {
   readonly RuntimeCapabilities: "runtime.capabilities";
   /** TeaKit runtime can return a diagnostic summary for the current client/session. */
   readonly RuntimeSummary: "runtime.summary";
+  /** TeaKit runtime can query loaded mods by ID. */
+  readonly RuntimeMods: "runtime.mods";
   /** TeaKit runtime can return the most recent structured runtime error, if one exists. */
   readonly RuntimeLastError: "runtime.lastError";
   /** TeaKit runtime can return log text and structured log entries. */
