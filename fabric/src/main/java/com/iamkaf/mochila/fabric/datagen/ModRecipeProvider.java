@@ -8,6 +8,11 @@ import com.iamkaf.mochila.recipe.BackpackUpgrading;
 //? if >=26.1
 import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricRecipeProvider;
+//? if >=26.3 {
+/*import net.minecraft.advancements.Advancement;
+import net.minecraft.data.worldgen.BootstrapContext;
+import net.minecraft.world.item.crafting.Recipe;
+*///?}
 import net.minecraft.core.HolderLookup;
 import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.data.recipes.*;
@@ -20,15 +25,19 @@ import org.jetbrains.annotations.NotNull;
 import java.util.concurrent.CompletableFuture;
 
 public class ModRecipeProvider extends RecipeProvider {
+    //? if >=26.3 {
+    /*private ModRecipeProvider(BootstrapContext<Recipe<?>> recipes, BootstrapContext<Advancement> advancements) {
+        super(recipes, advancements);
+    }
+    *///?} else {
     protected ModRecipeProvider(HolderLookup.Provider provider, RecipeOutput recipeOutput) {
         super(provider, recipeOutput);
     }
+    //?}
 
     @Override
     public void buildRecipes() {
-        ShapedRecipeBuilder.shaped(
-                        registries.lookupOrThrow(BuiltInRegistries.ITEM.key()),
-                        RecipeCategory.TOOLS,
+        shaped(RecipeCategory.TOOLS,
                         com.iamkaf.mochila.registry.Items.LEATHER_BACKPACK.get()
                 )
                 .pattern("ABA")
@@ -42,9 +51,7 @@ public class ModRecipeProvider extends RecipeProvider {
                 .unlockedBy("has_leather", has(Items.LEATHER))
                 .save(output);
 
-        ShapedRecipeBuilder.shaped(
-                        registries.lookupOrThrow(BuiltInRegistries.ITEM.key()),
-                        RecipeCategory.TOOLS,
+        shaped(RecipeCategory.TOOLS,
                         com.iamkaf.mochila.registry.Items.ENDER_BACKPACK.get()
                 )
                 .pattern("ABA")
@@ -167,10 +174,17 @@ public class ModRecipeProvider extends RecipeProvider {
         }
 
         @Override
+        //? if >=26.3 {
+        /*protected @NotNull RecipeProvider createRecipeProvider(HolderLookup.@NotNull Provider registries,
+                BootstrapContext<Recipe<?>> recipes, BootstrapContext<Advancement> advancements) {
+            return new ModRecipeProvider(recipes, advancements);
+        }
+        *///?} else {
         protected @NotNull RecipeProvider createRecipeProvider(HolderLookup.@NotNull Provider registries,
                 @NotNull RecipeOutput output) {
             return new ModRecipeProvider(registries, output);
         }
+        //?}
 
         @Override
         public @NotNull String getName() {
