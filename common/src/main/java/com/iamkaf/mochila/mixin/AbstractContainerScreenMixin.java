@@ -25,7 +25,10 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
         super(title);
     }
 
-    @Inject(method = "slotClicked", at = @At("HEAD"), cancellable = true)
+    //? if >=26.1
+    @Inject(method = "slotClicked(Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V", at = @At("HEAD"), cancellable = true)
+    //? if <26.1
+    /*@Inject(method = "slotClicked(Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ClickType;)V", at = @At("HEAD"), cancellable = true)*/
     //? if >=26.1
     protected void mochila$slotClicked(Slot slot, int slotId, int mouseButton, ContainerInput type,
     //? if <26.1

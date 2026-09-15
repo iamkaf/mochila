@@ -14,19 +14,17 @@ import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
 import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
-import org.lwjgl.glfw.GLFW;
 
 import static com.iamkaf.mochila.item.BackpackItem.BACKPACK_EQUIP_SOUND;
 
 public class Keybinds {
     public static final KeyMapping.Category MOCHILA_CATEGORY = KeyMapping.Category.register(Constants.resource("mochila"));
     public static final KeyMapping OPEN_BACKPACK =
-            new KeyMapping("key.mochila.open_backpack", InputConstants.Type.KEYSYM, GLFW.GLFW_KEY_B, MOCHILA_CATEGORY);
+            new KeyMapping("key.mochila.open_backpack", InputConstants.KEY_B, MOCHILA_CATEGORY);
     public static final KeyMapping OPEN_ENDER_BACKPACK =
             new KeyMapping(
                     "key.mochila.open_ender_backpack",
-                    InputConstants.Type.KEYSYM,
-                    GLFW.GLFW_KEY_V,
+                    InputConstants.KEY_V,
                     MOCHILA_CATEGORY
             );
 
