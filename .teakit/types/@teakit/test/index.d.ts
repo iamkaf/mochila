@@ -525,6 +525,8 @@ export interface RouteFixtureBuilder {
 }
 
 export interface PlayerApi {
+  /** Server-side players for testing multiplayer behavior. They have no client UI or input. */
+  fake: FakePlayerApi;
   self(options?: RuntimeCallOptions): Promise<PlayerRef>;
   position(options?: RuntimeCallOptions): Promise<Vec3>;
   /** Read position, rotation, effects, and held-use state in one observed snapshot. */
@@ -579,21 +581,63 @@ export interface PlayerApi {
   forceFishingBite(options?: RuntimeCallOptions): Promise<FishingBiteResult>;
   /** Read the player's current health. */
   health(options?: RuntimeCallOptions): Promise<number>;
-  /** Walk to a target block position. */
+  /** Choose among allowed travel modes, adapting to terrain and live player state. A position without `y` is a column:
+   * the trip stands on its surface once its chunk loads. */
+  travelTo(pos: BlockPos | ColumnPos, options: TravelOptions & { wait: false }): DriverTaskHandle;
+  travelTo(pos: BlockPos | ColumnPos, options?: TravelOptions): Promise<DriverTaskSnapshot>;
+  /** Plan a route without moving, beside any running trip, and wait until planning ends. Previews reach loaded terrain
+   * in the current dimension only. */
+  previewTravel(pos: BlockPos | ColumnPos, options?: TravelOptions): Promise<TravelPreviewResult>;
+  /** The ray from the camera through a GUI position, following a managed trip's orbit camera. */
+  pickRay(point: { x: number; y: number }, options?: RuntimeCallOptions): Promise<PickRay | null>;
+  /** Walk to a target block position without sprinting or crossing deep water. */
   walkTo(pos: BlockPos, options: PlayerOperationOptions & { wait: false }): DriverTaskHandle;
   walkTo(pos: BlockPos, options?: PlayerOperationOptions): Promise<DriverTaskSnapshot>;
   /** Sprint-jump to a target block position. */
   sprintJumpTo(pos: BlockPos, options: PlayerOperationOptions & { wait: false }): DriverTaskHandle;
   sprintJumpTo(pos: BlockPos, options?: PlayerOperationOptions): Promise<DriverTaskSnapshot>;
-  /** Swim to a target block position. */
+  /** Follow a water-surface route; fails if ground travel is required. */
   swimTo(pos: BlockPos, options: PlayerOperationOptions & { wait: false }): DriverTaskHandle;
   swimTo(pos: BlockPos, options?: PlayerOperationOptions): Promise<DriverTaskSnapshot>;
-  /** Climb to a target block position. */
+  /** Fly between supported launch/landing positions using an equipped elytra. */
+  flyTo(pos: BlockPos, options: FlightOptions & { wait: false }): DriverTaskHandle;
+  flyTo(pos: BlockPos, options?: FlightOptions): Promise<DriverTaskSnapshot>;
+  /** Submerged travel between breathing surfaces, with conservative air and escape checks. */
+  diveTo(pos: BlockPos, options: PlayerOperationOptions & { wait: false }): DriverTaskHandle;
+  diveTo(pos: BlockPos, options?: PlayerOperationOptions): Promise<DriverTaskSnapshot>;
+  /** Crawl using an existing trapdoor entrance, one placed with placing permission, or an already established low pose. */
+  crawlTo(pos: BlockPos, options: PlayerOperationOptions & { wait: false }): DriverTaskHandle;
+  crawlTo(pos: BlockPos, options?: PlayerOperationOptions): Promise<DriverTaskSnapshot>;
+  /** Follow a ladder route; fails if another travel mode is required. */
   climbTo(pos: BlockPos, options: PlayerOperationOptions & { wait: false }): DriverTaskHandle;
   climbTo(pos: BlockPos, options?: PlayerOperationOptions): Promise<DriverTaskSnapshot>;
-  /** Ride a boat to a target block position. */
-  rideBoatTo(pos: BlockPos, options: PlayerOperationOptions & { wait: false }): DriverTaskHandle;
-  rideBoatTo(pos: BlockPos, options?: PlayerOperationOptions): Promise<DriverTaskSnapshot>;
+  /** Follow a boat route, boarding nearby or deploying from the hotbar; shore destinations dismount. */
+  rideBoatTo(pos: BlockPos, options: TravelOptions & { wait: false }): DriverTaskHandle;
+  rideBoatTo(pos: BlockPos, options?: TravelOptions): Promise<DriverTaskSnapshot>;
+  /** Ride a nearby tame, saddled horse or camel, including supported terraces and short gaps; finish aboard. Camels never jump gaps. */
+  rideHorseTo(pos: BlockPos, options: TravelOptions & { wait: false }): DriverTaskHandle;
+  rideHorseTo(pos: BlockPos, options?: TravelOptions): Promise<DriverTaskSnapshot>;
+  /** Follow connected rails in a rideable minecart; ground exits need a braking station. */
+  rideMinecartTo(pos: BlockPos, options: TravelOptions & { wait: false }): DriverTaskHandle;
+  rideMinecartTo(pos: BlockPos, options?: TravelOptions): Promise<DriverTaskSnapshot>;
+}
+
+export interface FakePlayerApi {
+  /** Spawn a server-side player at a prepared, safe position. Removed after the test. */
+  spawn(name: string, pos: BlockPos | Vec3, options?: FakePlayerSpawnOptions): Promise<FakePlayerRef>;
+  list(options?: RuntimeCallOptions): Promise<FakePlayerRef[]>;
+  remove(name: string, options?: RuntimeCallOptions): Promise<{ removed: boolean }>;
+}
+
+export interface FakePlayerSpawnOptions extends RuntimeCallOptions {
+  /** Copy the named Minecraft account's skin, keeping this fake player's own UUID. Falls back to a default skin if unavailable. */
+  skinFrom?: string;
+}
+
+export interface FakePlayerRef extends PlayerRef {
+  uuid: string;
+  dimension: string;
+  position: Vec3;
 }
 
 export interface ClientApi {
@@ -973,7 +1017,266 @@ export interface PlayerResetResult {
   [key: string]: unknown;
 }
 
+export type TravelFailure = "unreachable" | "search_limit" | "terrain_unloaded" | "no_progress" | "stuck" | "landing"
+  | "destination" | "supplies" | "resources" | "fall" | "no_portal" | "air" | "vehicle" | "error";
+
+/** A column whose height is unknown; travel stands on its surface once its chunk loads. */
+export interface ColumnPos {
+  x: number;
+  z: number;
+}
+
+export type DriverCancelReason = "requested" | "escape" | "movement_takeover" | "player_changed" | "replaced";
+
+export type DriverPauseReason = "requested" | "pause_menu" | "movement_keys";
+
+export type DriverActivityKind = "planning" | "waiting_for_terrain" | "travelling" | "arriving" | "waiting_for_entity"
+  | "waiting_for_landing" | "opening" | "editing_terrain" | "restoring_terrain" | "provisioning" | "gathering"
+  | "visiting_workstation" | "eating" | "equipping" | "handling_vehicle" | "recovering_fall" | "recovering_air"
+  | "using_portal" | "mining" | "paused" | "finished";
+
+/** What a trip is doing; `mode`, `target`, and `subject` are set only for the kinds that use them. */
+export interface DriverActivity {
+  kind: DriverActivityKind;
+  mode?: TravelMode | null;
+  target?: BlockPos | null;
+  subject?: string | null;
+}
+
+export interface DriverRouteStep {
+  from: BlockPos;
+  to: BlockPos;
+  mode: TravelMode;
+  /** Waypoints of an elytra flight. */
+  flightPath: Vec3[];
+  placement?: BlockPos | null;
+  breaks: BlockPos[];
+  /** Where a carried boat or minecart is put down. */
+  deploysVehicle: boolean;
+  landing: { kind: "flight" | "water_bucket" | "water_drop" | "boat_drop" | "minecart_drop"; pos: BlockPos } | null;
+}
+
+/** The route planned so far. `revision` changes when the steps change; `nextStep` advances as the player moves. */
+export interface DriverRouteView {
+  taskId: string;
+  revision: number;
+  nextStep: number;
+  portal?: BlockPos | null;
+  /** UUID of the entity the traveller is waiting for. */
+  waitingFor?: string | null;
+  steps: DriverRouteStep[];
+}
+
+export interface DriverTerrainEdit {
+  dimension: string;
+  pos: BlockPos;
+  before: string;
+  after: string;
+  cause: "placed" | "broken" | "gathered" | "restored" | "removed" | "workstation_placed" | "workstation_recovered"
+    | "water_placed" | "water_recovered";
+}
+
+/** A finished trip. Distances are in blocks; items consumed net out items the trip returned, such as a recovered boat. */
+export interface DriverTripSummary {
+  taskId: string;
+  outcome: "succeeded" | "failed" | "cancelled";
+  message: string;
+  failure?: TravelFailure | null;
+  cancelReason?: DriverCancelReason | null;
+  goal: DriverGoal;
+  origin: BlockPos & { dimension: string };
+  end: BlockPos & { dimension: string };
+  durationMs: number;
+  distanceByMode: Partial<Record<TravelMode, number>>;
+  distance: number;
+  terrainEdits: DriverTerrainEdit[];
+  itemsConsumed: Record<string, number>;
+  counters: Record<string, unknown>;
+  reachedNearest: boolean;
+  retargets: number;
+}
+
+/** Player driver listener events TeaKit recorded for one trip. */
+export interface DriverTaskEvents {
+  taskId: string;
+  statusChanges: number;
+  routeChanges: number;
+  routeRevision: number;
+  /** `status:activity` for each reported status change, such as `running:travelling`. */
+  activities: string[];
+  terrainEdits: DriverTerrainEdit[];
+  itemUses: { item: string; count: number; purpose: string }[];
+  /** World clicks during a managed trip, with the camera ray taken when each arrived. */
+  clicks: { x: number; y: number; button: "left" | "right" | "middle"; ray?: PickRay | null }[];
+  ended: boolean;
+}
+
+export interface PickRay {
+  origin: Vec3;
+  /** Unit length. */
+  direction: Vec3;
+}
+
+export interface TravelPreviewResult {
+  previewId: string;
+  state: "searching" | "planned" | "failed" | "cancelled";
+  done: boolean;
+  message: string;
+  failure?: TravelFailure | null;
+  route?: DriverRouteView | null;
+  plan: { movements: number; modes: TravelMode[]; placements: number; breaks: number } | null;
+}
+
+/** A trip's destination: a cell, or an unresolved column, with an arrival radius when it is not zero. */
+export type DriverGoal = (BlockPos | ColumnPos) & { radius?: number; dimension?: string };
+
+export type TravelMode = "walk" | "sprint" | "jump" | "crouch" | "crawl" | "climb" | "swim" | "dive" | "boat" | "horse" | "minecart" | "elytra" | "water_bucket";
+
+export interface FlightOptions extends PlayerOperationOptions {
+  /** Maximum non-explosive hotbar rockets this run may consume (0–64). Defaults to 0. */
+  maxRockets?: number;
+  /** Remaining durability to preserve (2–431). Defaults to 16. */
+  elytraDurabilityReserve?: number;
+}
+
+export interface TravelOptions extends FlightOptions {
+  /** Arrive anywhere within this many blocks of the destination, 0–16. Default 0. */
+  arrivalRadius?: number;
+  /** Destination dimension, such as `minecraft:the_nether`. The traveller walks into the nearest loaded portal leading
+   * toward it (nether portals between the overworld and the nether, end portals to and from the end), waits for the
+   * transfer, and continues. Portals are never crossed otherwise. Defaults to the current dimension. */
+  dimension?: string;
+  /** Prepare existing horses, donkeys, mules, or undead equines through ordinary interactions. Defaults to no preparation. */
+  mounts?: {
+    tameHorses?: boolean;
+    /** Allow consuming a carried hotbar saddle. */
+    saddleHorses?: boolean;
+    /** Maximum preparation time in game ticks, 20–6000. Default 1200. */
+    maxTamingTicks?: number;
+    /** Ride existing boats, minecarts, and horses. Default true; false still deploys carried vehicles. */
+    borrow?: boolean;
+    /** Break and keep a borrowed boat or minecart after using it, like a deployed one. Default false. */
+    collectBorrowed?: boolean;
+  };
+  /** Weigh and limit routes the permissions allow. None of these grants an action. */
+  preferences?: {
+    /** Cost multipliers per travel mode, 0.1–10. Default 1. Sprinting only changes pace, so it has no cost. */
+    modeCosts?: Partial<Record<Exclude<TravelMode, "sprint">, number>>;
+    /** Extra cost for each step beside a hazard such as lava or fire, 0–64. Default 8. */
+    hazardCost?: number;
+    /** Largest plain drop without fall recovery, 1–3 blocks, further limited to the player's safe fall distance. Default 1. */
+    maxDrop?: number;
+    /** Keep the route within this many blocks of the straight line from the start to a destination, 0–256. 0 means unlimited. */
+    maxDetour?: number;
+    /** Search to the destination before moving instead of travelling in route sections. Default false. */
+    wholeJourney?: boolean;
+    /** Route search node budget, 1000–200000. Default 24000. */
+    maxNodes?: number;
+    /** Search the whole journey and finish with a `plan` summary, without moving or changing anything, as
+     * `previewTravel` does. A running trip keeps going. The destination must be in the current dimension, and a route
+     * that reaches unloaded terrain fails with `terrain_unloaded`. Default false. */
+    planOnly?: boolean;
+    /** Extra cost for cells other entities occupied when the route was planned, 0–64. Default 0. The traveller always
+     * waits up to three seconds for an entity standing in its next cell before routing around it. */
+    entityCost?: number;
+    /** Use the integrated server's recipes and loot when available. Off, crafting uses only unlocked recipe book entries
+     * (permitted by result item) and no drops are predicted, as on a remote server. Default true. */
+    serverKnowledge?: boolean;
+    /** When no route reaches the destination, or nobody can stand there, travel to the closest reachable point and
+     * succeed with `travel.reachedNearest`. Default false. */
+    acceptNearest?: boolean;
+  };
+  /** Move approved terrain supplies, boats, minecarts, rockets, and water buckets from the main inventory into the hotbar. Defaults to false. */
+  resupply?: boolean;
+  /** Wear the most durable carried elytra for a flight leg, then restore the displaced chest armor once supported. Defaults to false. */
+  equipElytra?: boolean;
+  /** Eat permitted carried food while walking once hunger reaches minFoodForSprint. Omit to never eat. */
+  eating?: {
+    /** Permitted food item IDs. */
+    foods: string[];
+    /** Maximum meals started in this journey, 0–64. */
+    maxItems: number;
+  };
+  /** Craft ordinary grid recipes using carried ingredients; includes resupply. Recipes come from the integrated server,
+   * or from the player's unlocked recipe book when `preferences.serverKnowledge` is false or on a remote server.
+   * Every consumed input (including crafted intermediates) counts against ingredients. maxCrafts counts recipe executions.
+   * Recipes with container remainders are not supported. */
+  crafting?: {
+    recipes: string[]; ingredients: Record<string, number>; maxCrafts: number;
+    /** Provision the discovered route before proceeding. Omit for crafting only at the obstacle with tables already in reach. */
+    workstations?: {
+      /** Maximum steps in a dry, level detour to an existing table, 0–32. Default 16. When no route exists, also the
+       * straight-line radius for a planned detour to a farther table the route's crafting needs. */
+      maxDetour?: number;
+      /** Explicit temporary table placement/recovery permission, 0–16 attempts per run. Default 0.
+       * Crafting the table still requires its recipe, ingredients, and craft budget. */
+      maxPlacements?: number;
+    };
+  };
+  /** Mine permitted blocks off the route when no route exists with the current supplies. The traveller walks beside a
+   * block whose drops, predicted on the integrated server, add placeable blocks or tools (directly or through permitted
+   * crafting), gathers it, and resumes. Gathered blocks are not restored. */
+  gathering?: {
+    /** Block IDs or `#namespace:path` tags. */
+    blocks: string[];
+    /** Permitted tools; omit to gather by hand only. IDs or tags. */
+    tools?: string[];
+    /** Maximum blocks gathered in this journey, 0–64. */
+    maxBlocks: number;
+    /** Search radius around the player in blocks, 1–48. Default 24. */
+    maxDetour?: number;
+  };
+  /** Best-effort local cleanup behind the player. Restore original states using carried blocks and remove temporary bridges.
+   * Never overwrites later edits. Cancellation stops immediately; inspect terrainChangesRemaining for incomplete cleanup. */
+  nonDestructive?: boolean;
+  /** Opt in to bounded fall strategies. Cancellation releases control immediately, including during a fall. */
+  fallRecovery?: {
+    /** Maximum total drop including distance already fallen, 4–24. Default 16. */
+    maxDrop?: number;
+    /** Allow checked drops into reachable water, including shallow and flowing water with sufficient depth. Requires swim mode. Default true. */
+    waterLandings?: boolean;
+    /** Ride a checked dry cliff route in an existing boat, or deploy and recover a hotbar boat when deployVehicles permits it. Borrowed boats remain intact. Requires boat mode. Default false. */
+    boatDrops?: boolean;
+    /** Steer toward reachable water or safe ground after losing footing or an airborne mount.
+     * Bucket use needs waterBucket permission and shares its budget. Default true. */
+    emergency?: boolean;
+  };
+  /** Planned drops onto checked dry landings using a hotbar water bucket. Recovers water before continuing.
+   * Emergency use additionally requires fallRecovery.emergency. */
+  waterBucket?: {
+    /** Maximum bucket-assisted drop in blocks, 4–24, including distance already fallen. Default 16. */
+    maxDrop?: number;
+    /** Maximum attempts in this journey, 0–64. Default 4; zero disables bucket drops. */
+    maxUses?: number;
+  };
+  /** Opt in to bridging and pillars with approved, full solid blocks from the hotbar, and to trapdoors placed as crawl
+   * entrances. Entries are block IDs or `#namespace:path` tags.
+   * Permitted blocks this journey mines count as supplies when played on the integrated server. Omit to forbid placement. */
+  placing?: { blocks: string[]; maxBlocks: number };
+  /** Opt in to clearing, carving stairs, and digging down with suitable approved hotbar tools. Blocks and tools accept IDs or
+   * `#namespace:path` tags. Short falling columns above a mined cell count against maxBlocks as they settle. Omit to forbid breaking. */
+  breaking?: { blocks: string[]; tools: string[]; maxBlocks: number; durabilityReserve?: number };
+  /** Hard limits on route selection. Defaults to all implemented modes. */
+  allowedModes?: TravelMode[];
+  /** Sprint only above this hunger level (6–20). Defaults to 8. */
+  minFoodForSprint?: number;
+  /** Allow deploying boats and plain minecarts from the hotbar. Defaults to true. */
+  deployVehicles?: boolean;
+}
+
 export interface PlayerOperationOptions {
+  /** Walk with an independent orbit camera and usable menus; movement keys cancel outside menus. */
+  managed?: boolean;
+  /** Managed camera collision with blocks. Defaults to true; false keeps orbit distance and reveals an occluded player model. */
+  cameraCollision?: boolean;
+  /** Initial managed orbit pitch, 10–85 degrees. Default 55. */
+  cameraPitch?: number;
+  /** Initial managed orbit distance, 2–16 blocks. Default 8. */
+  cameraDistance?: number;
+  /** What Escape does during a managed trip: end it (default), or hold it while the pause menu is open. */
+  escape?: "cancel" | "pause-menu";
+  /** What movement keys do during a managed trip: end it (default), or let the player walk while held and replan after. */
+  movementKeys?: "cancel" | "pause-while-held";
   timeout?: string | number;
   timeoutMs?: number;
   interval?: string | number;
@@ -1049,7 +1352,7 @@ export interface PlayerDropResult extends PlayerOperationResult {
   inventory?: PlayerInventory;
 }
 
-export type DriverTaskStatus = "idle" | "planning" | "running" | "interacting" | "mining" | "succeeded" | "failed" | "cancelled" | string;
+export type DriverTaskStatus = "idle" | "planning" | "running" | "interacting" | "mining" | "paused" | "succeeded" | "failed" | "cancelled" | string;
 
 export interface DriverTaskSnapshot {
   taskId: string;
@@ -1057,8 +1360,22 @@ export interface DriverTaskSnapshot {
   done: boolean;
   message?: string;
   feet?: BlockPos | null;
-  goal?: BlockPos | null;
+  goal?: DriverGoal | null;
   remainingPath?: number;
+  managed?: boolean;
+  /** Why a failed journey stopped, as a stable category; null unless the status is failed. Refusals before a journey
+   * starts reject the call instead. */
+  failure?: TravelFailure | null;
+  /** Why a cancelled journey stopped; null unless the status is cancelled. */
+  cancelReason?: DriverCancelReason | null;
+  /** Why a paused journey waits; null unless the status is paused. */
+  pause?: DriverPauseReason | null;
+  activity?: DriverActivity;
+  /** The route a `preferences.planOnly` journey found. Modes are listed in order of first use. */
+  plan?: { movements: number; modes: TravelMode[]; placements: number; breaks: number } | null;
+  travel?: { mode: TravelMode | null; sprinting: boolean; crouching: boolean; inWater: boolean; boating: boolean; ridingHorse: boolean; ridingMinecart: boolean; foodLevel: number; airSupply: number; maxAirSupply: number; lowPose: boolean; underwater: boolean; gliding: boolean; rocketsUsed: number; flightDiverted: boolean; flightLanding?: BlockPos | null; blocksPlaced: number; blocksBroken: number; craftsCompleted: number; blocksRestored: number; temporaryBlocksRemoved: number; terrainChangesRemaining: number; bucketAttempts: number; bucketClutches: number; waterRecoveries: number; waterLeftAt?: BlockPos | null; workstationsPlaced: number; workstationsRecovered: number; workstationLeftAt?: BlockPos | null; waterLandings: number; boatDrops: number; emergencyRecoveries: number; dropBoatLeftAt?: BlockPos | null; foodEaten: number; chestArmorDisplaced: boolean; blocksGathered: number; waitingFor?: string | null; reachedNearest: boolean; unrestoredTerrain: { position: BlockPos; originalBlock: string; reason: string }[] } | null;
+  /** Managed orbit measurements. Cursor coordinates use GUI units, like client.click(). */
+  camera?: { yaw: number; pitch: number; distance: number; dragging: boolean; cursorCaptured: boolean; renderedYaw: number; renderedPitch: number; collision: boolean; resolvedDistance: number; pivotY: number; targetY: number; renderedFov: number; occluded: boolean; ghostVisible: boolean; cursorX: number; cursorY: number } | null;
   inputs?: string[];
 }
 
@@ -1068,6 +1385,21 @@ export interface DriverTaskHandle {
   status(options?: RuntimeCallOptions): Promise<DriverTaskSnapshot>;
   wait(options?: PlayerOperationOptions): Promise<DriverTaskSnapshot>;
   cancel(options?: RuntimeCallOptions): Promise<DriverTaskSnapshot>;
+  /** Send the running journey elsewhere without stopping; budgets, vehicles, and the camera carry over. A committed move,
+   * such as a flight or a portal transfer, finishes first. */
+  retarget(pos: BlockPos | ColumnPos, options?: { arrivalRadius?: number; dimension?: string }, callOptions?: RuntimeCallOptions): Promise<DriverTaskSnapshot>;
+  /** Hold the journey and return control to the player until `resume()`. */
+  pause(options?: RuntimeCallOptions): Promise<DriverTaskSnapshot>;
+  /** Continue a paused journey from wherever the player stands. */
+  resume(options?: RuntimeCallOptions): Promise<DriverTaskSnapshot>;
+  /** Replace the journey's travel options; budgets already used still count. */
+  updatePolicy(policy: TravelOptions, options?: RuntimeCallOptions): Promise<DriverTaskSnapshot>;
+  /** The route planned so far, or null once the journey ended. */
+  route(options?: RuntimeCallOptions): Promise<DriverRouteView | null>;
+  /** The finished journey's summary, or null while it runs. */
+  summary(options?: RuntimeCallOptions): Promise<DriverTripSummary | null>;
+  /** Player driver listener events recorded for this journey. */
+  events(options?: RuntimeCallOptions): Promise<DriverTaskEvents>;
   /** Internal inspection hook used by TeaKit driver matchers. */
   $inspect(options?: RuntimeCallOptions): Promise<DriverTaskSnapshot>;
 }
@@ -1294,10 +1626,11 @@ export interface EventExpectationResult {
 }
 
 export interface ServerCommandResult {
-  ok?: boolean;
-  commands?: string[];
-  output?: string[];
-  [key: string]: unknown;
+  player: string;
+  command: string;
+  success: boolean;
+  result: number;
+  output: string[];
 }
 
 export interface ServerCommandBatchResult {
@@ -1458,6 +1791,8 @@ export declare const Capability: {
   readonly PlayerInteractions: "player.interactions";
   /** TeaKit runtime can run and observe player driver tasks. */
   readonly PlayerDriver: "player.driver";
+  /** TeaKit runtime can spawn and remove server-side fake players. */
+  readonly PlayerFake: "player.fake";
   /** TeaKit runtime can inspect the current client screen. */
   readonly ClientScreen: "client.screen";
   /** TeaKit runtime can close menus and wait for stable screen IDs. */

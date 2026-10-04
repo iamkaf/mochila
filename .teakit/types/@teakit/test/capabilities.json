@@ -159,7 +159,7 @@
     },
     "world.pathing" : {
       "category" : "world",
-      "sdk" : [ "world.ensureWalkable()", "world.pool()", "world.ladderTower()", "world.channel()", "world.routeFixture().build()", "player.walkTo()", "player.sprintJumpTo()", "player.swimTo()", "player.climbTo()", "player.rideBoatTo()" ],
+      "sdk" : [ "world.ensureWalkable()", "world.pool()", "world.ladderTower()", "world.channel()", "world.routeFixture().build()", "player.walkTo()", "player.sprintJumpTo()", "player.swimTo()", "player.flyTo()", "player.diveTo()", "player.crawlTo()", "player.climbTo()", "player.rideBoatTo()", "player.rideHorseTo()", "player.rideMinecartTo()" ],
       "endpoints" : [ "POST /world/pathing/ensure-walkable", "POST /world/pathing/pool", "POST /world/pathing/ladder-tower", "POST /world/pathing/channel", "POST /world/pathing/routes" ]
     },
     "world.explosions" : {
@@ -214,8 +214,14 @@
     },
     "player.driver" : {
       "category" : "player",
-      "sdk" : [ "player.mine()", "player.walkTo()", "player.sprintJumpTo()", "player.swimTo()", "player.climbTo()", "player.rideBoatTo()" ],
-      "endpoints" : [ "POST /players/self/driver/tasks/walk", "POST /players/self/driver/tasks/sprint-jump", "POST /players/self/driver/tasks/swim", "POST /players/self/driver/tasks/climb", "POST /players/self/driver/tasks/ride-boat", "POST /players/self/driver/tasks/mine", "POST /players/self/driver/tasks/status", "POST /players/self/driver/tasks/wait", "POST /players/self/driver/tasks/cancel" ]
+      "sdk" : [ "player.mine()", "player.travelTo()", "player.walkTo()", "player.sprintJumpTo()", "player.swimTo()", "player.flyTo()", "player.diveTo()", "player.crawlTo()", "player.climbTo()", "player.rideBoatTo()", "player.rideHorseTo()", "player.rideMinecartTo()", "player.previewTravel()", "player.pickRay()" ],
+      "endpoints" : [ "POST /players/self/driver/tasks/travel", "POST /players/self/driver/tasks/walk", "POST /players/self/driver/tasks/sprint-jump", "POST /players/self/driver/tasks/swim", "POST /players/self/driver/tasks/fly", "POST /players/self/driver/tasks/dive", "POST /players/self/driver/tasks/crawl", "POST /players/self/driver/tasks/climb", "POST /players/self/driver/tasks/ride-boat", "POST /players/self/driver/tasks/ride-horse", "POST /players/self/driver/tasks/ride-minecart", "POST /players/self/driver/tasks/mine", "POST /players/self/driver/tasks/status", "POST /players/self/driver/tasks/wait", "POST /players/self/driver/tasks/cancel", "POST /players/self/driver/tasks/retarget", "POST /players/self/driver/tasks/pause", "POST /players/self/driver/tasks/resume", "POST /players/self/driver/tasks/policy", "POST /players/self/driver/tasks/route", "POST /players/self/driver/tasks/summary", "POST /players/self/driver/tasks/events", "POST /players/self/driver/tasks/preview", "POST /players/self/driver/tasks/pick-ray" ]
+    },
+    "player.fake" : {
+      "category" : "player",
+      "sdk" : [ "player.fake.spawn()", "player.fake.list()", "player.fake.remove()" ],
+      "endpoints" : [ "POST /players/fake", "GET /players/fake", "POST /players/fake/remove" ],
+      "minMinecraftVersion" : "1.21.11"
     },
     "client.screen" : {
       "category" : "client",

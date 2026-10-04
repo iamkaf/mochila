@@ -95,6 +95,7 @@ export type RuntimeCapability =
   | "player.useItem"
   | "player.interactions"
   | "player.driver"
+  | "player.fake"
   | "client.screen"
   | "client.screens"
   | "client.screenshot"
@@ -115,6 +116,7 @@ export interface RuntimeCapabilityMatrixEntry {
   sdk: string[];
   endpoints: string[];
   status?: "active" | "legacy" | "future" | string;
+  minMinecraftVersion?: string;
   [key: string]: unknown;
 }
 
