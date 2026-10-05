@@ -32,13 +32,13 @@ side = "BOTH"
 modId = "amber"
 type="required" #mandatory (Can be one of "required", "optional", "incompatible" or "discouraged")
 versionRange = "[${amber_version},)"
-ordering = "BEFORE"
+ordering = "AFTER"
 side = "BOTH"
 [[dependencies.${mod_id}]]
 modId = "konfig"
 type="required"
 versionRange = "*"
-ordering = "BEFORE"
+ordering = "AFTER"
 side = "BOTH"
 [[dependencies.${mod_id}]]
 modId = "jei"
