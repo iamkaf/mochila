@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the full changelog at https://github.com/iamkaf/mochila
 
+## 6.2.1
+
+### Changed
+
+- Backpacks can no longer be put in shulker boxes or bundles.
+
+### Fixed
+
+- Sorting mods can no longer duplicate items or delete a backpack while it is open.
+- Sorting mods can no longer put backpacks or shulker boxes into a backpack.
+
 ## 6.2.0
 
 ### Changed

@@ -2,6 +2,8 @@ package com.iamkaf.mochila.item.backpack;
 
 import net.minecraft.core.component.DataComponents;
 import net.minecraft.world.SimpleContainer;
+import net.minecraft.world.entity.player.Inventory;
+import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
@@ -31,6 +33,22 @@ public class BackpackContainer extends SimpleContainer {
             case FIVE_ROWS -> 45;
             case SIX_ROWS -> 54;
         };
+    }
+
+    public boolean isBackpack(ItemStack candidate) {
+        return candidate == stack;
+    }
+
+    // The menu writes to this exact stack, so it stays usable only while the player still holds it.
+    @Override
+    public boolean stillValid(Player player) {
+        Inventory inventory = player.getInventory();
+        for (int i = 0; i < inventory.getContainerSize(); i++) {
+            if (isBackpack(inventory.getItem(i))) {
+                return true;
+            }
+        }
+        return false;
     }
 
     public MenuType<ChestMenu> getMenuType() {
