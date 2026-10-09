@@ -127,6 +127,11 @@ public class BackpackItem extends Item {
         return super.useOn(context);
     }
 
+    @Override
+    public boolean canFitInsideContainerItems() {
+        return false;
+    }
+
     // deprecated, fix it
     @Override
     public void appendHoverText(ItemStack stack, TooltipContext context, TooltipDisplay tooltipDisplay,

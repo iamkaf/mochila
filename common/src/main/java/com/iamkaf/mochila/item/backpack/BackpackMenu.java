@@ -1,6 +1,5 @@
 package com.iamkaf.mochila.item.backpack;
 
-import net.minecraft.world.Container;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
@@ -9,15 +8,30 @@ import net.minecraft.world.inventory.ChestMenu;
 //? if >=26.1
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.MenuType;
+import net.minecraft.world.inventory.ShulkerBoxSlot;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import org.jetbrains.annotations.NotNull;
 
 public class BackpackMenu extends ChestMenu {
-    public BackpackMenu(MenuType<?> type, int containerId, Inventory playerInventory, Container container,
+    public BackpackMenu(MenuType<?> type, int containerId, Inventory playerInventory, BackpackContainer container,
             int rows) {
         super(type, containerId, playerInventory, container, rows);
+    }
+
+    // ChestMenu sets its container before it adds slots, so getContainer() is ready here.
+    @Override
+    protected Slot addSlot(Slot slot) {
+        if (getContainer() instanceof BackpackContainer backpack) {
+            if (slot.container == backpack) {
+                // Uses the vanilla container-item rule, so direct inserts can't nest backpacks or shulker boxes.
+                slot = new ShulkerBoxSlot(backpack, slot.getContainerSlot(), slot.x, slot.y);
+            } else if (backpack.isBackpack(slot.getItem())) {
+                slot = new OpenBackpackSlot(slot);
+            }
+        }
+        return super.addSlot(slot);
     }
 
     @Override
@@ -70,5 +84,25 @@ public class BackpackMenu extends ChestMenu {
             return player.getInventory().getItem(button);
         }
         return ItemStack.EMPTY;
+    }
+
+    /**
+     * Holds the open backpack. Sorting mods check {@link #mayPickup} before they move a stack, so this keeps
+     * them from copying or moving the backpack while its menu writes to it.
+     */
+    private static class OpenBackpackSlot extends Slot {
+        OpenBackpackSlot(Slot slot) {
+            super(slot.container, slot.getContainerSlot(), slot.x, slot.y);
+        }
+
+        @Override
+        public boolean mayPickup(Player player) {
+            return false;
+        }
+
+        @Override
+        public boolean mayPlace(ItemStack stack) {
+            return false;
+        }
     }
 }

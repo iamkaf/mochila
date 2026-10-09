@@ -164,6 +164,13 @@ async function screenshot(ctx: Ctx, name: string) {
   await ctx.client.screenshot(name, { timeoutMs: 10_000 });
 }
 
+// The B key opens the first backpack in the inventory, so with an empty hotbar this one is in a main slot.
+async function openBackpackFromMainInventory(ctx: Ctx) {
+  await ctx.commands.assert("/item replace entity @s inventory.5 with mochila:leather_backpack");
+  await keyTap(ctx, 66);
+  await waitForTitle(ctx, "Leather Backpack");
+}
+
 async function waitMs(ctx: Ctx, durationMs: number) {
   await ctx.runtime.wait(durationMs, { timeoutMs: durationMs + 1_000 });
 }
@@ -338,6 +345,50 @@ test("backpack keeps container component contents", async (ctx) => {
   await useMainHandAndWaitForTitle(ctx, "Leather Backpack");
   await closeMenu(ctx);
   await assertInventoryContains(ctx, "mochila:leather_backpack");
+});
+
+test("open backpack is locked in its inventory slot", async (ctx) => {
+  await openBackpackFromMainInventory(ctx);
+  await ctx.commands.assert("/mochila debug menu assert-open-backpack-locked", {
+    expectOutputContains: ["inventory slot 14"],
+  });
+  await closeMenu(ctx);
+  await ctx.commands.run("/clear @s");
+
+  await equipMainHand(ctx, "mochila:leather_backpack");
+  await useMainHandAndWaitForTitle(ctx, "Leather Backpack");
+  await ctx.commands.assert("/mochila debug menu assert-open-backpack-locked", {
+    expectOutputContains: ["inventory slot 0"],
+  });
+  await closeMenu(ctx);
+});
+
+test("backpack storage refuses backpacks and shulker boxes", async (ctx) => {
+  await openBackpackFromMainInventory(ctx);
+  for (const item of [
+    "mochila:leather_backpack",
+    "mochila:red_netherite_backpack",
+    "minecraft:shulker_box",
+    "minecraft:red_shulker_box",
+  ]) {
+    await ctx.commands.assert(`/mochila debug menu assert-storage-refuses ${item}`);
+  }
+  const cobblestone = await ctx.commands.run("/mochila debug menu assert-storage-refuses minecraft:cobblestone");
+  expect(cobblestone.success).toBe(false);
+  await closeMenu(ctx);
+});
+
+test("backpack menu closes when its backpack leaves the inventory", async (ctx) => {
+  await openBackpackFromMainInventory(ctx);
+  // A copy in the same slot is what a sorting mod that ignores the slot lock would write.
+  await ctx.commands.assert("/item replace entity @s inventory.5 with mochila:leather_backpack");
+  await expect(() => ctx.commands.run("/mochila debug menu assert-closed")).toEventuallyEqual(
+    expect.objectContaining({ success: true }),
+    { timeout: "3s" },
+  );
+  await expect(async () => (await ctx.client.screen()).title === "Leather Backpack").toEventuallyEqual(false, {
+    timeout: "3s",
+  });
 });
 
 test("ender backpack opens by item use", async (ctx) => {
