@@ -2,17 +2,17 @@ package com.iamkaf.mochila.registry;
 
 import com.iamkaf.amber.api.registry.v1.DeferredRegister;
 import com.iamkaf.mochila.Constants;
+import com.iamkaf.mochila.compat.ItemProperties;
+import com.iamkaf.mochila.compat.VanillaRegistries;
 import com.iamkaf.mochila.item.BackpackItem;
 import com.iamkaf.mochila.item.EnderBackpackItem;
 import com.iamkaf.mochila.item.backpack.BackpackContainer;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.ResourceKey;
 import net.minecraft.world.item.Item;
 
 import java.util.function.Supplier;
 
 public class Items {
-    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Constants.MOD_ID, Registries.ITEM);
+    public static final DeferredRegister<Item> ITEMS = DeferredRegister.create(Constants.MOD_ID, VanillaRegistries.itemKey());
     public static final BackpackContainer.BackpackSize LEATHER_BACKPACK_SIZE = BackpackContainer.BackpackSize.TWO_ROWS;
     public static final BackpackContainer.BackpackSize IRON_BACKPACK_SIZE = BackpackContainer.BackpackSize.THREE_ROWS;
     public static final BackpackContainer.BackpackSize GOLD_BACKPACK_SIZE = BackpackContainer.BackpackSize.FOUR_ROWS;
@@ -103,10 +103,10 @@ public class Items {
     public static Supplier<Item> PINK_GOLD_BACKPACK = e("pink_gold_backpack", GOLD_BACKPACK_SIZE);
     public static Supplier<Item> PINK_DIAMOND_BACKPACK = e("pink_diamond_backpack", DIAMOND_BACKPACK_SIZE);
     public static Supplier<Item> PINK_NETHERITE_BACKPACK = e("pink_netherite_backpack", NETHERITE_BACKPACK_SIZE);
-    public static Supplier<Item> ENDER_BACKPACK = ITEMS.register("ender_backpack", () -> new EnderBackpackItem(new Item.Properties().stacksTo(1).fireResistant().setId(ResourceKey.create(Registries.ITEM, Constants.resource("ender_backpack")))));
+    public static Supplier<Item> ENDER_BACKPACK = ITEMS.register("ender_backpack", () -> new EnderBackpackItem(ItemProperties.single("ender_backpack").fireResistant()));
 
     private static Supplier<Item> e(String id, BackpackContainer.BackpackSize size) {
-        Supplier<Item> item = ITEMS.register(id, () -> new BackpackItem(size, new Item.Properties().stacksTo(1).setId(ResourceKey.create(Registries.ITEM, Constants.resource(id)))));
+        Supplier<Item> item = ITEMS.register(id, () -> new BackpackItem(size, ItemProperties.single(id)));
 
         CreativeModeTabs.addItem(item);
 

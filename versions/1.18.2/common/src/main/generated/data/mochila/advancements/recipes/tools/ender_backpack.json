@@ -1,0 +1,34 @@
+{
+  "parent": "minecraft:recipes/root",
+  "rewards": {
+    "recipes": [
+      "mochila:ender_backpack"
+    ]
+  },
+  "criteria": {
+    "has_eye_of_ender": {
+      "trigger": "minecraft:inventory_changed",
+      "conditions": {
+        "items": [
+          {
+            "items": [
+              "minecraft:ender_eye"
+            ]
+          }
+        ]
+      }
+    },
+    "has_the_recipe": {
+      "trigger": "minecraft:recipe_unlocked",
+      "conditions": {
+        "recipe": "mochila:ender_backpack"
+      }
+    }
+  },
+  "requirements": [
+    [
+      "has_eye_of_ender",
+      "has_the_recipe"
+    ]
+  ]
+}

@@ -1,13 +1,15 @@
 package com.iamkaf.mochila.item.backpack;
 
-import net.minecraft.core.component.DataComponents;
+import com.iamkaf.mochila.compat.BackpackData;
 import net.minecraft.world.SimpleContainer;
 import net.minecraft.world.entity.player.Inventory;
 import net.minecraft.world.entity.player.Player;
 import net.minecraft.world.inventory.ChestMenu;
 import net.minecraft.world.inventory.MenuType;
 import net.minecraft.world.item.ItemStack;
-import net.minecraft.world.item.component.ItemContainerContents;
+
+import java.util.ArrayList;
+import java.util.List;
 
 // Based on the NeoForge docs: https://docs.neoforged.net/docs/blockentities/container#containers-on-itemstacks
 
@@ -16,13 +18,9 @@ public class BackpackContainer extends SimpleContainer {
     private final BackpackSize size;
 
     public BackpackContainer(ItemStack stack, BackpackSize size) {
-        super(sizeToInt(size));
+        super(BackpackData.readContents(stack, sizeToInt(size)).toArray(new ItemStack[0]));
         this.stack = stack;
         this.size = size;
-
-        ItemContainerContents contents =
-                stack.getOrDefault(DataComponents.CONTAINER, ItemContainerContents.EMPTY);
-        contents.copyInto(this.getItems());
     }
 
     public static int sizeToInt(BackpackSize size) {
@@ -78,7 +76,11 @@ public class BackpackContainer extends SimpleContainer {
     @Override
     public void setChanged() {
         super.setChanged();
-        this.stack.set(DataComponents.CONTAINER, ItemContainerContents.fromItems(this.getItems()));
+        List<ItemStack> contents = new ArrayList<>(getContainerSize());
+        for (int i = 0; i < getContainerSize(); i++) {
+            contents.add(getItem(i));
+        }
+        BackpackData.writeContents(this.stack, contents);
     }
 
     public enum BackpackSize {

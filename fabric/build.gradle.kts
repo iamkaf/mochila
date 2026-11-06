@@ -25,15 +25,10 @@ extensions.configure<MultiloaderFabricExtension>("multiloaderFabric") {
     commonDatagen.set(true)
 }
 
+apply(from = rootProject.file("gradle/jei.gradle.kts"))
+
 dependencies {
-    if (isModernLine) {
-        compileOnly(catalog.requiredDependency("jei-common-api"))
-        compileOnly(catalog.requiredDependency("jei-fabric-api"))
-        if (hasRuntimeJei) {
-            runtimeOnly(catalog.requiredDependency("jei-fabric"))
-        }
-    } else {
-        "modCompileOnly"(catalog.requiredDependency("jei-common-api"))
-        "modCompileOnly"(catalog.requiredDependency("jei-fabric-api"))
+    if (isModernLine && hasRuntimeJei) {
+        runtimeOnly(catalog.requiredDependency("jei-fabric"))
     }
 }

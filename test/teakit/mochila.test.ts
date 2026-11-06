@@ -148,16 +148,29 @@ async function assertRecipe(ctx: Ctx, width: number, height: number, items: Item
 }
 
 async function assertSmithing(ctx: Ctx, baseItemId: ItemId, resultItemId: ItemId) {
-  await ctx.recipes.assertSmithingTransform(baseItemId, resultItemId, {
-    templateItemId: "minecraft:netherite_upgrade_smithing_template",
-    additionItemId: "minecraft:netherite_ingot",
-  });
+  if (await minecraftAtLeast(ctx, "1.20")) {
+    await ctx.recipes.assertSmithingTransform(baseItemId, resultItemId, {
+      templateItemId: "minecraft:netherite_upgrade_smithing_template",
+      additionItemId: "minecraft:netherite_ingot",
+    });
+  } else {
+    // Smithing templates arrive with 1.20. Before that the recipe is a plain base and addition, which TeaKit
+    // cannot craft, so this checks that the recipe exists. Giving a recipe the player already knows fails.
+    await ctx.commands.run(`/recipe take @s ${resultItemId}`);
+    await ctx.commands.assert(`/recipe give @s ${resultItemId}`);
+  }
 }
 
+// Quickstash moves items on the server tick, so a slow machine can need longer than a fixed wait.
 async function commandOutput(ctx: Ctx, command: string, expectOutputContains: string[]) {
-  await ctx.commands.run(command, {
-    expectOutputContains,
-  });
+  await expect(async () => {
+    try {
+      await ctx.commands.run(command, { expectOutputContains });
+      return true;
+    } catch {
+      return false;
+    }
+  }).toEventuallyEqual(true, { timeout: "5s" });
 }
 
 async function screenshot(ctx: Ctx, name: string) {
@@ -173,6 +186,72 @@ async function openBackpackFromMainInventory(ctx: Ctx) {
 
 async function waitMs(ctx: Ctx, durationMs: number) {
   await ctx.runtime.wait(durationMs, { timeoutMs: durationMs + 1_000 });
+}
+
+function versionAtLeast(version: string | undefined, floor: string): boolean {
+  const parts = (value: string) => value.split("-")[0].split(".").map((part) => Number.parseInt(part, 10) || 0);
+  const have = parts(version ?? "0");
+  const want = parts(floor);
+  for (let i = 0; i < Math.max(have.length, want.length); i++) {
+    const difference = (have[i] ?? 0) - (want[i] ?? 0);
+    if (difference !== 0) {
+      return difference > 0;
+    }
+  }
+  return true;
+}
+
+// Minecraft 1.20.5 moved item data from NBT tags to components, and the commands that write it changed with them.
+async function minecraftAtLeast(ctx: Ctx, floor: string): Promise<boolean> {
+  return versionAtLeast((await ctx.runtime.summary()).minecraftVersion, floor);
+}
+
+type Contents = { slot: number; item: string; count: number }[];
+
+const SAMPLE_CONTENTS: Contents = [
+  { slot: 0, item: "minecraft:cobblestone", count: 16 },
+  { slot: 1, item: "minecraft:oak_log", count: 8 },
+];
+
+// A backpack item argument for /item replace, as components from 1.20.5 and as an item tag before it.
+async function backpackWith(ctx: Ctx, id: string, data: { mode?: number; contents?: Contents }): Promise<string> {
+  if (await minecraftAtLeast(ctx, "1.20.5")) {
+    const components: string[] = [];
+    if (data.mode !== undefined) {
+      components.push(`mochila:quickstash_mode=${data.mode}`);
+    }
+    if (data.contents) {
+      const slots = data.contents.map(({ slot, item, count }) => `{slot:${slot},item:{id:"${item}",count:${count}}}`);
+      components.push(`minecraft:container=[${slots.join(",")}]`);
+    }
+    return `${id}[${components.join(",")}]`;
+  }
+  const fields: string[] = [];
+  if (data.mode !== undefined) {
+    fields.push(`QuickstashMode:${data.mode}`);
+  }
+  if (data.contents) {
+    const slots = data.contents.map(({ slot, item, count }) => `{Slot:${slot}b,id:"${item}",Count:${count}b}`);
+    fields.push(`Items:[${slots.join(",")}]`);
+  }
+  return `${id}{mochila:{${fields.join(",")}}}`;
+}
+
+async function assertMainHandInTag(ctx: Ctx, tag: string) {
+  if (await minecraftAtLeast(ctx, "1.20.5")) {
+    await ctx.commands.assert(`/execute if items entity @s weapon.mainhand #${tag}`);
+  } else {
+    // /execute if items arrived in 1.20.5. A count of 0 only reports the matches.
+    await ctx.commands.assert(`/clear @s #${tag} 0`);
+  }
+}
+
+async function assertMainHandMode(ctx: Ctx, id: string, mode: number) {
+  if (await minecraftAtLeast(ctx, "1.20.5")) {
+    await ctx.commands.assert(`/execute if items entity @s weapon.mainhand ${id}[mochila:quickstash_mode=${mode}]`);
+  } else {
+    await ctx.commands.assert(`/execute if data entity @s SelectedItem.tag.mochila{QuickstashMode:${mode}}`);
+  }
 }
 
 test("content exposes core backpack items", async (ctx) => {
@@ -197,15 +276,15 @@ test("content exposes color backpack items", async ({ commands }) => {
 
 test("content item tags classify backpacks", async (ctx) => {
   await equipMainHand(ctx, "mochila:leather_backpack");
-  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #mochila:backpacks");
-  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #mochila:leather_backpacks");
+  await assertMainHandInTag(ctx, "mochila:backpacks");
+  await assertMainHandInTag(ctx, "mochila:leather_backpacks");
 
   await equipMainHand(ctx, "mochila:iron_backpack");
-  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #mochila:backpacks");
-  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #mochila:iron_backpacks");
+  await assertMainHandInTag(ctx, "mochila:backpacks");
+  await assertMainHandInTag(ctx, "mochila:iron_backpacks");
 
   await equipMainHand(ctx, "mochila:ender_backpack");
-  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #mochila:backpacks");
+  await assertMainHandInTag(ctx, "mochila:backpacks");
 });
 
 test("recipes include base and ender backpack shapes", async (ctx) => {
@@ -333,15 +412,17 @@ test("backpack keybind opens and quickstash mode component persists", async (ctx
   await waitForTitle(ctx, "Leather Backpack");
   await closeMenu(ctx);
 
-  await equipMainHand(ctx, "mochila:leather_backpack[mochila:quickstash_mode=1]");
-  await ctx.commands.assert("/execute if items entity @s weapon.mainhand mochila:leather_backpack[mochila:quickstash_mode=1]");
+  await equipMainHand(ctx, await backpackWith(ctx, "mochila:leather_backpack", { mode: 1 }));
+  await assertMainHandMode(ctx, "mochila:leather_backpack", 1);
+});
+
+test("backpack tooltip lists its details", async (ctx) => {
+  await equipMainHand(ctx, "mochila:leather_backpack");
+  await ctx.commands.assert("/mochila debug tooltip");
 });
 
 test("backpack keeps container component contents", async (ctx) => {
-  await equipMainHand(
-    ctx,
-    'mochila:leather_backpack[minecraft:container=[{slot:0,item:{id:"minecraft:cobblestone",count:16}},{slot:1,item:{id:"minecraft:oak_log",count:8}}]]',
-  );
+  await equipMainHand(ctx, await backpackWith(ctx, "mochila:leather_backpack", { contents: SAMPLE_CONTENTS }));
   await useMainHandAndWaitForTitle(ctx, "Leather Backpack");
   await closeMenu(ctx);
   await assertInventoryContains(ctx, "mochila:leather_backpack");
@@ -407,10 +488,7 @@ test("ender backpack keybind opens menu", async (ctx) => {
 
 test("quickstash dumps backpack contents into a chest", async (ctx) => {
   await buildContainerLine(ctx);
-  await equipMainHand(
-    ctx,
-    'mochila:leather_backpack[minecraft:container=[{slot:0,item:{id:"minecraft:cobblestone",count:16}},{slot:1,item:{id:"minecraft:oak_log",count:8}}]]',
-  );
+  await equipMainHand(ctx, await backpackWith(ctx, "mochila:leather_backpack", { contents: SAMPLE_CONTENTS }));
   await sneakUseBlock(ctx, pos(2), "north");
   await waitMs(ctx, 250);
   await commandOutput(ctx, "/data get block 2 200 0 Items", ["minecraft:cobblestone", "minecraft:oak_log"]);
@@ -418,7 +496,10 @@ test("quickstash dumps backpack contents into a chest", async (ctx) => {
 
 test("quickstash dumps backpack contents into a barrel", async (ctx) => {
   await buildContainerLine(ctx);
-  await equipMainHand(ctx, 'mochila:iron_backpack[minecraft:container=[{slot:0,item:{id:"minecraft:dirt",count:32}}]]');
+  await equipMainHand(
+    ctx,
+    await backpackWith(ctx, "mochila:iron_backpack", { contents: [{ slot: 0, item: "minecraft:dirt", count: 32 }] }),
+  );
   await sneakUseBlock(ctx, pos(4), "up");
   await waitMs(ctx, 250);
   await commandOutput(ctx, "/data get block 4 200 0 Items", ["minecraft:dirt"]);
@@ -429,7 +510,7 @@ test("quickstash store mode only stores matching items", async (ctx) => {
   await ctx.commands.assert("/item replace block 2 200 0 container.0 with minecraft:cobblestone 1");
   await equipMainHand(
     ctx,
-    'mochila:leather_backpack[mochila:quickstash_mode=1,minecraft:container=[{slot:0,item:{id:"minecraft:cobblestone",count:16}},{slot:1,item:{id:"minecraft:oak_log",count:8}}]]',
+    await backpackWith(ctx, "mochila:leather_backpack", { mode: 1, contents: SAMPLE_CONTENTS }),
   );
   await sneakUseBlock(ctx, pos(2), "north");
   await waitMs(ctx, 250);

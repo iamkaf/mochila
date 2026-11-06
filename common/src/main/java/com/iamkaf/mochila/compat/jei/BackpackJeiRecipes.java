@@ -1,9 +1,8 @@
 package com.iamkaf.mochila.compat.jei;
 
+import com.iamkaf.mochila.compat.Dyes;
 import com.iamkaf.mochila.item.backpack.BackpackUtils;
 import com.iamkaf.mochila.recipe.BackpackUpgrading;
-import net.minecraft.core.registries.BuiltInRegistries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -52,10 +51,6 @@ public final class BackpackJeiRecipes {
         return backpacks;
     }
 
-    public static Item dyeItem(DyeColor color) {
-        return BuiltInRegistries.ITEM.getValue(Identifier.withDefaultNamespace(color.getSerializedName() + "_dye"));
-    }
-
     private static boolean isCraftingUpgradeMaterial(Item material) {
         return material == Items.IRON_INGOT || material == Items.GOLD_INGOT || material == Items.DIAMOND;
     }
@@ -66,7 +61,7 @@ public final class BackpackJeiRecipes {
         }
 
         public ItemStack dyeInput() {
-            return new ItemStack(dyeItem(color));
+            return new ItemStack(Dyes.itemOf(color));
         }
 
         public ItemStack output() {

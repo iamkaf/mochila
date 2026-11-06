@@ -1,8 +1,8 @@
 package com.iamkaf.mochila.item.backpack;
 
+import com.iamkaf.mochila.compat.VanillaRegistries;
 import com.iamkaf.mochila.item.BackpackItem;
 import com.iamkaf.mochila.registry.Items;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.DyeColor;
 import net.minecraft.world.item.Item;
@@ -36,6 +36,16 @@ public class BackpackUtils {
     }
 
     public static Item getBackpackByTierAndColor(Tier tier, @Nullable DyeColor color) {
+        if (color == null) {
+            return switch (tier) {
+                case LEATHER -> Items.LEATHER_BACKPACK.get();
+                case IRON -> Items.IRON_BACKPACK.get();
+                case GOLD -> Items.GOLD_BACKPACK.get();
+                case DIAMOND -> Items.DIAMOND_BACKPACK.get();
+                case NETHERITE -> Items.NETHERITE_BACKPACK.get();
+            };
+        }
+
         return switch (tier) {
             case LEATHER -> switch (color) {
                 case WHITE -> Items.WHITE_LEATHER_BACKPACK.get();
@@ -54,7 +64,6 @@ public class BackpackUtils {
                 case PURPLE -> Items.PURPLE_LEATHER_BACKPACK.get();
                 case MAGENTA -> Items.MAGENTA_LEATHER_BACKPACK.get();
                 case PINK -> Items.PINK_LEATHER_BACKPACK.get();
-                case null -> Items.LEATHER_BACKPACK.get();
             };
             case IRON -> switch (color) {
                 case WHITE -> Items.WHITE_IRON_BACKPACK.get();
@@ -73,7 +82,6 @@ public class BackpackUtils {
                 case PURPLE -> Items.PURPLE_IRON_BACKPACK.get();
                 case MAGENTA -> Items.MAGENTA_IRON_BACKPACK.get();
                 case PINK -> Items.PINK_IRON_BACKPACK.get();
-                case null -> Items.IRON_BACKPACK.get();
             };
             case GOLD -> switch (color) {
                 case WHITE -> Items.WHITE_GOLD_BACKPACK.get();
@@ -92,7 +100,6 @@ public class BackpackUtils {
                 case PURPLE -> Items.PURPLE_GOLD_BACKPACK.get();
                 case MAGENTA -> Items.MAGENTA_GOLD_BACKPACK.get();
                 case PINK -> Items.PINK_GOLD_BACKPACK.get();
-                case null -> Items.GOLD_BACKPACK.get();
             };
             case DIAMOND -> switch (color) {
                 case WHITE -> Items.WHITE_DIAMOND_BACKPACK.get();
@@ -111,7 +118,6 @@ public class BackpackUtils {
                 case PURPLE -> Items.PURPLE_DIAMOND_BACKPACK.get();
                 case MAGENTA -> Items.MAGENTA_DIAMOND_BACKPACK.get();
                 case PINK -> Items.PINK_DIAMOND_BACKPACK.get();
-                case null -> Items.DIAMOND_BACKPACK.get();
             };
             case NETHERITE -> switch (color) {
                 case WHITE -> Items.WHITE_NETHERITE_BACKPACK.get();
@@ -130,13 +136,12 @@ public class BackpackUtils {
                 case PURPLE -> Items.PURPLE_NETHERITE_BACKPACK.get();
                 case MAGENTA -> Items.MAGENTA_NETHERITE_BACKPACK.get();
                 case PINK -> Items.PINK_NETHERITE_BACKPACK.get();
-                case null -> Items.NETHERITE_BACKPACK.get();
             };
         };
     }
 
     public static Tier determineTier(ItemStack backpack) {
-        String path = Objects.requireNonNull(BuiltInRegistries.ITEM.getKey(backpack.getItem())).getPath();
+        String path = Objects.requireNonNull(VanillaRegistries.items().getKey(backpack.getItem())).getPath();
         if (path.contains("leather")) {
             return Tier.LEATHER;
         }
@@ -156,7 +161,7 @@ public class BackpackUtils {
     }
 
     public static @Nullable DyeColor determineDyeColor(ItemStack backpack) {
-        String path = Objects.requireNonNull(BuiltInRegistries.ITEM.getKey(backpack.getItem())).getPath();
+        String path = Objects.requireNonNull(VanillaRegistries.items().getKey(backpack.getItem())).getPath();
         if (path.contains("white")) {
             return DyeColor.WHITE;
         }
@@ -210,7 +215,7 @@ public class BackpackUtils {
     }
 
     public static boolean isBlacklistedItem(Item theItem) {
-        Identifier registryName = BuiltInRegistries.ITEM.getKey(theItem);
+        Identifier registryName = VanillaRegistries.items().getKey(theItem);
         return theItem instanceof BackpackItem || registryName.getPath().contains("shulker_box");
     }
 

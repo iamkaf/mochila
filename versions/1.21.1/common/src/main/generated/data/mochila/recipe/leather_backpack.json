@@ -1,0 +1,30 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "category": "equipment",
+  "key": {
+    "A": {
+      "item": "minecraft:leather"
+    },
+    "B": {
+      "item": "minecraft:iron_ingot"
+    },
+    "C": {
+      "item": "minecraft:chest"
+    },
+    "D": {
+      "item": "minecraft:string"
+    },
+    "E": {
+      "tag": "minecraft:wool"
+    }
+  },
+  "pattern": [
+    "ABA",
+    "ACD",
+    "AEB"
+  ],
+  "result": {
+    "count": 1,
+    "id": "mochila:leather_backpack"
+  }
+}

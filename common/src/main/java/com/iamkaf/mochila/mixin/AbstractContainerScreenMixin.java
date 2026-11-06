@@ -8,9 +8,6 @@ import net.minecraft.client.gui.screens.inventory.MenuAccess;
 import net.minecraft.client.player.LocalPlayer;
 import net.minecraft.network.chat.Component;
 import net.minecraft.world.inventory.AbstractContainerMenu;
-//? if <26.1
-/*import net.minecraft.world.inventory.ClickType;*/
-//? if >=26.1
 import net.minecraft.world.inventory.ContainerInput;
 import net.minecraft.world.inventory.Slot;
 import org.spongepowered.asm.mixin.Mixin;
@@ -25,20 +22,14 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
         super(title);
     }
 
-    //? if >=26.1
     @Inject(method = "slotClicked(Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ContainerInput;)V", at = @At("HEAD"), cancellable = true)
-    //? if <26.1
-    /*@Inject(method = "slotClicked(Lnet/minecraft/world/inventory/Slot;IILnet/minecraft/world/inventory/ClickType;)V", at = @At("HEAD"), cancellable = true)*/
-    //? if >=26.1
     protected void mochila$slotClicked(Slot slot, int slotId, int mouseButton, ContainerInput type,
-    //? if <26.1
-    /*protected void mochila$slotClicked(Slot slot, int slotId, int mouseButton, ClickType type,*/
             CallbackInfo ci) {
         LocalPlayer player = Minecraft.getInstance().player;
         assert player != null;
         // TODO: this won't work until I have a real registered menu
 //        if (player.hasContainerOpen() && player.containerMenu instanceof BackpackMenu) {
-        if (player.hasContainerOpen()) {
+        if (player.containerMenu != player.inventoryMenu) {
             boolean illegalBackpackMovementDetected = mochila$checkForBlacklist(slot, mouseButton, type);
             if (illegalBackpackMovementDetected) {
                 ci.cancel();
@@ -47,14 +38,8 @@ public abstract class AbstractContainerScreenMixin<T extends AbstractContainerMe
     }
 
     @Unique
-    //? if >=26.1
     private boolean mochila$checkForBlacklist(Slot slot, int button, ContainerInput type) {
-    //? if <26.1
-    /*private boolean mochila$checkForBlacklist(Slot slot, int button, ClickType type) {*/
-        //? if >=26.1
         if (type.equals(ContainerInput.SWAP)) {
-        //? if <26.1
-        /*if (type.equals(ClickType.SWAP)) {*/
             assert Minecraft.getInstance().player != null;
             if (mochila$swapSourceIsBlacklisted(Minecraft.getInstance().player, button)) {
                 return true;

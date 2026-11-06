@@ -2437,6 +2437,8 @@ export interface ClientScreen {
   title?: string;
   screenClass?: string;
   open?: boolean;
+  /** True once the title screen shows with nothing loading over it. */
+  titleScreen?: boolean;
   widgets(): ScreenWidgetCollection;
   lists(role?: string): ScreenListCollection;
   menu(): ScreenMenuFacade;

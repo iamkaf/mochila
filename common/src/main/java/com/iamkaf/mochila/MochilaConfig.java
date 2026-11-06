@@ -6,24 +6,14 @@ import com.iamkaf.konfig.api.v1.ConfigScope;
 import com.iamkaf.konfig.api.v1.ConfigValue;
 import com.iamkaf.konfig.api.v1.Konfig;
 import com.iamkaf.konfig.api.v1.SyncMode;
-import net.minecraft.core.registries.Registries;
+import com.iamkaf.mochila.compat.ContainerBlocks;
+import com.iamkaf.mochila.compat.VanillaRegistries;
 
+import java.util.ArrayList;
 import java.util.List;
 
 public final class MochilaConfig {
-    private static final List<String> DEFAULT_QUICKSTASH_TARGETS = List.of(
-            "minecraft:chest",
-            "minecraft:trapped_chest",
-            "minecraft:barrel",
-            "minecraft:copper_chest",
-            "minecraft:exposed_copper_chest",
-            "minecraft:weathered_copper_chest",
-            "minecraft:oxidized_copper_chest",
-            "minecraft:waxed_copper_chest",
-            "minecraft:waxed_exposed_copper_chest",
-            "minecraft:waxed_weathered_copper_chest",
-            "minecraft:waxed_oxidized_copper_chest"
-    );
+    private static final List<String> DEFAULT_QUICKSTASH_TARGETS = defaultQuickstashTargets();
 
     public static final ConfigHandle HANDLE;
     private static final ConfigValue<Boolean> QUICKSTASH_ENABLED;
@@ -56,7 +46,7 @@ public final class MochilaConfig {
                 .build();
         QUICKSTASH_TARGETS = builder.stringList("targets", DEFAULT_QUICKSTASH_TARGETS)
                 .comment("Block registry IDs that backpacks can quickstash into.")
-                .registry(Registries.BLOCK)
+                .registry(VanillaRegistries.blockKey())
                 .info(info -> info
                         .header("Quickstash Targets")
                         .inlineText("Each entry is a block registry id, such as minecraft:chest or minecraft:barrel.")
@@ -115,6 +105,16 @@ public final class MochilaConfig {
     }
 
     private MochilaConfig() {
+    }
+
+    private static List<String> defaultQuickstashTargets() {
+        List<String> targets = new ArrayList<>(List.of(
+                "minecraft:chest",
+                "minecraft:trapped_chest",
+                "minecraft:barrel"
+        ));
+        targets.addAll(ContainerBlocks.copperChests());
+        return targets;
     }
 
     public static void init() {

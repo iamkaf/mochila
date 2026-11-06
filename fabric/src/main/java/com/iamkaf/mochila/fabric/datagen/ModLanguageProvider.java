@@ -1,16 +1,20 @@
 package com.iamkaf.mochila.fabric.datagen;
 
 import com.iamkaf.mochila.Constants;
-//? if <26.1
-/*import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;*/
 //? if >=26.1
 import net.fabricmc.fabric.api.datagen.v1.FabricPackOutput;
+//? if <26.1 && >=1.19.3
+/*import net.fabricmc.fabric.api.datagen.v1.FabricDataOutput;*/
+//? if <1.19.3
+/*import net.fabricmc.fabric.api.datagen.v1.FabricDataGenerator;*/
 import net.fabricmc.fabric.api.datagen.v1.provider.FabricLanguageProvider;
+//? if >=1.20.5
 import net.minecraft.core.HolderLookup;
 import org.apache.commons.lang3.StringUtils;
 
 import java.util.Arrays;
 import java.util.List;
+//? if >=1.20.5
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.Collectors;
 
@@ -37,16 +41,30 @@ public class ModLanguageProvider extends FabricLanguageProvider {
             "pink"
     );
 
-    //? if >=26.1
+    //? if >=26.1 {
     public ModLanguageProvider(FabricPackOutput dataOutput, CompletableFuture<HolderLookup.Provider> registryLookup) {
-    //? if <26.1
-    /*public ModLanguageProvider(FabricDataOutput dataOutput, CompletableFuture<HolderLookup.Provider> registryLookup) {*/
         super(dataOutput, registryLookup);
     }
+    //?} else if >=1.20.5 {
+    /*public ModLanguageProvider(FabricDataOutput dataOutput, CompletableFuture<HolderLookup.Provider> registryLookup) {
+        super(dataOutput, registryLookup);
+    }
+    *///?} else if >=1.19.3 {
+    /*public ModLanguageProvider(FabricDataOutput dataOutput) {
+        super(dataOutput);
+    }
+    *///?} else {
+    /*public ModLanguageProvider(FabricDataGenerator dataGenerator) {
+        super(dataGenerator);
+    }
+    *///?}
 
     protected void addTranslations(TranslationBuilder translationBuilder) {
         translationBuilder.add("creativetab.mochila.mochila", "Mochila");
+        //? if >=1.21.9
         translationBuilder.add("key.category.mochila.mochila", "Mochila");
+        //? if <1.21.9
+        /*translationBuilder.add("key.categories.mochila", "Mochila");*/
         translationBuilder.add("key.mochila.open_backpack", "Open Backpack");
         translationBuilder.add("key.mochila.open_ender_backpack", "Open Ender Backpack");
         translationBuilder.add("jei.mochila.category.backpack_coloring", "Backpack Coloring");
@@ -106,8 +124,15 @@ public class ModLanguageProvider extends FabricLanguageProvider {
         return color.isEmpty() ? material + "_backpack" : color + "_" + material + "_backpack";
     }
 
+    //? if >=1.20.5 {
     @Override
     public void generateTranslations(HolderLookup.Provider provider, TranslationBuilder translationBuilder) {
         addTranslations(translationBuilder);
     }
+    //?} else {
+    /*@Override
+    public void generateTranslations(TranslationBuilder translationBuilder) {
+        addTranslations(translationBuilder);
+    }
+    *///?}
 }

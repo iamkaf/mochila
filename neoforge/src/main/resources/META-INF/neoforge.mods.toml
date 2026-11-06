@@ -31,7 +31,7 @@ side = "BOTH"
 [[dependencies.${mod_id}]]
 modId = "amber"
 type="required" #mandatory (Can be one of "required", "optional", "incompatible" or "discouraged")
-versionRange = "[${amber_version},)"
+versionRange = "${amber_version_range}"
 ordering = "AFTER"
 side = "BOTH"
 [[dependencies.${mod_id}]]

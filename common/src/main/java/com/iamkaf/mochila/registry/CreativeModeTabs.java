@@ -1,10 +1,10 @@
 package com.iamkaf.mochila.registry;
 
-import com.iamkaf.amber.api.registry.v1.creativetabs.CreativeModeTabRegistry;
-import com.iamkaf.amber.api.registry.v1.DeferredRegister;
 import com.iamkaf.amber.api.registry.v1.RegistrySupplier;
+import com.iamkaf.amber.api.registry.v1.creativetabs.CreativeModeTabRegistry;
 import com.iamkaf.mochila.Constants;
-import net.minecraft.network.chat.Component;
+import com.iamkaf.mochila.compat.CreativeTabs;
+import com.iamkaf.mochila.compat.Texts;
 import net.minecraft.world.item.CreativeModeTab;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
@@ -17,11 +17,10 @@ public class CreativeModeTabs {
     private static final List<Supplier<Item>> ITEMS = new ArrayList<>();
 
     public static final RegistrySupplier<CreativeModeTab> MOCHILA = CreativeModeTabRegistry.register(
-            CreativeModeTabRegistry.builder(Constants.MOD_ID)
-                    .row(CreativeModeTab.Row.TOP)
+            CreativeTabs.builder(Constants.MOD_ID)
                     .column(0)
                     .icon(() -> new ItemStack(Items.LIGHT_BLUE_IRON_BACKPACK.get()))
-                    .title(Component.translatable("creativetab." + Constants.MOD_ID + "." + Constants.MOD_ID))
+                    .title(Texts.translatable("creativetab." + Constants.MOD_ID + "." + Constants.MOD_ID))
     );
 
     public static void addItem(Supplier<Item> item) {

@@ -3,19 +3,20 @@ package com.iamkaf.mochila.item.backpack;
 import com.iamkaf.amber.api.event.v1.events.common.PlayerEvents;
 import com.iamkaf.amber.api.functions.v1.PlayerFunctions;
 import com.iamkaf.mochila.MochilaConfig;
+import com.iamkaf.mochila.compat.BackpackData;
+import com.iamkaf.mochila.compat.Sounds;
+import com.iamkaf.mochila.compat.Stacks;
+import com.iamkaf.mochila.compat.Texts;
+import com.iamkaf.mochila.compat.VanillaRegistries;
 import com.iamkaf.mochila.item.BackpackItem;
-import com.iamkaf.mochila.registry.DataComponents;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.particles.ParticleTypes;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.resources.Identifier;
 import net.minecraft.server.level.ServerLevel;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.sounds.SoundSource;
 import net.minecraft.world.Container;
-import net.minecraft.world.ContainerHelper;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.InteractionResult;
 import net.minecraft.world.entity.decoration.ItemFrame;
@@ -60,7 +61,7 @@ public class QuickStash {
     }
 
     public static Mode getMode(ItemStack stack) {
-        return stack.getOrDefault(DataComponents.QUICKSTASH_MODE.get(), 0) == 0 ? Mode.DUMP : Mode.STORE;
+        return BackpackData.quickstashMode(stack) == 0 ? Mode.DUMP : Mode.STORE;
     }
 
     public static void sendParticles(Direction direction, Level level, BlockPos pos) {
@@ -106,7 +107,7 @@ public class QuickStash {
                     }
                     continue;
                 }
-                ItemStack toInsert = ContainerHelper.takeItem(backpack.getItems(), i);
+                ItemStack toInsert = backpack.removeItemNoUpdate(i);
                 int inCount = toInsert.getCount();
                 boolean insertingEmpty = toInsert.isEmpty();
                 attemptedNonEmpty |= !insertingEmpty;
@@ -123,7 +124,7 @@ public class QuickStash {
                     level.playSound(
                             null,
                             player.blockPosition(),
-                            SoundEvents.ARMOR_EQUIP_NETHERITE.value(),
+                            Sounds.armorEquipNetherite(),
                             SoundSource.PLAYERS,
                             0.5f,
                             1f
@@ -152,7 +153,7 @@ public class QuickStash {
 
     public static boolean contains(ItemStack stack, Container container) {
         for (int i = 0; i < container.getContainerSize(); i++) {
-            if (ItemStack.isSameItem(stack, container.getItem(i))) {
+            if (Stacks.isSameItem(stack, container.getItem(i))) {
                 return true;
             }
         }
@@ -167,7 +168,7 @@ public class QuickStash {
         return MochilaConfig.quickstashTargets()
                 .stream()
                 .map(Identifier::tryParse)
-                .flatMap(id -> id == null ? Stream.<Block>empty() : BuiltInRegistries.BLOCK.getOptional(id).stream())
+                .flatMap(id -> id == null ? Stream.<Block>empty() : VanillaRegistries.blocks().getOptional(id).stream())
                 .collect(Collectors.toSet());
     }
 
@@ -197,11 +198,11 @@ public class QuickStash {
             Mode mode
     ) {
         static Result unsupported() {
-            return new Result(false, false, 0, 0, false, false, Component.empty(), Mode.DUMP);
+            return new Result(false, false, 0, 0, false, false, Texts.empty(), Mode.DUMP);
         }
 
         static Result disabled() {
-            return new Result(false, false, 0, 0, false, false, Component.empty(), Mode.DUMP);
+            return new Result(false, false, 0, 0, false, false, Texts.empty(), Mode.DUMP);
         }
 
         public Component message() {
@@ -209,15 +210,15 @@ public class QuickStash {
                 String key = mode == Mode.STORE
                         ? "mochila.quickstash.feedback.stored_matching"
                         : "mochila.quickstash.feedback.stored";
-                return Component.translatable(key, movedItems, targetName);
+                return Texts.translatable(key, movedItems, targetName);
             }
             if (mode == Mode.STORE && skippedByStoreMode) {
-                return Component.translatable("mochila.quickstash.feedback.no_matching");
+                return Texts.translatable("mochila.quickstash.feedback.no_matching");
             }
             if (attemptedNonEmpty) {
-                return Component.translatable("mochila.quickstash.feedback.full", targetName);
+                return Texts.translatable("mochila.quickstash.feedback.full", targetName);
             }
-            return Component.translatable("mochila.quickstash.feedback.empty");
+            return Texts.translatable("mochila.quickstash.feedback.empty");
         }
     }
 }

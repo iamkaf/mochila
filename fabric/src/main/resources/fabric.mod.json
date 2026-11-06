@@ -35,7 +35,7 @@
         "minecraft": "${fabric_version_range}",
         "java": ">=${java_version}",
         "konfig": "*",
-        "amber": ">=${amber_version}"
+        "amber": "${amber_version_range}"
     },
     "suggests": {
         "modmenu": ">=${mod_menu_version}",

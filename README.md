@@ -19,7 +19,7 @@ The project is built as a Stonecutter multi-loader mod. Shared code lives in `co
 - Quick stash modes for moving backpack contents into target containers.
 - Configurable quick stash target blocks.
 - In-game configuration screens through Konfig where supported.
-- JEI recipe views for backpack coloring and crafting upgrades on Fabric and NeoForge.
+- JEI recipe views for backpack coloring and crafting upgrades.
 - TeaKit tests for repeatable smoke, recipe, content, visual, and interaction checks.
 
 ## Requirements
@@ -36,10 +36,25 @@ client's Creative inventory, but taking one may disconnect the player with a
 
 | Minecraft | Fabric | Forge | NeoForge |
 | --- | --- | --- | --- |
+| 26.3 | Supported | Supported | Supported |
 | 26.2 | Supported | Supported | Supported |
 | 26.1.2 | Supported | Supported | Supported |
+| 26.1.1 | Supported | Supported | Supported |
+| 26.1 | Supported | Supported | Supported |
+| 1.21.11 | Supported | Supported | Supported |
+| 1.21.10 | Supported | Supported | Supported |
+| 1.21.8 | Supported | Supported | Supported |
+| 1.21.7 | Supported | Supported | Supported |
+| 1.21.6 | Supported | Supported | Supported |
+| 1.21.5 | Supported | Supported | Supported |
+| 1.21.4 | Supported | Supported | Supported |
+| 1.21.1 | Supported | Supported | Supported |
+| 1.21 | Supported | Supported | - |
+| 1.20.1 | Supported | Supported | - |
+| 1.19.4 | Supported | Supported | - |
+| 1.18.2 | Supported | Supported | - |
 
-JEI integration is currently enabled for Fabric and NeoForge.
+JEI integration loads wherever JEI is available for the loader and Minecraft version.
 
 ## Project Layout
 
@@ -59,7 +74,7 @@ mochila/
 
 Prerequisites:
 
-- Java 25 for the current `26.1.2` target.
+- Java 25 for the current `26.1.2` target. Older lines build with Java 17 (1.18.2 to 1.20.1) or Java 21 (1.21 to 1.21.11).
 - `just`
 
 Useful commands:

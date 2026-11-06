@@ -1,0 +1,28 @@
+{
+  "type": "minecraft:crafting_shaped",
+  "pattern": [
+    "ABA",
+    "ACD",
+    "AEB"
+  ],
+  "key": {
+    "A": {
+      "item": "minecraft:leather"
+    },
+    "B": {
+      "item": "minecraft:iron_ingot"
+    },
+    "C": {
+      "item": "minecraft:ender_chest"
+    },
+    "D": {
+      "item": "minecraft:string"
+    },
+    "E": {
+      "tag": "minecraft:wool"
+    }
+  },
+  "result": {
+    "item": "mochila:ender_backpack"
+  }
+}
