@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the full changelog at https://github.com/iamkaf/mochila
 
+## 6.3.0
+
+### Changed
+
+- Ported to Minecraft 1.18.2, 1.19.4, 1.20.1, 1.21, 1.21.1, and 1.21.4 through 1.21.10.
+
 ## 6.2.1
 
 ### Changed
