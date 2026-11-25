@@ -1,6 +1,10 @@
 package com.iamkaf.mochila.debug;
 
 import com.iamkaf.amber.api.event.v1.events.common.CommandEvents;
+import com.iamkaf.amber.api.networking.v1.PacketContext;
+import com.iamkaf.konfig.api.v1.ConfigValue;
+import com.iamkaf.konfig.impl.v1.config.model.ConfigHandleImpl;
+import com.iamkaf.mochila.MochilaConfig;
 import com.iamkaf.mochila.compat.BackpackData;
 import com.iamkaf.mochila.compat.CommandCompat;
 import com.iamkaf.mochila.compat.Players;
@@ -12,9 +16,11 @@ import com.iamkaf.mochila.item.backpack.BackpackContainer;
 import com.iamkaf.mochila.item.backpack.BackpackMenu;
 import com.iamkaf.mochila.item.backpack.BackpackUtils;
 import com.iamkaf.mochila.item.backpack.QuickStash;
+import com.iamkaf.mochila.network.ChangeBackpackModePacket;
 import com.iamkaf.mochila.recipe.BackpackColoring;
 import com.iamkaf.mochila.recipe.BackpackUpgrading;
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
@@ -62,6 +68,8 @@ public final class MochilaDebugCommands {
                                         .executes(MochilaDebugCommands::sample)))
                         .then(Commands.literal("tooltip")
                                 .executes(MochilaDebugCommands::tooltip))
+                        .then(configCommand())
+                        .then(Commands.literal("mode").executes(MochilaDebugCommands::mode))
                         .then(Commands.literal("quickstash")
                                 .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                         .then(Commands.argument("direction", StringArgumentType.word())
@@ -89,6 +97,68 @@ public final class MochilaDebugCommands {
                                 .then(Commands.literal("assert-invalid-upgrade")
                                         .then(Commands.argument("material", item)
                                                 .executes(MochilaDebugCommands::assertInvalidUpgrade)))));
+    }
+
+    // Runs the handler of the packet the sneak-and-backpack-key press sends, as the command's player.
+    private static int mode(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        ChangeBackpackModePacket.handle(new ChangeBackpackModePacket(0), new PacketContext() {
+            @Override
+            public boolean isClientSide() {
+                return false;
+            }
+
+            @Override
+            public net.minecraft.world.entity.player.Player getPlayer() {
+                return player;
+            }
+
+            @Override
+            public void execute(Runnable task) {
+                task.run();
+            }
+        });
+        return Command.SINGLE_SUCCESS;
+    }
+
+    // Changes the quickstash switch, target list and feedback setting, which are the ones tests flip.
+    private static LiteralArgumentBuilder<CommandSourceStack> configCommand() {
+        LiteralArgumentBuilder<CommandSourceStack> config = Commands.literal("config")
+                .then(Commands.literal("reset").executes(context -> {
+                    MochilaConfig.QUICKSTASH_ENABLED.set(true);
+                    MochilaConfig.QUICKSTASH_TARGETS.set(MochilaConfig.QUICKSTASH_TARGETS.defaultValue());
+                    MochilaConfig.QUICKSTASH_FEEDBACK.set(true);
+                    return configApplied(context);
+                }))
+                .then(Commands.literal("targets")
+                        .then(Commands.argument("blocks", StringArgumentType.greedyString()).executes(context -> {
+                            String raw = StringArgumentType.getString(context, "blocks").trim();
+                            MochilaConfig.QUICKSTASH_TARGETS.set(raw.isEmpty() ? List.of() : List.of(raw.split(",")));
+                            return configApplied(context);
+                        })));
+        flag(config, "enabled", MochilaConfig.QUICKSTASH_ENABLED);
+        flag(config, "feedback", MochilaConfig.QUICKSTASH_FEEDBACK);
+        return config;
+    }
+
+    private static void flag(LiteralArgumentBuilder<CommandSourceStack> parent, String name,
+            ConfigValue<Boolean> value) {
+        parent.then(Commands.literal(name)
+                .then(Commands.argument("value", BoolArgumentType.bool())
+                        .executes(context -> {
+                            value.set(BoolArgumentType.getBool(context, "value"));
+                            return configApplied(context);
+                        })));
+    }
+
+    // The config only syncs to a player when they join, and this process hosts both ends, so apply the saved snapshot
+    // the way a joining client would.
+    private static int configApplied(CommandContext<CommandSourceStack> context) {
+        ConfigHandleImpl handle = (ConfigHandleImpl) MochilaConfig.HANDLE;
+        handle.save();
+        handle.applySyncSnapshot(handle.snapshotJson());
+        CommandCompat.success(context.getSource(), Texts.literal("Config applied."));
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int sample(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {

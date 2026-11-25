@@ -16,9 +16,9 @@ public final class MochilaConfig {
     private static final List<String> DEFAULT_QUICKSTASH_TARGETS = defaultQuickstashTargets();
 
     public static final ConfigHandle HANDLE;
-    private static final ConfigValue<Boolean> QUICKSTASH_ENABLED;
-    private static final ConfigValue<List<String>> QUICKSTASH_TARGETS;
-    private static final ConfigValue<Boolean> QUICKSTASH_FEEDBACK;
+    public static final ConfigValue<Boolean> QUICKSTASH_ENABLED;
+    public static final ConfigValue<List<String>> QUICKSTASH_TARGETS;
+    public static final ConfigValue<Boolean> QUICKSTASH_FEEDBACK;
     private static final ConfigValue<Boolean> QUICKSTASH_FEEDBACK_NOOP;
     private static final ConfigValue<Boolean> QUICKSTASH_SOUND;
     private static final ConfigValue<Boolean> QUICKSTASH_PARTICLES;
