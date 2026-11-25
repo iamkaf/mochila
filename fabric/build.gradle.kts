@@ -31,4 +31,9 @@ dependencies {
     if (isModernLine && hasRuntimeJei) {
         runtimeOnly(catalog.requiredDependency("jei-fabric"))
     }
+    // JEI at dev runtime on 1.21.1, so its recipe categories can be checked there. Obfuscated lines remap it.
+    if (minecraftVersion == "1.21.1") {
+        val configuration = if (configurations.names.contains("modRuntimeOnly")) "modRuntimeOnly" else "runtimeOnly"
+        add(configuration, catalog.requiredDependency("jei-fabric"))
+    }
 }
