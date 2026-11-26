@@ -1,28 +1,14 @@
 package com.iamkaf.mochila.tags;
 
 import com.iamkaf.mochila.Constants;
+import com.iamkaf.mochila.compat.VanillaRegistries;
 import com.iamkaf.mochila.item.backpack.BackpackUtils;
-import net.minecraft.core.registries.Registries;
-import net.minecraft.resources.Identifier;
 import net.minecraft.tags.TagKey;
 import net.minecraft.world.item.Item;
-import net.minecraft.world.level.block.Block;
 
 public class MochilaTags {
     private static TagKey<Item> createItemTag(String name) {
-        return TagKey.create(Registries.ITEM, Constants.resource(name));
-    }
-
-    private static TagKey<Item> createItemTag(String namespace, String path) {
-        return TagKey.create(Registries.ITEM, Identifier.fromNamespaceAndPath(namespace, path));
-    }
-
-    private static TagKey<Block> createBlockTag(String name) {
-        return TagKey.create(Registries.BLOCK, Constants.resource(name));
-    }
-
-    private static TagKey<Block> createBlockTag(String namespace, String path) {
-        return TagKey.create(Registries.BLOCK, Identifier.fromNamespaceAndPath(namespace, path));
+        return TagKey.create(VanillaRegistries.itemKey(), Constants.resource(name));
     }
 
     public static class Items {

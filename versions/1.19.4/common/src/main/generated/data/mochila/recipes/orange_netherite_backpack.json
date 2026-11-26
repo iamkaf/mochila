@@ -1,0 +1,12 @@
+{
+  "type": "minecraft:smithing",
+  "addition": {
+    "item": "minecraft:netherite_ingot"
+  },
+  "base": {
+    "item": "mochila:orange_diamond_backpack"
+  },
+  "result": {
+    "item": "mochila:orange_netherite_backpack"
+  }
+}

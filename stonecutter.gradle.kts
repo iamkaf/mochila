@@ -15,3 +15,14 @@ teakit {
 }
 
 stonecutter active "26.1.2".let { multiloaderStonecutter.active(it) }
+
+stonecutter parameters {
+    // 1.21.11 renamed ResourceLocation to Identifier.
+    replacements.string(eval(current.version, ">=1.21.11")) {
+        replace("ResourceLocation", "Identifier")
+    }
+    // 26.1 renamed ClickType to ContainerInput.
+    replacements.string(eval(current.version, ">=26.1")) {
+        replace("ClickType", "ContainerInput")
+    }
+}

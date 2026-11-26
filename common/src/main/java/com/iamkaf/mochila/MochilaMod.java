@@ -4,6 +4,7 @@ import com.iamkaf.amber.api.core.v2.AmberInitializer;
 import com.iamkaf.amber.api.platform.v1.Platform;
 import com.iamkaf.amber.util.Env;
 import com.iamkaf.amber.util.EnvExecutor;
+import com.iamkaf.mochila.compat.BackpackData;
 import com.iamkaf.mochila.debug.MochilaDebugCommands;
 import com.iamkaf.mochila.network.MochilaNetworking;
 import com.iamkaf.mochila.platform.Services;
@@ -24,7 +25,7 @@ public class MochilaMod {
         MochilaConfig.init();
 
         // Registries
-        DataComponents.init();
+        BackpackData.init();
         Items.init();
         CreativeModeTabs.init();
         RecipeSerializers.init();

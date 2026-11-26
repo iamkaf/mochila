@@ -20,7 +20,10 @@ const LEFT_SHIFT_KEY = 340;
 
 const TIERS = ["leather", "iron", "gold", "diamond", "netherite"] as const;
 const COLOR_TIERS = ["leather", "iron", "gold", "diamond", "netherite"] as const;
-const COLORS = ["white", "red", "blue", "black", "pink"] as const;
+const ALL_COLORS = [
+  "white", "orange", "magenta", "light_blue", "yellow", "lime", "pink", "gray",
+  "light_gray", "cyan", "purple", "blue", "brown", "green", "red", "black",
+] as const;
 const BACKPACK_MENUS = [
   ["leather", "Leather Backpack"],
   ["iron", "Iron Backpack"],
@@ -47,6 +50,7 @@ describe.configure({
     Capability.WorldFill,
     Capability.WorldSetBlock,
     Capability.WorldRecipes,
+    Capability.ServerCommands,
   ],
 });
 
@@ -129,7 +133,7 @@ async function keyTap(ctx: Ctx, key: number) {
   await ctx.client.keyState(key, false);
 }
 
-async function sneakUseBlock(ctx: Ctx, target: BlockPos, face: "north" | "up") {
+async function sneakUseBlock(ctx: Ctx, target: BlockPos, face: "north" | "south" | "up") {
   await ctx.client.keyState(LEFT_SHIFT_KEY, true);
   try {
     await waitMs(ctx, 250);
@@ -148,16 +152,29 @@ async function assertRecipe(ctx: Ctx, width: number, height: number, items: Item
 }
 
 async function assertSmithing(ctx: Ctx, baseItemId: ItemId, resultItemId: ItemId) {
-  await ctx.recipes.assertSmithingTransform(baseItemId, resultItemId, {
-    templateItemId: "minecraft:netherite_upgrade_smithing_template",
-    additionItemId: "minecraft:netherite_ingot",
-  });
+  if (await minecraftAtLeast(ctx, "1.20")) {
+    await ctx.recipes.assertSmithingTransform(baseItemId, resultItemId, {
+      templateItemId: "minecraft:netherite_upgrade_smithing_template",
+      additionItemId: "minecraft:netherite_ingot",
+    });
+  } else {
+    // Smithing templates arrive with 1.20. Before that the recipe is a plain base and addition, which TeaKit
+    // cannot craft, so this checks that the recipe exists. Giving a recipe the player already knows fails.
+    await ctx.commands.run(`/recipe take @s ${resultItemId}`);
+    await ctx.commands.assert(`/recipe give @s ${resultItemId}`);
+  }
 }
 
+// Quickstash moves items on the server tick, so a slow machine can need longer than a fixed wait.
 async function commandOutput(ctx: Ctx, command: string, expectOutputContains: string[]) {
-  await ctx.commands.run(command, {
-    expectOutputContains,
-  });
+  await expect(async () => {
+    try {
+      await ctx.commands.run(command, { expectOutputContains });
+      return true;
+    } catch {
+      return false;
+    }
+  }).toEventuallyEqual(true, { timeout: "5s" });
 }
 
 async function screenshot(ctx: Ctx, name: string) {
@@ -175,6 +192,72 @@ async function waitMs(ctx: Ctx, durationMs: number) {
   await ctx.runtime.wait(durationMs, { timeoutMs: durationMs + 1_000 });
 }
 
+function versionAtLeast(version: string | undefined, floor: string): boolean {
+  const parts = (value: string) => value.split("-")[0].split(".").map((part) => Number.parseInt(part, 10) || 0);
+  const have = parts(version ?? "0");
+  const want = parts(floor);
+  for (let i = 0; i < Math.max(have.length, want.length); i++) {
+    const difference = (have[i] ?? 0) - (want[i] ?? 0);
+    if (difference !== 0) {
+      return difference > 0;
+    }
+  }
+  return true;
+}
+
+// Minecraft 1.20.5 moved item data from NBT tags to components, and the commands that write it changed with them.
+async function minecraftAtLeast(ctx: Ctx, floor: string): Promise<boolean> {
+  return versionAtLeast((await ctx.runtime.summary()).minecraftVersion, floor);
+}
+
+type Contents = { slot: number; item: string; count: number }[];
+
+const SAMPLE_CONTENTS: Contents = [
+  { slot: 0, item: "minecraft:cobblestone", count: 16 },
+  { slot: 1, item: "minecraft:oak_log", count: 8 },
+];
+
+// A backpack item argument for /item replace, as components from 1.20.5 and as an item tag before it.
+async function backpackWith(ctx: Ctx, id: string, data: { mode?: number; contents?: Contents }): Promise<string> {
+  if (await minecraftAtLeast(ctx, "1.20.5")) {
+    const components: string[] = [];
+    if (data.mode !== undefined) {
+      components.push(`mochila:quickstash_mode=${data.mode}`);
+    }
+    if (data.contents) {
+      const slots = data.contents.map(({ slot, item, count }) => `{slot:${slot},item:{id:"${item}",count:${count}}}`);
+      components.push(`minecraft:container=[${slots.join(",")}]`);
+    }
+    return `${id}[${components.join(",")}]`;
+  }
+  const fields: string[] = [];
+  if (data.mode !== undefined) {
+    fields.push(`QuickstashMode:${data.mode}`);
+  }
+  if (data.contents) {
+    const slots = data.contents.map(({ slot, item, count }) => `{Slot:${slot}b,id:"${item}",Count:${count}b}`);
+    fields.push(`Items:[${slots.join(",")}]`);
+  }
+  return `${id}{mochila:{${fields.join(",")}}}`;
+}
+
+async function assertMainHandInTag(ctx: Ctx, tag: string) {
+  if (await minecraftAtLeast(ctx, "1.20.5")) {
+    await ctx.commands.assert(`/execute if items entity @s weapon.mainhand #${tag}`);
+  } else {
+    // /execute if items arrived in 1.20.5. A count of 0 only reports the matches.
+    await ctx.commands.assert(`/clear @s #${tag} 0`);
+  }
+}
+
+async function assertMainHandMode(ctx: Ctx, id: string, mode: number) {
+  if (await minecraftAtLeast(ctx, "1.20.5")) {
+    await ctx.commands.assert(`/execute if items entity @s weapon.mainhand ${id}[mochila:quickstash_mode=${mode}]`);
+  } else {
+    await ctx.commands.assert(`/execute if data entity @s SelectedItem.tag.mochila{QuickstashMode:${mode}}`);
+  }
+}
+
 test("content exposes core backpack items", async (ctx) => {
   for (const tier of TIERS) {
     await ctx.commands.assert(`/give @s mochila:${tier}_backpack`);
@@ -187,8 +270,8 @@ test("content exposes core backpack items", async (ctx) => {
   await assertInventoryContains(ctx, "mochila:ender_backpack");
 });
 
-test("content exposes color backpack items", async ({ commands }) => {
-  for (const color of COLORS) {
+test("content exposes every color of every backpack tier", async ({ commands }) => {
+  for (const color of ALL_COLORS) {
     for (const tier of COLOR_TIERS) {
       await commands.assert(`/give @s mochila:${color}_${tier}_backpack`);
     }
@@ -197,15 +280,15 @@ test("content exposes color backpack items", async ({ commands }) => {
 
 test("content item tags classify backpacks", async (ctx) => {
   await equipMainHand(ctx, "mochila:leather_backpack");
-  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #mochila:backpacks");
-  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #mochila:leather_backpacks");
+  await assertMainHandInTag(ctx, "mochila:backpacks");
+  await assertMainHandInTag(ctx, "mochila:leather_backpacks");
 
   await equipMainHand(ctx, "mochila:iron_backpack");
-  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #mochila:backpacks");
-  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #mochila:iron_backpacks");
+  await assertMainHandInTag(ctx, "mochila:backpacks");
+  await assertMainHandInTag(ctx, "mochila:iron_backpacks");
 
   await equipMainHand(ctx, "mochila:ender_backpack");
-  await ctx.commands.assert("/execute if items entity @s weapon.mainhand #mochila:backpacks");
+  await assertMainHandInTag(ctx, "mochila:backpacks");
 });
 
 test("recipes include base and ender backpack shapes", async (ctx) => {
@@ -234,10 +317,12 @@ test("recipes include base and ender backpack shapes", async (ctx) => {
   ], "mochila:ender_backpack");
 });
 
-test("recipes include coloring transforms", async (ctx) => {
-  await assertRecipe(ctx, 2, 1, ["mochila:leather_backpack", "minecraft:red_dye"], "mochila:red_leather_backpack");
-  await assertRecipe(ctx, 2, 1, ["mochila:iron_backpack", "minecraft:blue_dye"], "mochila:blue_iron_backpack");
-  await assertRecipe(ctx, 2, 1, ["mochila:diamond_backpack", "minecraft:black_dye"], "mochila:black_diamond_backpack");
+test("recipes color every tier with every dye", async (ctx) => {
+  for (const color of ALL_COLORS) {
+    for (const tier of COLOR_TIERS) {
+      await assertRecipe(ctx, 2, 1, [`mochila:${tier}_backpack`, `minecraft:${color}_dye`], `mochila:${color}_${tier}_backpack`);
+    }
+  }
 });
 
 test("recipes include tier upgrades", async (ctx) => {
@@ -333,15 +418,17 @@ test("backpack keybind opens and quickstash mode component persists", async (ctx
   await waitForTitle(ctx, "Leather Backpack");
   await closeMenu(ctx);
 
-  await equipMainHand(ctx, "mochila:leather_backpack[mochila:quickstash_mode=1]");
-  await ctx.commands.assert("/execute if items entity @s weapon.mainhand mochila:leather_backpack[mochila:quickstash_mode=1]");
+  await equipMainHand(ctx, await backpackWith(ctx, "mochila:leather_backpack", { mode: 1 }));
+  await assertMainHandMode(ctx, "mochila:leather_backpack", 1);
+});
+
+test("backpack tooltip lists its details", async (ctx) => {
+  await equipMainHand(ctx, "mochila:leather_backpack");
+  await ctx.commands.assert("/mochila debug tooltip");
 });
 
 test("backpack keeps container component contents", async (ctx) => {
-  await equipMainHand(
-    ctx,
-    'mochila:leather_backpack[minecraft:container=[{slot:0,item:{id:"minecraft:cobblestone",count:16}},{slot:1,item:{id:"minecraft:oak_log",count:8}}]]',
-  );
+  await equipMainHand(ctx, await backpackWith(ctx, "mochila:leather_backpack", { contents: SAMPLE_CONTENTS }));
   await useMainHandAndWaitForTitle(ctx, "Leather Backpack");
   await closeMenu(ctx);
   await assertInventoryContains(ctx, "mochila:leather_backpack");
@@ -407,10 +494,7 @@ test("ender backpack keybind opens menu", async (ctx) => {
 
 test("quickstash dumps backpack contents into a chest", async (ctx) => {
   await buildContainerLine(ctx);
-  await equipMainHand(
-    ctx,
-    'mochila:leather_backpack[minecraft:container=[{slot:0,item:{id:"minecraft:cobblestone",count:16}},{slot:1,item:{id:"minecraft:oak_log",count:8}}]]',
-  );
+  await equipMainHand(ctx, await backpackWith(ctx, "mochila:leather_backpack", { contents: SAMPLE_CONTENTS }));
   await sneakUseBlock(ctx, pos(2), "north");
   await waitMs(ctx, 250);
   await commandOutput(ctx, "/data get block 2 200 0 Items", ["minecraft:cobblestone", "minecraft:oak_log"]);
@@ -418,7 +502,10 @@ test("quickstash dumps backpack contents into a chest", async (ctx) => {
 
 test("quickstash dumps backpack contents into a barrel", async (ctx) => {
   await buildContainerLine(ctx);
-  await equipMainHand(ctx, 'mochila:iron_backpack[minecraft:container=[{slot:0,item:{id:"minecraft:dirt",count:32}}]]');
+  await equipMainHand(
+    ctx,
+    await backpackWith(ctx, "mochila:iron_backpack", { contents: [{ slot: 0, item: "minecraft:dirt", count: 32 }] }),
+  );
   await sneakUseBlock(ctx, pos(4), "up");
   await waitMs(ctx, 250);
   await commandOutput(ctx, "/data get block 4 200 0 Items", ["minecraft:dirt"]);
@@ -429,7 +516,7 @@ test("quickstash store mode only stores matching items", async (ctx) => {
   await ctx.commands.assert("/item replace block 2 200 0 container.0 with minecraft:cobblestone 1");
   await equipMainHand(
     ctx,
-    'mochila:leather_backpack[mochila:quickstash_mode=1,minecraft:container=[{slot:0,item:{id:"minecraft:cobblestone",count:16}},{slot:1,item:{id:"minecraft:oak_log",count:8}}]]',
+    await backpackWith(ctx, "mochila:leather_backpack", { mode: 1, contents: SAMPLE_CONTENTS }),
   );
   await sneakUseBlock(ctx, pos(2), "north");
   await waitMs(ctx, 250);
@@ -468,5 +555,225 @@ test("visual backpack menus render", async (ctx) => {
   await equipMainHand(ctx, "mochila:ender_backpack");
   await useMainHandAndWaitForTitle(ctx, "Ender Chest");
   await screenshot(ctx, "mochila-ender-backpack-menu");
+  await closeMenu(ctx);
+});
+
+const SHIFT_KEY = LEFT_SHIFT_KEY;
+const B_KEY = 66;
+
+async function debugConfig(ctx: Ctx, args: string) {
+  await ctx.commands.assert(`/mochila debug config ${args}`);
+}
+
+async function waitForMainHandMode(ctx: Ctx, id: string, mode: number) {
+  await expect(async () => {
+    try {
+      await assertMainHandMode(ctx, id, mode);
+      return true;
+    } catch {
+      return false;
+    }
+  }).toEventuallyEqual(true, { timeout: "5s" });
+}
+
+async function chestHolds(ctx: Ctx, at: BlockPos, item: string): Promise<boolean> {
+  const result = await ctx.commands.run(`/execute if items block ${at.x} ${at.y} ${at.z} container.* ${item}`);
+  return result.success;
+}
+
+async function equipFilledBackpack(ctx: Ctx, id = "mochila:leather_backpack", mode = 0) {
+  await equipMainHand(ctx, await backpackWith(ctx, id, { mode, contents: SAMPLE_CONTENTS }));
+}
+
+// The sneak-and-backpack-key press sends ChangeBackpackModePacket, but the client reads Shift from the operating
+// system's key state, which TeaKit's synthetic key events never set. So this drives the packet's handler directly.
+test("the backpack mode packet cycles the held backpack between dump and store", async (ctx) => {
+  await equipMainHand(ctx, "mochila:leather_backpack");
+  await ctx.commands.assert("/mochila debug mode");
+  await waitForMainHandMode(ctx, "mochila:leather_backpack", 1);
+  await ctx.commands.assert("/mochila debug mode");
+  await waitForMainHandMode(ctx, "mochila:leather_backpack", 0);
+});
+
+test("quickstash dumps backpack contents into a trapped chest", async (ctx) => {
+  await buildContainerLine(ctx);
+  await equipFilledBackpack(ctx);
+  await sneakUseBlock(ctx, pos(6), "north");
+  await commandOutput(ctx, "/data get block 6 200 0 Items", ["minecraft:cobblestone", "minecraft:oak_log"]);
+});
+
+test("quickstash reaches the chest behind a wall sign", async (ctx) => {
+  await ctx.world.setBlock(pos(2), { id: "minecraft:chest", properties: { facing: "north" } });
+  // A sign on the chest's south face, facing away from it.
+  await ctx.commands.assert("/setblock 2 200 1 minecraft:oak_wall_sign[facing=south]");
+  await ctx.commands.assert("/execute if block 2 200 1 minecraft:oak_wall_sign[facing=south]");
+  await equipFilledBackpack(ctx);
+  await sneakUseBlock(ctx, pos(2, 1), "south");
+  try {
+    await commandOutput(ctx, "/data get block 2 200 0 Items", ["minecraft:cobblestone", "minecraft:oak_log"]);
+  } catch (error) {
+    const chest = await ctx.commands.run("/data get block 2 200 0 Items", { captureOutput: true });
+    const sign = await ctx.commands.run("/execute if block 2 200 1 minecraft:oak_wall_sign", { captureOutput: true });
+    const held = await ctx.commands.run("/data get entity @s SelectedItem", { captureOutput: true });
+    throw new Error(`${error}\nchest: ${chest.output}\nsign: ${sign.output}\nheld: ${held.output}`);
+  }
+});
+
+test("quickstash reports through the action bar unless the config turns it off", async (ctx) => {
+  await buildContainerLine(ctx);
+  try {
+    await equipFilledBackpack(ctx);
+    await sneakUseBlock(ctx, pos(2), "north");
+    await commandOutput(ctx, "/data get block 2 200 0 Items", ["minecraft:cobblestone"]);
+    await waitMs(ctx, 400);
+    await screenshot(ctx, "mochila-quickstash-feedback-on");
+
+    // The action bar message stays up for about three seconds, so let it clear before the quiet attempt.
+    await waitMs(ctx, 3_500);
+    await debugConfig(ctx, "feedback false");
+    await equipFilledBackpack(ctx, "mochila:iron_backpack");
+    await sneakUseBlock(ctx, pos(4), "up");
+    await commandOutput(ctx, "/data get block 4 200 0 Items", ["minecraft:cobblestone"]);
+    await waitMs(ctx, 400);
+    await screenshot(ctx, "mochila-quickstash-feedback-off");
+  } finally {
+    await debugConfig(ctx, "reset");
+  }
+});
+
+test("quickstash does nothing while the switch is off", async (ctx) => {
+  await buildContainerLine(ctx);
+  try {
+    await debugConfig(ctx, "enabled false");
+    await equipFilledBackpack(ctx);
+    await sneakUseBlock(ctx, pos(2), "north");
+    await waitMs(ctx, 750);
+    expect(await chestHolds(ctx, pos(2), "minecraft:cobblestone")).toBe(false);
+
+    await debugConfig(ctx, "enabled true");
+    await sneakUseBlock(ctx, pos(2), "north");
+    await commandOutput(ctx, "/data get block 2 200 0 Items", ["minecraft:cobblestone"]);
+  } finally {
+    await debugConfig(ctx, "reset");
+  }
+});
+
+test("quickstash only fills the blocks in the target list", async (ctx) => {
+  await buildContainerLine(ctx);
+  try {
+    await debugConfig(ctx, "targets minecraft:barrel");
+    await equipFilledBackpack(ctx);
+    await sneakUseBlock(ctx, pos(2), "north");
+    await waitMs(ctx, 750);
+    expect(await chestHolds(ctx, pos(2), "minecraft:cobblestone")).toBe(false);
+
+    await sneakUseBlock(ctx, pos(4), "up");
+    await commandOutput(ctx, "/data get block 4 200 0 Items", ["minecraft:cobblestone"]);
+
+    // A list with no chest or barrel in it. Dirt is new to the barrel, so finding it there would mean it was filled.
+    await debugConfig(ctx, "targets minecraft:bedrock");
+    await equipMainHand(
+      ctx,
+      await backpackWith(ctx, "mochila:leather_backpack", { contents: [{ slot: 0, item: "minecraft:dirt", count: 8 }] }),
+    );
+    await sneakUseBlock(ctx, pos(4), "up");
+    await waitMs(ctx, 750);
+    expect(await chestHolds(ctx, pos(4), "minecraft:dirt")).toBe(false);
+  } finally {
+    await debugConfig(ctx, "reset");
+  }
+});
+
+test("the backpack key opens a backpack held in the off hand", async (ctx) => {
+  await ctx.commands.assert("/item replace entity @s weapon.offhand with mochila:iron_backpack");
+  await keyTap(ctx, B_KEY);
+  await waitForTitle(ctx, "Iron Backpack");
+  await closeMenu(ctx);
+});
+
+const GLFW_KEY_1 = 49;
+const GLFW_KEY_R = 82;
+const GLFW_KEY_U = 85;
+const MIDDLE_MOUSE = 2;
+const JEI_RECIPES_SCREEN = "mezz.jei.gui.recipes.RecipesGui";
+const INVENTORY_SCREEN = "net.minecraft.client.gui.screens.inventory.InventoryScreen";
+
+type GuiOrigin = { left: number; top: number; width: number; height: number };
+
+// The survival inventory is 176 by 166 and centered. Its recipe book button sits at (104, 61) inside it, which gives the
+// window size, and with it the origin of any other centered screen.
+async function windowOrigin(ctx: Ctx): Promise<GuiOrigin> {
+  await ctx.client.openInventory();
+  const screen = await ctx.client.waitForScreen(INVENTORY_SCREEN, { timeoutMs: 5_000 });
+  const book = screen.widgets().all().find((widget) => widget.widgetClass.endsWith("ImageButton"));
+  if (!book) throw new Error("The inventory screen has no recipe book button to find its origin by");
+  const left = book.x - 104;
+  const top = book.y - 61;
+  await closeMenu(ctx);
+  return { left, top, width: left * 2 + 176, height: top * 2 + 166 };
+}
+
+// A middle click only moves the pointer in survival, which is all hovering a slot needs.
+async function hover(ctx: Ctx, x: number, y: number) {
+  await ctx.client.click({ x, y, button: MIDDLE_MOUSE });
+  await waitMs(ctx, 200);
+}
+
+test("JEI shows the backpack coloring and upgrading recipes", { target: { mods: "jei" } }, async (ctx) => {
+  await ctx.commands.assert("/gamemode survival");
+  const window = await windowOrigin(ctx);
+  await ctx.commands.assert("/item replace entity @s inventory.0 with mochila:red_leather_backpack");
+  await ctx.commands.assert("/item replace entity @s inventory.1 with mochila:leather_backpack");
+  await ctx.client.openInventory();
+  await ctx.client.waitForScreen(INVENTORY_SCREEN, { timeoutMs: 5_000 });
+
+  // Only the coloring category makes a red leather backpack.
+  await hover(ctx, window.left + 8 + 8, window.top + 84 + 8);
+  await ctx.client.key(GLFW_KEY_R);
+  await ctx.client.waitForScreen(JEI_RECIPES_SCREEN, { timeoutMs: 5_000 });
+  await waitMs(ctx, 500);
+  await screenshot(ctx, "mochila-jei-coloring");
+  await ctx.client.key(256);
+  await ctx.client.waitForScreen(INVENTORY_SCREEN, { timeoutMs: 5_000 });
+
+  // A plain leather backpack goes into the coloring and upgrading categories.
+  await hover(ctx, window.left + 26 + 8, window.top + 84 + 8);
+  await ctx.client.key(GLFW_KEY_U);
+  await ctx.client.waitForScreen(JEI_RECIPES_SCREEN, { timeoutMs: 5_000 });
+  await waitMs(ctx, 500);
+  await screenshot(ctx, "mochila-jei-uses");
+  await closeMenu(ctx);
+});
+
+test("a hotbar number key cannot swap a backpack into an open container", async (ctx) => {
+  await ctx.commands.assert("/gamemode survival");
+  const window = await windowOrigin(ctx);
+  await ctx.world.setBlock(pos(2), { id: "minecraft:chest", properties: { facing: "north" } });
+  await expect(() => ctx.world.block(pos(2))).toEventuallyEqual(expect.objectContaining({ id: "minecraft:chest" }));
+  const firstChestSlot = {
+    x: window.left + 8 + 8,
+    y: Math.floor((window.height - (114 + 3 * 18)) / 2) + 18 + 8,
+  };
+
+  // Control: a plain item swaps from hotbar slot 1 into the hovered chest slot, so the key and pointer work.
+  await ctx.commands.assert("/item replace entity @s hotbar.0 with minecraft:cobblestone 4");
+  await ctx.player.openBlock(pos(2));
+  await ctx.client.waitForScreen("Chest", { timeoutMs: 5_000 });
+  await hover(ctx, firstChestSlot.x, firstChestSlot.y);
+  await ctx.client.key(GLFW_KEY_1);
+  await commandOutput(ctx, "/data get block 2 200 0 Items", ["minecraft:cobblestone"]);
+  await closeMenu(ctx);
+  await ctx.commands.run("/clear @s");
+  await ctx.commands.assert("/item replace block 2 200 0 container.0 with minecraft:air");
+
+  // The same swap with a backpack is refused: the backpack stays in the hotbar and the chest stays empty.
+  await ctx.commands.assert("/item replace entity @s hotbar.0 with mochila:leather_backpack");
+  await ctx.player.openBlock(pos(2));
+  await ctx.client.waitForScreen("Chest", { timeoutMs: 5_000 });
+  await hover(ctx, firstChestSlot.x, firstChestSlot.y);
+  await ctx.client.key(GLFW_KEY_1);
+  await waitMs(ctx, 750);
+  expect(await chestHolds(ctx, pos(2), "mochila:leather_backpack")).toBe(false);
+  await ctx.commands.assert("/execute if items entity @s hotbar.0 mochila:leather_backpack");
   await closeMenu(ctx);
 });

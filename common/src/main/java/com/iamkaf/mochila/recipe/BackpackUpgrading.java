@@ -1,57 +1,48 @@
 package com.iamkaf.mochila.recipe;
 
 import com.google.common.collect.ImmutableSet;
+import com.iamkaf.mochila.Constants;
+import com.iamkaf.mochila.compat.BackpackData;
+import com.iamkaf.mochila.compat.CustomRecipes;
+import com.iamkaf.mochila.compat.PlainCraftingRecipe;
 import com.iamkaf.mochila.item.BackpackItem;
 import com.iamkaf.mochila.item.backpack.BackpackUtils;
 import com.iamkaf.mochila.registry.RecipeSerializers;
-import com.mojang.serialization.MapCodec;
-//? if <26.1
-/*import net.minecraft.core.HolderLookup;*/
-import net.minecraft.network.RegistryFriendlyByteBuf;
-import net.minecraft.network.codec.StreamCodec;
+import net.minecraft.resources.Identifier;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.CraftingBookCategory;
-import net.minecraft.world.item.crafting.CraftingInput;
 import net.minecraft.world.item.crafting.CustomRecipe;
 import net.minecraft.world.item.crafting.RecipeSerializer;
-import net.minecraft.world.level.Level;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
 /**
  * Upgrades a backpack copying its contents and color.
  */
-public class BackpackUpgrading extends CustomRecipe {
-    public static final BackpackUpgrading INSTANCE = new BackpackUpgrading();
-    public static final MapCodec<BackpackUpgrading> MAP_CODEC = MapCodec.unit(INSTANCE);
-    public static final StreamCodec<RegistryFriendlyByteBuf, BackpackUpgrading> STREAM_CODEC = StreamCodec.unit(INSTANCE);
-    //? if >=26.1
-    public static final RecipeSerializer<BackpackUpgrading> SERIALIZER = new RecipeSerializer<>(MAP_CODEC, STREAM_CODEC);
-    //? if <26.1
-    /*public static final RecipeSerializer<BackpackUpgrading> SERIALIZER = new CustomRecipe.Serializer<>(BackpackUpgrading::new);*/
+public class BackpackUpgrading extends PlainCraftingRecipe {
+    public static final BackpackUpgrading INSTANCE = new BackpackUpgrading(Constants.resource("backpack_upgrading"));
+    public static final RecipeSerializer<BackpackUpgrading> SERIALIZER =
+            CustomRecipes.serializer(INSTANCE, BackpackUpgrading::new);
+
+    public BackpackUpgrading(Identifier id) {
+        super(id);
+    }
+
     private final Set<Item> UPGRADE_MATERIALS =
             ImmutableSet.of(Items.IRON_INGOT, Items.GOLD_INGOT, Items.DIAMOND);
 
-    private BackpackUpgrading() {
-        //? if <26.1
-        /*super(CraftingBookCategory.MISC);*/
-    }
-
-    //? if <26.1
-    /*public BackpackUpgrading(CraftingBookCategory category) { super(category); }*/
-
-    public boolean matches(CraftingInput input, Level level) {
+    @Override
+    public boolean matchesItems(List<ItemStack> items) {
         ItemStack backpack = ItemStack.EMPTY;
         int backpackCount = 0;
         Map<Item, Integer> materialMap = new HashMap<>();
 
-        for (int k = 0; k < input.size(); k++) {
-            ItemStack itemStack = input.getItem(k);
+        for (ItemStack itemStack : items) {
             if (itemStack.isEmpty()) {
                 continue;
             }
@@ -91,14 +82,11 @@ public class BackpackUpgrading extends CustomRecipe {
         return material.equals(getMaterialForTier(nextTier));
     }
 
-    //? if >=26.1
-    public @NotNull ItemStack assemble(CraftingInput input) {
-    //? if <26.1
-    /*public @NotNull ItemStack assemble(CraftingInput input, HolderLookup.Provider registries) {*/
+    @Override
+    public @NotNull ItemStack assembleItems(List<ItemStack> items) {
         ItemStack backpack = ItemStack.EMPTY;
 
-        for (int i = 0; i < input.size(); i++) {
-            ItemStack inputStack = input.getItem(i);
+        for (ItemStack inputStack : items) {
             if (!inputStack.isEmpty()) {
                 Item item = inputStack.getItem();
                 if (item instanceof BackpackItem) {
@@ -114,14 +102,7 @@ public class BackpackUpgrading extends CustomRecipe {
         assert nextTier != null;
 
         Item item = BackpackUtils.getBackpackByTierAndColor(nextTier, color);
-        return backpack.transmuteCopy(item, 1);
-    }
-
-    public @NotNull ItemStack assembleForCommands(CraftingInput input, Level level) {
-        //? if >=26.1
-        return assemble(input);
-        //? if <26.1
-        /*return assemble(input, level.registryAccess());*/
+        return BackpackData.convert(backpack, item);
     }
 
     public static Item getMaterialForTier(BackpackUtils.Tier tier) {

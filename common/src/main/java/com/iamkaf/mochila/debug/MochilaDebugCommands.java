@@ -1,21 +1,31 @@
 package com.iamkaf.mochila.debug;
 
 import com.iamkaf.amber.api.event.v1.events.common.CommandEvents;
+import com.iamkaf.amber.api.networking.v1.PacketContext;
+import com.iamkaf.konfig.api.v1.ConfigValue;
+import com.iamkaf.konfig.impl.v1.config.model.ConfigHandleImpl;
+import com.iamkaf.mochila.MochilaConfig;
+import com.iamkaf.mochila.compat.BackpackData;
+import com.iamkaf.mochila.compat.CommandCompat;
+import com.iamkaf.mochila.compat.Players;
+import com.iamkaf.mochila.compat.Stacks;
+import com.iamkaf.mochila.compat.Texts;
+import com.iamkaf.mochila.compat.VanillaRegistries;
 import com.iamkaf.mochila.item.BackpackItem;
 import com.iamkaf.mochila.item.backpack.BackpackContainer;
 import com.iamkaf.mochila.item.backpack.BackpackMenu;
-import com.iamkaf.mochila.item.backpack.QuickStash;
 import com.iamkaf.mochila.item.backpack.BackpackUtils;
+import com.iamkaf.mochila.item.backpack.QuickStash;
+import com.iamkaf.mochila.network.ChangeBackpackModePacket;
 import com.iamkaf.mochila.recipe.BackpackColoring;
 import com.iamkaf.mochila.recipe.BackpackUpgrading;
-import com.iamkaf.mochila.registry.DataComponents;
 import com.mojang.brigadier.Command;
+import com.mojang.brigadier.arguments.BoolArgumentType;
 import com.mojang.brigadier.arguments.StringArgumentType;
 import com.mojang.brigadier.builder.LiteralArgumentBuilder;
 import com.mojang.brigadier.context.CommandContext;
 import com.mojang.brigadier.exceptions.CommandSyntaxException;
 import com.mojang.brigadier.exceptions.SimpleCommandExceptionType;
-import net.minecraft.commands.CommandBuildContext;
 import net.minecraft.commands.CommandSourceStack;
 import net.minecraft.commands.Commands;
 import net.minecraft.commands.arguments.coordinates.BlockPosArgument;
@@ -24,83 +34,142 @@ import net.minecraft.commands.arguments.item.ItemInput;
 import net.minecraft.core.BlockPos;
 import net.minecraft.core.Direction;
 import net.minecraft.core.NonNullList;
-import net.minecraft.core.registries.BuiltInRegistries;
 import net.minecraft.network.chat.Component;
 import net.minecraft.server.level.ServerPlayer;
-import net.minecraft.server.permissions.Permission;
-import net.minecraft.server.permissions.PermissionLevel;
 import net.minecraft.world.InteractionHand;
 import net.minecraft.world.inventory.Slot;
 import net.minecraft.world.item.DyeItem;
 import net.minecraft.world.item.Item;
 import net.minecraft.world.item.ItemStack;
 import net.minecraft.world.item.Items;
-import net.minecraft.world.item.crafting.CraftingInput;
-import net.minecraft.world.item.component.ItemContainerContents;
 import net.minecraft.world.level.Level;
 import net.minecraft.world.level.block.state.BlockState;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public final class MochilaDebugCommands {
-    private static final Component SAMPLE_NAME = Component.literal("Preserved Pack");
+    private static final Component SAMPLE_NAME = Texts.literal("Preserved Pack");
 
     private MochilaDebugCommands() {
     }
 
     public static void init() {
         CommandEvents.EVENT.register((dispatcher, registryAccess, environment) ->
-                dispatcher.register(command(registryAccess)));
+                dispatcher.register(command(CommandCompat.itemArgument(registryAccess))));
     }
 
-    private static LiteralArgumentBuilder<CommandSourceStack> command(CommandBuildContext registryAccess) {
+    private static LiteralArgumentBuilder<CommandSourceStack> command(ItemArgument item) {
         return Commands.literal("mochila")
                 .then(Commands.literal("debug")
-                        .requires(source -> source.permissions()
-                                .hasPermission(new Permission.HasCommandLevel(PermissionLevel.OWNERS)))
+                        .requires(CommandCompat::isOwner)
                         .then(Commands.literal("sample")
-                                .then(Commands.argument("item", ItemArgument.item(registryAccess))
+                                .then(Commands.argument("item", item)
                                         .executes(MochilaDebugCommands::sample)))
+                        .then(Commands.literal("tooltip")
+                                .executes(MochilaDebugCommands::tooltip))
+                        .then(configCommand())
+                        .then(Commands.literal("mode").executes(MochilaDebugCommands::mode))
                         .then(Commands.literal("quickstash")
                                 .then(Commands.argument("pos", BlockPosArgument.blockPos())
                                         .then(Commands.argument("direction", StringArgumentType.word())
                                                 .executes(MochilaDebugCommands::quickstash))))
                         .then(Commands.literal("assert-sample")
-                                .then(Commands.argument("item", ItemArgument.item(registryAccess))
+                                .then(Commands.argument("item", item)
                                         .executes(MochilaDebugCommands::assertSample)))
                         .then(Commands.literal("menu")
                                 .then(Commands.literal("assert-open-backpack-locked")
                                         .executes(MochilaDebugCommands::assertOpenBackpackLocked))
                                 .then(Commands.literal("assert-storage-refuses")
-                                        .then(Commands.argument("item", ItemArgument.item(registryAccess))
+                                        .then(Commands.argument("item", item)
                                                 .executes(MochilaDebugCommands::assertStorageRefuses)))
                                 .then(Commands.literal("assert-closed")
                                         .executes(MochilaDebugCommands::assertMenuClosed)))
                         .then(Commands.literal("recipe")
                                 .then(Commands.literal("color")
-                                        .then(Commands.argument("dye", ItemArgument.item(registryAccess))
+                                        .then(Commands.argument("dye", item)
                                                 .executes(MochilaDebugCommands::color)))
                                 .then(Commands.literal("upgrade")
-                                        .then(Commands.argument("material", ItemArgument.item(registryAccess))
+                                        .then(Commands.argument("material", item)
                                                 .executes(MochilaDebugCommands::upgrade)))
                                 .then(Commands.literal("smith-netherite")
                                         .executes(MochilaDebugCommands::smithNetherite))
                                 .then(Commands.literal("assert-invalid-upgrade")
-                                        .then(Commands.argument("material", ItemArgument.item(registryAccess))
+                                        .then(Commands.argument("material", item)
                                                 .executes(MochilaDebugCommands::assertInvalidUpgrade)))));
+    }
+
+    // Runs the handler of the packet the sneak-and-backpack-key press sends, as the command's player.
+    private static int mode(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        ChangeBackpackModePacket.handle(new ChangeBackpackModePacket(0), new PacketContext() {
+            @Override
+            public boolean isClientSide() {
+                return false;
+            }
+
+            @Override
+            public net.minecraft.world.entity.player.Player getPlayer() {
+                return player;
+            }
+
+            @Override
+            public void execute(Runnable task) {
+                task.run();
+            }
+        });
+        return Command.SINGLE_SUCCESS;
+    }
+
+    // Changes the quickstash switch, target list and feedback setting, which are the ones tests flip.
+    private static LiteralArgumentBuilder<CommandSourceStack> configCommand() {
+        LiteralArgumentBuilder<CommandSourceStack> config = Commands.literal("config")
+                .then(Commands.literal("reset").executes(context -> {
+                    MochilaConfig.QUICKSTASH_ENABLED.set(true);
+                    MochilaConfig.QUICKSTASH_TARGETS.set(MochilaConfig.QUICKSTASH_TARGETS.defaultValue());
+                    MochilaConfig.QUICKSTASH_FEEDBACK.set(true);
+                    return configApplied(context);
+                }))
+                .then(Commands.literal("targets")
+                        .then(Commands.argument("blocks", StringArgumentType.greedyString()).executes(context -> {
+                            String raw = StringArgumentType.getString(context, "blocks").trim();
+                            MochilaConfig.QUICKSTASH_TARGETS.set(raw.isEmpty() ? List.of() : List.of(raw.split(",")));
+                            return configApplied(context);
+                        })));
+        flag(config, "enabled", MochilaConfig.QUICKSTASH_ENABLED);
+        flag(config, "feedback", MochilaConfig.QUICKSTASH_FEEDBACK);
+        return config;
+    }
+
+    private static void flag(LiteralArgumentBuilder<CommandSourceStack> parent, String name,
+            ConfigValue<Boolean> value) {
+        parent.then(Commands.literal(name)
+                .then(Commands.argument("value", BoolArgumentType.bool())
+                        .executes(context -> {
+                            value.set(BoolArgumentType.getBool(context, "value"));
+                            return configApplied(context);
+                        })));
+    }
+
+    // The config only syncs to a player when they join, and this process hosts both ends, so apply the saved snapshot
+    // the way a joining client would.
+    private static int configApplied(CommandContext<CommandSourceStack> context) {
+        ConfigHandleImpl handle = (ConfigHandleImpl) MochilaConfig.HANDLE;
+        handle.save();
+        handle.applySyncSnapshot(handle.snapshotJson());
+        CommandCompat.success(context.getSource(), Texts.literal("Config applied."));
+        return Command.SINGLE_SUCCESS;
     }
 
     private static int sample(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        ItemStack stack = createItemStack(ItemArgument.getItem(context, "item"));
+        ItemStack stack = CommandCompat.stackOf(ItemArgument.getItem(context, "item"));
         if (!(stack.getItem() instanceof BackpackItem backpackItem)) {
             return fail("Item is not a Mochila backpack.");
         }
 
-        stack.set(net.minecraft.core.component.DataComponents.CUSTOM_NAME, SAMPLE_NAME);
-        stack.set(DataComponents.QUICKSTASH_MODE.get(), 1);
+        Stacks.setName(stack, SAMPLE_NAME);
+        BackpackData.setQuickstashMode(stack, 1);
 
         BackpackContainer backpack = new BackpackContainer(stack, backpackItem.size);
         backpack.setItem(0, new ItemStack(Items.COBBLESTONE, 16));
@@ -108,7 +177,25 @@ public final class MochilaDebugCommands {
         backpack.setChanged();
 
         player.setItemInHand(InteractionHand.MAIN_HAND, stack);
-        context.getSource().sendSuccess(() -> Component.literal("Created sample backpack."), false);
+        CommandCompat.success(context.getSource(), Texts.literal("Created sample backpack."));
+        return Command.SINGLE_SUCCESS;
+    }
+
+    // The held backpack has to list its own tooltip lines.
+    private static int tooltip(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
+        ServerPlayer player = context.getSource().getPlayerOrException();
+        ItemStack stack = player.getMainHandItem();
+        if (!(stack.getItem() instanceof BackpackItem)) {
+            return fail("Main hand item is not a Mochila backpack.");
+        }
+
+        List<Component> lines = Stacks.tooltipLines(stack, player);
+        String hint = Texts.translatable("item.mochila.backpack.hold_shift").getString();
+        if (lines.stream().noneMatch(line -> line.getString().equals(hint))) {
+            return fail("The tooltip does not list \"" + hint + "\".");
+        }
+
+        CommandCompat.success(context.getSource(), Texts.literal("Tooltip lists " + lines.size() + " lines."));
         return Command.SINGLE_SUCCESS;
     }
 
@@ -125,11 +212,12 @@ public final class MochilaDebugCommands {
         }
 
         BlockPos pos = BlockPosArgument.getLoadedBlockPos(context, "pos");
-        BlockState state = player.level().getBlockState(pos);
+        Level level = Players.level(player);
+        BlockState state = level.getBlockState(pos);
         QuickStash.Result result = QuickStash.quickStash(
                 state,
                 player,
-                player.level(),
+                level,
                 pos,
                 InteractionHand.MAIN_HAND,
                 direction,
@@ -140,13 +228,13 @@ public final class MochilaDebugCommands {
             return fail("Quickstash moved no items: " + result.message().getString());
         }
 
-        context.getSource().sendSuccess(() -> result.message(), false);
+        CommandCompat.success(context.getSource(), result.message());
         return Command.SINGLE_SUCCESS;
     }
 
     private static int assertSample(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        ItemStack expected = createItemStack(ItemArgument.getItem(context, "item"));
+        ItemStack expected = CommandCompat.stackOf(ItemArgument.getItem(context, "item"));
         ItemStack actual = player.getMainHandItem();
         if (!actual.is(expected.getItem())) {
             return fail("Expected " + itemId(expected.getItem()) + " but found " + itemId(actual.getItem()) + ".");
@@ -154,16 +242,14 @@ public final class MochilaDebugCommands {
         if (!(actual.getItem() instanceof BackpackItem backpackItem)) {
             return fail("Main hand item is not a Mochila backpack.");
         }
-        if (!Objects.equals(actual.get(net.minecraft.core.component.DataComponents.CUSTOM_NAME), SAMPLE_NAME)) {
+        if (!Stacks.isNamed(actual, SAMPLE_NAME)) {
             return fail("Backpack custom name was not preserved.");
         }
-        if (actual.getOrDefault(DataComponents.QUICKSTASH_MODE.get(), 0) != 1) {
+        if (BackpackData.quickstashMode(actual) != 1) {
             return fail("Backpack quickstash mode was not preserved.");
         }
 
-        NonNullList<ItemStack> contents = NonNullList.withSize(BackpackContainer.sizeToInt(backpackItem.size), ItemStack.EMPTY);
-        actual.getOrDefault(net.minecraft.core.component.DataComponents.CONTAINER, ItemContainerContents.EMPTY)
-                .copyInto(contents);
+        NonNullList<ItemStack> contents = BackpackData.readContents(actual, BackpackContainer.sizeToInt(backpackItem.size));
         if (contents.size() != BackpackContainer.sizeToInt(backpackItem.size)) {
             return fail("Backpack container size was not preserved.");
         }
@@ -174,7 +260,7 @@ public final class MochilaDebugCommands {
             return fail("Backpack slot 1 was not preserved.");
         }
 
-        context.getSource().sendSuccess(() -> Component.literal("Sample backpack assertions passed."), false);
+        CommandCompat.success(context.getSource(), Texts.literal("Sample backpack assertions passed."));
         return Command.SINGLE_SUCCESS;
     }
 
@@ -199,9 +285,9 @@ public final class MochilaDebugCommands {
                 return fail("The open backpack was taken from its slot.");
             }
             int inventorySlot = slot.getContainerSlot();
-            context.getSource().sendSuccess(
-                    () -> Component.literal("Open backpack is locked in inventory slot " + inventorySlot + "."),
-                    false
+            CommandCompat.success(
+                    context.getSource(),
+                    Texts.literal("Open backpack is locked in inventory slot " + inventorySlot + ".")
             );
             return Command.SINGLE_SUCCESS;
         }
@@ -217,7 +303,7 @@ public final class MochilaDebugCommands {
             return fail("No backpack menu is open.");
         }
 
-        ItemStack stack = createItemStack(ItemArgument.getItem(context, "item"));
+        ItemStack stack = CommandCompat.stackOf(ItemArgument.getItem(context, "item"));
         int storageSlots = 0;
         for (Slot slot : menu.slots) {
             if (slot.container != backpack) {
@@ -233,9 +319,9 @@ public final class MochilaDebugCommands {
         }
 
         int checked = storageSlots;
-        context.getSource().sendSuccess(
-                () -> Component.literal("All " + checked + " backpack slots refuse " + itemId(stack.getItem()) + "."),
-                false
+        CommandCompat.success(
+                context.getSource(),
+                Texts.literal("All " + checked + " backpack slots refuse " + itemId(stack.getItem()) + ".")
         );
         return Command.SINGLE_SUCCESS;
     }
@@ -245,44 +331,44 @@ public final class MochilaDebugCommands {
         if (player.containerMenu instanceof BackpackMenu) {
             return fail("A backpack menu is still open.");
         }
-        context.getSource().sendSuccess(() -> Component.literal("No backpack menu is open."), false);
+        CommandCompat.success(context.getSource(), Texts.literal("No backpack menu is open."));
         return Command.SINGLE_SUCCESS;
     }
 
     private static int color(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
-        ItemStack dye = createItemStack(ItemArgument.getItem(context, "dye"));
+        ItemStack dye = CommandCompat.stackOf(ItemArgument.getItem(context, "dye"));
         if (!(dye.getItem() instanceof DyeItem)) {
             return fail("Color recipe requires a dye item.");
         }
         ServerPlayer player = context.getSource().getPlayerOrException();
         ItemStack backpack = player.getMainHandItem();
-        CraftingInput input = CraftingInput.of(2, 1, List.of(backpack, dye));
-        if (!BackpackColoring.INSTANCE.matches(input, player.level())) {
+        List<ItemStack> items = List.of(backpack, dye);
+        if (!BackpackColoring.INSTANCE.matchesItems(items)) {
             return fail("Coloring recipe did not match.");
         }
-        player.setItemInHand(InteractionHand.MAIN_HAND, BackpackColoring.INSTANCE.assembleForCommands(input, player.level()));
-        context.getSource().sendSuccess(() -> Component.literal("Applied coloring recipe."), false);
+        player.setItemInHand(InteractionHand.MAIN_HAND, BackpackColoring.INSTANCE.assembleItems(items));
+        CommandCompat.success(context.getSource(), Texts.literal("Applied coloring recipe."));
         return Command.SINGLE_SUCCESS;
     }
 
     private static int upgrade(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        ItemStack result = assembleUpgrade(player.getMainHandItem(), ItemArgument.getItem(context, "material"), player.level());
+        ItemStack result = assembleUpgrade(player.getMainHandItem(), ItemArgument.getItem(context, "material"));
         if (result.isEmpty()) {
             return fail("Upgrade recipe did not match.");
         }
         player.setItemInHand(InteractionHand.MAIN_HAND, result);
-        context.getSource().sendSuccess(() -> Component.literal("Applied upgrade recipe."), false);
+        CommandCompat.success(context.getSource(), Texts.literal("Applied upgrade recipe."));
         return Command.SINGLE_SUCCESS;
     }
 
     private static int assertInvalidUpgrade(CommandContext<CommandSourceStack> context) throws CommandSyntaxException {
         ServerPlayer player = context.getSource().getPlayerOrException();
-        ItemStack result = assembleUpgrade(player.getMainHandItem(), ItemArgument.getItem(context, "material"), player.level());
+        ItemStack result = assembleUpgrade(player.getMainHandItem(), ItemArgument.getItem(context, "material"));
         if (!result.isEmpty()) {
             return fail("Upgrade recipe unexpectedly matched.");
         }
-        context.getSource().sendSuccess(() -> Component.literal("Invalid upgrade assertion passed."), false);
+        CommandCompat.success(context.getSource(), Texts.literal("Invalid upgrade assertion passed."));
         return Command.SINGLE_SUCCESS;
     }
 
@@ -302,31 +388,23 @@ public final class MochilaDebugCommands {
                 BackpackUtils.Tier.NETHERITE,
                 BackpackUtils.determineDyeColor(backpack)
         );
-        player.setItemInHand(InteractionHand.MAIN_HAND, backpack.transmuteCopy(item, 1));
-        context.getSource().sendSuccess(() -> Component.literal("Applied netherite smithing transform."), false);
+        player.setItemInHand(InteractionHand.MAIN_HAND, BackpackData.convert(backpack, item));
+        CommandCompat.success(context.getSource(), Texts.literal("Applied netherite smithing transform."));
         return Command.SINGLE_SUCCESS;
     }
 
-    private static ItemStack assembleUpgrade(ItemStack backpack, ItemInput materialInput, Level level)
+    private static ItemStack assembleUpgrade(ItemStack backpack, ItemInput materialInput)
             throws CommandSyntaxException {
-        ItemStack material = createItemStack(materialInput);
+        ItemStack material = CommandCompat.stackOf(materialInput);
         List<ItemStack> items = new ArrayList<>(9);
         for (int i = 0; i < 9; i++) {
             items.add(material.copy());
         }
         items.set(4, backpack);
 
-        CraftingInput input = CraftingInput.of(3, 3, items);
-        return BackpackUpgrading.INSTANCE.matches(input, null)
-                ? BackpackUpgrading.INSTANCE.assembleForCommands(input, level)
+        return BackpackUpgrading.INSTANCE.matchesItems(items)
+                ? BackpackUpgrading.INSTANCE.assembleItems(items)
                 : ItemStack.EMPTY;
-    }
-
-    private static ItemStack createItemStack(ItemInput input) throws CommandSyntaxException {
-        //? if >=26.1
-        return input.createItemStack(1);
-        //? if <26.1
-        /*return input.createItemStack(1, false);*/
     }
 
     private static boolean isStack(ItemStack stack, Item item, int count) {
@@ -334,11 +412,11 @@ public final class MochilaDebugCommands {
     }
 
     private static String itemId(Item item) {
-        return BuiltInRegistries.ITEM.getKey(item).toString();
+        return VanillaRegistries.items().getKey(item).toString();
     }
 
     // Throwing marks the command as failed. A plain zero result still counts as success.
     private static int fail(String message) throws CommandSyntaxException {
-        throw new SimpleCommandExceptionType(Component.literal(message)).create();
+        throw new SimpleCommandExceptionType(Texts.literal(message)).create();
     }
 }

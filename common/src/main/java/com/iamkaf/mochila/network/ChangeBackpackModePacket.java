@@ -1,14 +1,14 @@
 package com.iamkaf.mochila.network;
 
+import com.iamkaf.amber.api.functions.v1.PlayerFunctions;
 import com.iamkaf.amber.api.networking.v1.Packet;
 import com.iamkaf.amber.api.networking.v1.PacketContext;
+import com.iamkaf.mochila.compat.BackpackData;
+import com.iamkaf.mochila.compat.Texts;
 import com.iamkaf.mochila.item.BackpackItem;
 import com.iamkaf.mochila.item.backpack.QuickStash;
-import com.iamkaf.mochila.registry.DataComponents;
 import net.minecraft.ChatFormatting;
 import net.minecraft.network.FriendlyByteBuf;
-import net.minecraft.network.chat.Component;
-import net.minecraft.network.protocol.game.ClientboundSystemChatPacket;
 import net.minecraft.server.level.ServerPlayer;
 import net.minecraft.world.item.ItemStack;
 
@@ -38,17 +38,13 @@ public class ChangeBackpackModePacket implements Packet<ChangeBackpackModePacket
             ItemStack stack = player.getMainHandItem();
 
             if (stack.getItem() instanceof BackpackItem) {
-                int oldMode = stack.getOrDefault(
-                                DataComponents.QUICKSTASH_MODE.get(),
-                                0
-                        );
-                int newMode = oldMode == 0 ? 1 : 0;
-                stack.set(DataComponents.QUICKSTASH_MODE.get(), newMode);
-                player.connection.send(new ClientboundSystemChatPacket(
-                        Component.translatable("mochila.keybind_mode_changed", "§e" + QuickStash.getMode(stack))
-                                .withStyle(ChatFormatting.BLUE),
-                        true
-                ));
+                int newMode = BackpackData.quickstashMode(stack) == 0 ? 1 : 0;
+                BackpackData.setQuickstashMode(stack, newMode);
+                PlayerFunctions.sendActionBar(
+                        player,
+                        Texts.translatable("mochila.keybind_mode_changed", "§e" + QuickStash.getMode(stack))
+                                .withStyle(ChatFormatting.BLUE)
+                );
             }
         });
     }

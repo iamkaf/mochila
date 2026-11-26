@@ -2,7 +2,8 @@ package com.iamkaf.mochila.registry;
 
 import com.iamkaf.amber.api.event.v1.events.common.client.ClientTickEvents;
 import com.iamkaf.amber.api.registry.v1.KeybindHelper;
-import com.iamkaf.mochila.Constants;
+import com.iamkaf.mochila.compat.Keys;
+import com.iamkaf.mochila.compat.Sounds;
 import com.iamkaf.mochila.item.BackpackItem;
 import com.iamkaf.mochila.item.EnderBackpackItem;
 import com.iamkaf.mochila.network.ChangeBackpackModePacket;
@@ -12,20 +13,16 @@ import com.iamkaf.mochila.network.OpenEnderBackpackPacket;
 import com.mojang.blaze3d.platform.InputConstants;
 import net.minecraft.client.KeyMapping;
 import net.minecraft.client.Minecraft;
-import net.minecraft.sounds.SoundEvents;
 import net.minecraft.world.item.ItemStack;
 
-import static com.iamkaf.mochila.item.BackpackItem.BACKPACK_EQUIP_SOUND;
-
 public class Keybinds {
-    public static final KeyMapping.Category MOCHILA_CATEGORY = KeyMapping.Category.register(Constants.resource("mochila"));
     public static final KeyMapping OPEN_BACKPACK =
-            new KeyMapping("key.mochila.open_backpack", InputConstants.KEY_B, MOCHILA_CATEGORY);
+            new KeyMapping("key.mochila.open_backpack", InputConstants.KEY_B, Keys.CATEGORY);
     public static final KeyMapping OPEN_ENDER_BACKPACK =
             new KeyMapping(
                     "key.mochila.open_ender_backpack",
                     InputConstants.KEY_V,
-                    MOCHILA_CATEGORY
+                    Keys.CATEGORY
             );
 
 
@@ -41,9 +38,9 @@ public class Keybinds {
                     return;
                 }
 
-                if (minecraft.hasShiftDown()) {
+                if (Keys.hasShiftDown()) {
                     if (player.getMainHandItem().getItem() instanceof BackpackItem) {
-                        player.playSound(SoundEvents.UI_BUTTON_CLICK.value());
+                        player.playSound(Sounds.uiButtonClick(), 1.0f, 1.0f);
                         MochilaNetworking.CHANNEL.sendToServer(new ChangeBackpackModePacket(0));
                     }
                 } else {
@@ -59,7 +56,7 @@ public class Keybinds {
                     }
                     
                     if (hasBackpack) {
-                        player.playSound(BACKPACK_EQUIP_SOUND.value());
+                        player.playSound(Sounds.armorEquipLeather(), 1.0f, 1.0f);
                         MochilaNetworking.CHANNEL.sendToServer(new OpenBackpackPacket(0));
                     }
                 }

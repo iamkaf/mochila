@@ -220,8 +220,7 @@
     "player.fake" : {
       "category" : "player",
       "sdk" : [ "player.fake.spawn()", "player.fake.list()", "player.fake.remove()" ],
-      "endpoints" : [ "POST /players/fake", "GET /players/fake", "POST /players/fake/remove" ],
-      "minMinecraftVersion" : "1.21.11"
+      "endpoints" : [ "POST /players/fake", "GET /players/fake", "POST /players/fake/remove" ]
     },
     "client.screen" : {
       "category" : "client",
