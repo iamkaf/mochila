@@ -108,11 +108,17 @@ async function showMenuWithMods(ctx: TeaKitTestContext): Promise<ClientScreen> {
   throw new Error(`No screen with a Mods button, last on ${(await ctx.client.screen()).screenClass}`);
 }
 
-// Leave no screen open for the tests that follow. Escape backs out of the config screen, the mod list and the pause menu.
+// Leave no screen open for the tests that follow. Escape backs out of the config screen, the mod list and the pause
+// menu, and the next screen can take a moment to appear, so require the HUD on two reads in a row.
 async function leaveMenus(ctx: TeaKitTestContext): Promise<void> {
-  for (let attempt = 0; attempt < 8; attempt++) {
-    if (!(await ctx.client.screen()).open) return;
-    await ctx.client.key(GLFW_KEY_ESCAPE);
+  let clearReads = 0;
+  for (let attempt = 0; attempt < 20 && clearReads < 2; attempt++) {
+    if ((await ctx.client.screen()).open) {
+      clearReads = 0;
+      await ctx.client.key(GLFW_KEY_ESCAPE);
+    } else {
+      clearReads++;
+    }
     await ctx.runtime.wait(250);
   }
 }
