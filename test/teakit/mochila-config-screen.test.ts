@@ -27,7 +27,7 @@ describe("Mochila config screen", () => {
       }
 
       for (const label of expected) {
-        expect(labels.has(label), `config entry ${label} in ${[...labels].join(", ")}`).toBe(true);
+        expect([...labels]).toContain(label);
       }
       await ctx.client.screenshot(`mochila-config-${loader}`);
     } finally {
