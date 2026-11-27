@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 See the full changelog at https://github.com/iamkaf/mochila
 
+## 6.3.1
+
+### Fixed
+
+- NeoForge 1.21.1: Mochila works with NeoForge 21.1.62 and newer again. 6.3.0 required NeoForge 21.1.268, which launchers don't offer yet.
+
 ## 6.3.0
 
 ### Changed
